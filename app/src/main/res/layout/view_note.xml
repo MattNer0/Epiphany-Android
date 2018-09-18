@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!--LinearLayout
+        android:id="@+id/container_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <include
+            android:id="@+id/toolbar"
+            layout="@layout/tool_bar" />
+    </LinearLayout-->
+
+    <FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <us.feras.mdv.MarkdownView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/markdownView" />
+    </FrameLayout>
+
+    <io.github.kobakei.materialfabspeeddial.FabSpeedDial
+        android:id="@+id/noteviewFab"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom|end"
+        app:fab_menu="@menu/menu_note_view"
+        app:fab_fabDrawable="@drawable/ic_menu_white_24dp"
+        app:fab_fabBackgroundColor="@color/colorPrimaryDark"
+        app:fab_miniFabBackgroundColor="@color/textColor"
+        app:fab_fabDrawableTint="@color/textColor"
+        app:fab_miniFabDrawableTint="@color/colorPrimaryDark"
+        app:fab_miniFabTextColor="@color/colorPrimaryDark"
+        app:fab_miniFabTextBackground="@color/textColor" />
+
+</android.support.design.widget.CoordinatorLayout>

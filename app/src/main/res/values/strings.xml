@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Epiphany</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="action_settings">Settings</string>
+    <string name="settings_title">Settings</string>
+
+    <!--Strings for Settings-->
+    <string name="general_preferences_title">Epiphany Preferences</string>
+    <string name="app_settings">App Settings</string>
+    <string name="pref_root_directory_title">Select storage folder</string>
+    <string name="pref_default_notebook">Select default notebook</string>
+
+    <!--Strings for Actionbar-->
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_fragment_notebooks">Notebooks</string>
+    <string name="title_fragment_notes">Notes</string>
+    <string name="title_add_note">Add Note</string>
+    <string name="title_edit_note">Edit Note</string>
+    <string name="title_view_note">View Note</string>
+
+    <!--Strings for Header-->
+    <string name="rack_title">Buckets</string>
+
+    <!--Strings for NotebookRow-->
+    <string name="notebook_count_text">Notes</string>
+
+    <!--Strings for MarkdownEditor-->
+    <string name="add_note_hint">What is on your mind?</string>
+
+    <!--Strngs for CreateNotebookDialog-->
+    <string name="create_notebook">Create</string>
+    <string name="cancel">Cancel</string>
+
+    <!--Strings for NotesFragment Context Menu-->
+    <string name="delete_note">Delete Note</string>
+    <string name="move_note">Move Note</string>
+
+    <!--Strings for NotebookFragment Context Menu-->
+    <string name="delete_notebook">Delete Notebook</string>
+    <string name="rename_notebook">Rename Notebook</string>
+
+    <string-array name="pref_note_order_entries">
+        <item>Modified Date</item>
+        <item>Creation Date</item>
+        <item>Note Title</item>
+    </string-array>
+
+    <string-array name="pref_note_entries_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+</resources>

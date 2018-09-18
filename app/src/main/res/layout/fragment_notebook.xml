@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    android:id="@+id/fragment_notebook"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/notebookview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:scrollbars="vertical" />
+
+    <io.github.kobakei.materialfabspeeddial.FabSpeedDial
+        android:id="@+id/notebookFab"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom|end"
+        app:fab_fabBackgroundColor="@color/colorPrimaryDark"
+        app:fab_miniFabBackgroundColor="@color/textColor"
+        app:fab_fabDrawableTint="@color/textColor"
+        app:fab_miniFabDrawableTint="@color/colorPrimaryDark"
+        app:fab_miniFabTextColor="@color/colorPrimaryDark"
+        app:fab_miniFabTextBackground="@color/textColor" />
+
+    <!--android.support.design.widget.FloatingActionButton
+        android:id="@+id/addFolderButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_plus"
+        app:backgroundTint="@color/accent"
+        app:layout_anchor="@id/notebookview"
+        app:layout_anchorGravity="bottom|right|end" /-->
+
+</android.support.design.widget.CoordinatorLayout>

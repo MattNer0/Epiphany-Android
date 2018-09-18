@@ -1,0 +1,306 @@
+package com.neromatt.epiphany.ui;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.neromatt.epiphany.model.DataObjects.MainModel;
+import com.neromatt.epiphany.model.Path;
+import com.neromatt.epiphany.model.Adapters.RackAdapter;
+import com.neromatt.epiphany.model.DataObjects.SingleRack;
+import com.neromatt.epiphany.model.SortBy;
+import com.neromatt.epiphany.ui.NotebookFragment.NotebookFragment;
+import com.neromatt.epiphany.ui.NotesFragment.NotesFragment;
+import com.neromatt.epiphany.ui.RackFragment.CreateRackListener;
+import com.neromatt.epiphany.ui.RackFragment.RackFragmentCallback;
+import com.sensorberg.permissionbitte.BitteBitte;
+import com.sensorberg.permissionbitte.PermissionBitte;
+
+import java.io.File;
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity implements BitteBitte, PathSupplier, RackFragmentCallback{
+
+    private Toolbar toolbar; // Declaring the Toolbar Object
+    android.support.v7.app.ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private Path path;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerList = findViewById(R.id.left_drawer);
+
+        setupToolBar();
+        setupDrawerToggle();
+
+        if (PermissionBitte.shouldAsk(this, this)) {
+            PermissionBitte.ask(MainActivity.this, MainActivity.this);
+            return;
+        } else {
+            this.yesYouCan();
+        }
+
+        if (savedInstanceState == null) {
+            loadDefaultNotebook();
+        }
+    }
+    public void refreshRackDrawer() {
+        //TODO : handle exception if racklist is null, racklist is null when folder doesn't exist
+        try {
+            ArrayList<MainModel> racklist = path.getRacks();
+            RackAdapter adapter = new RackAdapter(this, 0, racklist);
+            adapter.sort(SortBy.ORDER);
+            mDrawerList.setAdapter(adapter);
+            mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        } catch(NullPointerException e) {
+            e.printStackTrace();
+        }
+    }
+    @Override
+    protected void onResume(){
+        super.onResume();
+        refreshRackDrawer();
+    }
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        mDrawerToggle.syncState();
+    }
+
+    private void setupToolBar(){
+        toolbar = findViewById(R.id.toolbar); // Attaching the layout to the toolbar object
+        if (toolbar!=null) {
+            setSupportActionBar(toolbar);    // Setting toolbar as the ActionBar with setSupportActionBar() call
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        }
+    }
+    void setupDrawerHeader() {
+        LayoutInflater inflater = getLayoutInflater();
+        View listHeaderView = inflater.inflate(R.layout.header,null, false);
+        ImageView addRackButton = listHeaderView.findViewById(R.id.addRackButton);
+        addRackButton.setOnClickListener(new CreateRackListener(this, this.path));
+        mDrawerList.addHeaderView(listHeaderView);
+    }
+    void setupDrawerToggle(){
+        mDrawerToggle = new android.support.v7.app.ActionBarDrawerToggle(this,mDrawerLayout,toolbar,R.string.app_name, R.string.app_name);
+        //This is necessary to change the icon of the Drawer Toggle upon state change.
+        mDrawerToggle.syncState();
+    }
+
+
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            selectItem(position);
+        }
+
+    }
+    private void loadDefaultNotebook() {
+        String path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_default_notebook", "");
+        if (!path.isEmpty()) {
+            File f1 = new File(path);
+            if (f1.exists()) {
+                this.path.setCurrentPath(path);
+                Log.i("file", path);
+                Fragment fragment = NotebookFragment.newInstance();
+                if (fragment != null) {
+                    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                    transaction.replace(R.id.content_frame, fragment, "Notes_Fragment");
+                    transaction.commit();
+                }
+            }
+        }
+    }
+    private void selectItem(int position) {
+        try {
+            String rackName = ((SingleRack) mDrawerList.getAdapter().getItem(position)).getName();
+            this.path.resetPath();
+            this.path.goForward(rackName);
+            if (createNotebookFragment()) {
+                mDrawerList.setItemChecked(position, true);
+                mDrawerList.setSelection(position);
+                mDrawerLayout.closeDrawer(mDrawerList);
+            }
+        } catch (NullPointerException e) {
+            Log.e("err", "null item");
+        }
+    }
+    private boolean createNotebookFragment(){
+        Fragment fragment = NotebookFragment.newInstance();
+        if (fragment != null) {
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.content_frame, fragment, "Notebook_Fragment");
+            transaction.commit();
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private void showSettings() {
+        Intent settingsIntent = new Intent(this, SettingsActivity.class);
+        startActivity(settingsIntent);
+    }
+    boolean checkIfFirstRun() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
+        if (prefs.getBoolean("firstrun", true) || path.isEmpty() || !(new File(path)).exists()) {
+            Toast.makeText(this, "First Run", Toast.LENGTH_SHORT).show();
+            File rootDir = Environment.getExternalStorageDirectory();
+            String full = rootDir + "/epiphany";
+            String fullnotebook = full+"/FirstNotebook";
+            File fullpath = new File(full);
+            File defaultnotebookpath = new File(fullnotebook);
+            if (!(fullpath.exists() && fullpath.isDirectory())) {
+                fullpath.mkdirs();
+                defaultnotebookpath.mkdirs();
+            }
+
+            SharedPreferences.Editor prefs_edit = prefs.edit();
+
+            prefs_edit.putString("pref_root_directory", full);
+            prefs_edit.putBoolean("firstrun", false);
+            prefs_edit.putString("pref_default_notebook", fullnotebook);
+            prefs_edit.apply();
+
+            this.path = new Path(full);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public void yesYouCan() {
+        if (checkIfFirstRun()) {
+            loadDefaultNotebook();
+        } else {
+            String path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
+            this.path = new Path(path);
+        }
+
+        setupDrawerHeader();
+    }
+
+    @Override
+    public void noYouCant() {
+        Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void askNicer() {
+        new AlertDialog.Builder(this)
+            .setTitle("Storage")
+            .setMessage("Epiphany needs to access your storage to read and save notes")
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    PermissionBitte.ask(MainActivity.this, MainActivity.this);
+                }
+            })
+            .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    MainActivity.this.finish();
+                }
+            })
+            .setCancelable(false)
+            .show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            showSettings();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+    @Override
+    public void onBackPressed() {
+
+        if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
+            super.onBackPressed();
+        } else {
+            NotebookFragment notebookFragment = (NotebookFragment) getSupportFragmentManager().findFragmentByTag("Notebook_Fragment");
+            NotesFragment notesFragment = (NotesFragment) getSupportFragmentManager().findFragmentByTag("Notes_Fragment");
+            if (notebookFragment != null && notebookFragment.isVisible()) {
+                if (path.isRack()) {
+                    this.mDrawerLayout.openDrawer(Gravity.LEFT);
+                } else {
+                    path.getBack();
+                    notebookFragment.refreshNotebooks();
+                }
+            }
+            else if(notesFragment !=null && notesFragment.isVisible()){
+                path.getBack();
+                createNotebookFragment();
+               // super.onBackPressed();
+            }
+            else {
+                super.onBackPressed();
+            }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+    public Path getPath(){
+        return this.path;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("currentPath", this.path.getCurrentPath());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        this.path.setCurrentPath(savedInstanceState.getString("currentPath"));
+    }
+}
+
+

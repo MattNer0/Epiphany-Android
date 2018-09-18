@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="AppTheme.Base"/>
+    <style name="AppTheme.Base" parent="Theme.AppCompat">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+        <item name="android:textViewStyle">@style/RobotoTextViewStyle</item>
+        <item name="android:buttonStyle">@style/RobotoButtonStyle</item>
+        <item name="android:activatedBackgroundIndicator">@drawable/list_activated_background</item>
+        <item name="android:listDivider">@drawable/divider_gray</item>
+        <item name="android:itemTextAppearance">@style/your_new_text_appearance</item>
+    </style>
+    <style name="AppFullScreenTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+    <style name="RobotoTextViewStyle" parent="android:Widget.TextView">
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+    <style name="RobotoButtonStyle" parent="android:Widget.Holo.Button">
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+    <style name="ThemeOverlay.Epiphany" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:textColor">@color/textColor</item>
+    </style>
+    <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="color">@android:color/white</item>
+    </style>
+    <!-- This helps the PopupMenu stick with Light theme while the ActionBar is in Dark theme -->
+    <style name="your_new_text_appearance">
+        <item name="android:textColor">@color/background</item>
+    </style>
+</resources>

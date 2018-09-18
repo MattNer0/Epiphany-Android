@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <color name="background">#252526</color>
+    <color name="textColor">#FFFFFF</color>
+    <color name="colorPrimaryLighter">#333333</color>
+    <color name="colorPrimary">#252526</color>
+    <color name="colorPrimaryDark">#1e1e1e</color>
+    <color name="listDividerColor">#D3D3D3</color>
+    <color name="listActivatedBackgroundColor">#e6e6e6</color>
+    <color name="listSubColor">#999999</color>
+    <color name="accent">#252526</color>
+    <color name="gray">#DADADA</color>
+</resources>

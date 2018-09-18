@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/app_settings">
+        <Preference
+            android:id="@+id/pref_root_directory"
+            android:summary=""
+            android:key="pref_root_directory"
+            android:title="@string/pref_root_directory_title"/>
+
+        <Preference
+            android:id="@+id/pref_default_notebook"
+            android:summary=""
+            android:key="pref_default_notebook"
+            android:title="@string/pref_default_notebook"/>
+
+        <ListPreference
+            android:key="pref_note_order"
+            android:title="Select note order"
+            android:summary="%s"
+            android:entries="@array/pref_note_order_entries"
+            android:entryValues="@array/pref_note_entries_values"
+            android:defaultValue="0" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
