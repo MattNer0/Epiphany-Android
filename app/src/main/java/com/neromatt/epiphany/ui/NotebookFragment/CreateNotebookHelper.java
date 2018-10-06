@@ -20,10 +20,11 @@ public class CreateNotebookHelper implements CreateNotebookDialog.CreateNotebook
         dialog.setDialogListener(this);
         dialog.show(mCallbackFragment.getActivity().getSupportFragmentManager(), "CreateNotebookDialogFragment");
     }
+
     @Override
     public void onDialogPositiveClick(CreateNotebookDialog dialog, String notebookname) {
         path.createNotebook(notebookname);
-        ((NotebookFragmentCallback) mCallbackFragment).refreshNotebooks();
+        ((NotebookFragment) mCallbackFragment).refreshNotebooks();
     }
 
     @Override

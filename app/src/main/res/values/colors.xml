@@ -11,4 +11,5 @@
     <color name="listSubColor">#999999</color>
     <color name="accent">#252526</color>
     <color name="gray">#DADADA</color>
+    <color name="white">#FFFFFF</color>
 </resources>

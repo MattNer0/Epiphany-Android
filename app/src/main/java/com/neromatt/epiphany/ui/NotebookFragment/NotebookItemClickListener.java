@@ -31,7 +31,7 @@ public class NotebookItemClickListener {
 
         String selectedModelName = notebook.getName();
 
-        if (notebook.getType() == MainModel.TYPE_FOLDER) {
+        /*if (notebook.isFolder() || notebook.isBucket()) {
             FragmentManager fm = ma.getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fm.beginTransaction();
             NotebookFragment fragment = NotebookFragment.newInstance();
@@ -39,10 +39,9 @@ public class NotebookItemClickListener {
             fragmentTransaction.replace(((ViewGroup) view.getParent()).getId(), fragment, "Notebook_Fragment");
             fragmentTransaction.commit();
         } else if (notebook.getType() == MainModel.TYPE_MARKDOWN_NOTE) {
-            String path = ((SingleNote) notebook).getFullPath();
             Intent intent = new Intent(ma, ViewNote.class);
-            intent.putExtra("notePath", path);
+            intent.putExtra("note", ((SingleNote) notebook).toBundle());
             ma.startActivity(intent);
-        }
+        }*/
     }
 }

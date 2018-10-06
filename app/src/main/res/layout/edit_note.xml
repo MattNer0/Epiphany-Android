@@ -1,34 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:orientation="vertical">
-
-<LinearLayout
-    android:id="@+id/container_toolbar"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <include
-        android:id="@+id/toolbar"
-        layout="@layout/tool_bar" />
-</LinearLayout>
+    <LinearLayout
+        android:id="@+id/container_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        android:orientation="vertical">
 
+        <include
+            android:id="@+id/toolbar"
+            layout="@layout/tool_bar" />
+    </LinearLayout>
 
-<FrameLayout
-    android:id="@+id/content_frame"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    <LinearLayout
+        app:layout_constraintTop_toBottomOf="@id/container_toolbar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical">
 
-    <EditText android:id="@+id/edit_text"
-        android:padding="16dp"
-        android:gravity="top"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:hint="@string/add_note_hint" />
+        <FrameLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
+            <com.yydcdut.rxmarkdown.RxMDEditText
+                android:id="@+id/edit_text"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:gravity="top"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:hint="@string/add_note_hint" />
 
-</FrameLayout>
+        </FrameLayout>
+    </LinearLayout>
 
-</LinearLayout>
+    <!--io.github.kobakei.materialfabspeeddial.FabSpeedDial
+        android:id="@+id/noteeditFab"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom|end"
+        app:fab_menu="@menu/menu_note_edit"
+        app:fab_fabDrawable="@drawable/ic_menu_white_24dp"
+        app:fab_fabBackgroundColor="@color/colorPrimaryDark"
+        app:fab_miniFabBackgroundColor="@color/textColor"
+        app:fab_fabDrawableTint="@color/textColor"
+        app:fab_miniFabDrawableTint="@color/colorPrimaryDark"
+        app:fab_miniFabTextColor="@color/colorPrimaryDark"
+        app:fab_miniFabTextBackground="@color/textColor" /-->
+
+</android.support.constraint.ConstraintLayout>

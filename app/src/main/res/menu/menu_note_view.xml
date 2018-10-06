@@ -3,11 +3,11 @@
     <item
         android:id="@+id/edit_note"
         android:title="Edit"
-        android:icon="@drawable/ic_plus"
+        android:icon="@drawable/ic_mode_edit_white_24dp"
         android:orderInCategory="1"/>
     <item
         android:id="@+id/info_note"
         android:title="Info"
-        android:icon="@drawable/ic_plus"
+        android:icon="@drawable/ic_info_outline_white_24dp"
         android:orderInCategory="2"/>
 </menu>

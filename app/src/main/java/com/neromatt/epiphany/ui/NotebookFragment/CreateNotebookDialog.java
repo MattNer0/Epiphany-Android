@@ -27,7 +27,6 @@ public class CreateNotebookDialog extends DialogFragment {
         this.mListener = mListener;
     }
 
-
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder;

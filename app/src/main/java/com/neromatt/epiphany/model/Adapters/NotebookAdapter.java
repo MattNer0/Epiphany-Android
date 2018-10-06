@@ -28,23 +28,33 @@ public class NotebookAdapter extends RecyclerView.Adapter<NotebookAdapter.ViewHo
 
         TextView mNotebookTitle;
         TextView mNoteCount;
+        TextView mNoteSummary;
 
         private ViewHolder(View v) {
             super(v);
             this.itemView = v;
             this.mNotebookTitle = v.findViewById(R.id.notebook_title);
             this.mNoteCount = v.findViewById(R.id.note_count);
+            this.mNoteSummary = v.findViewById(R.id.notebook_summary);
         }
 
         private void bindView(final MainModel obj, final NotebookItemClickListener mClickListener) {
             this.mNotebookTitle.setText(obj.getName());
 
-            if (obj.isFolder()) {
+            if (obj.isBucket()) {
+                this.mNoteCount.setText("");
+            } else if (obj.isFolder()) {
                 SingleNotebook objFolder = (SingleNotebook) obj;
-                this.mNoteCount.setText(objFolder.getNoteCountAsString());
+                if (objFolder.getNoteCount() > 0) {
+                    this.mNoteCount.setText(""+objFolder.getNoteCount());
+                } else {
+                    this.mNoteCount.setText("");
+                }
 
             } else {
                 //this.mNoteCount.setText("");
+                SingleNote objNote = (SingleNote) obj;
+                if (this.mNoteSummary != null) this.mNoteSummary.setText(objNote.getSummary());
             }
 
             if (mClickListener != null) {
@@ -95,6 +105,7 @@ public class NotebookAdapter extends RecyclerView.Adapter<NotebookAdapter.ViewHo
             case MainModel.TYPE_MARKDOWN_NOTE:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.markdown_note_row, parent, false);
                 break;
+            case MainModel.TYPE_RACK:
             case MainModel.TYPE_FOLDER:
                 v = LayoutInflater.from(parent.getContext()).inflate(R.layout.notebook_row, parent, false);
                 break;
@@ -110,7 +121,7 @@ public class NotebookAdapter extends RecyclerView.Adapter<NotebookAdapter.ViewHo
         holder.bindView(getItem(position), clickListener);
     }
 
-    public void sort(final SortBy sortBy, int note_order) {
+    public void sort(final SortBy sortByFolders, int note_order) {
 
         final SortBy sortByNotes;
         switch (note_order) {
@@ -130,8 +141,16 @@ public class NotebookAdapter extends RecyclerView.Adapter<NotebookAdapter.ViewHo
         Collections.sort(data, new Comparator<MainModel>() {
             @Override
             public int compare(MainModel singleNotebook, MainModel t1) {
+                if (singleNotebook.getType() == t1.getType() && singleNotebook.getType() == MainModel.TYPE_RACK) {
+                    if (sortByFolders == SortBy.NAME) {
+                        return singleNotebook.getName().compareTo(t1.getName());
+                    } else {
+                        return singleNotebook.getOrder() - t1.getOrder();
+                    }
+                }
+
                 if (singleNotebook.getType() == t1.getType() && singleNotebook.getType() == MainModel.TYPE_FOLDER) {
-                    if (sortBy == SortBy.NAME) {
+                    if (sortByFolders == SortBy.NAME) {
                         return singleNotebook.getName().compareTo(t1.getName());
                     } else {
                         return singleNotebook.getOrder() - t1.getOrder();

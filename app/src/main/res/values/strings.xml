@@ -21,6 +21,9 @@
     <string name="title_edit_note">Edit Note</string>
     <string name="title_view_note">View Note</string>
 
+    <string name="title_activity_editor">Edit Note</string>
+    <string name="title_activity_loading">Loading</string>
+
     <!--Strings for Header-->
     <string name="rack_title">Buckets</string>
 
@@ -34,7 +37,6 @@
     <string name="create_notebook">Create</string>
     <string name="cancel">Cancel</string>
 
-    <!--Strings for NotesFragment Context Menu-->
     <string name="delete_note">Delete Note</string>
     <string name="move_note">Move Note</string>
 

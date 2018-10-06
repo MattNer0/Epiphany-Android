@@ -37,9 +37,11 @@ public class Path{
     }
 
     public void getBack() {
-        if(!currentPath.toString().equals(rootPath)){
+        if (!currentPath.toString().equals(rootPath)) {
             currentPath = this.currentPath.getParentFile();
             depth -= 1;
+        } else {
+            depth = 0;
         }
     }
 
@@ -56,27 +58,65 @@ public class Path{
         depth = 0;
     }
 
-    public boolean isRack() {
+    public boolean isRoot() {
+        return depth == 0;
+    }
+
+    public boolean isBucket() {
         return depth == 1;
+    }
+
+    public String getRootPath() {
+        return rootPath;
     }
 
     public String getCurrentPath(){
        return currentPath.toString();
     }
+
     public void setCurrentPath(String currentPath){
         this.currentPath = new File(currentPath);
-        if (this.currentPath.getParentFile().toString().equals(this.rootPath)) {
+        if (this.currentPath.toString().equals(this.rootPath)) {
+            depth = 0;
+        } else if (this.currentPath.getParentFile().toString().equals(this.rootPath)) {
             depth = 1;
         }
     }
 
-    public boolean isLeaf() {
+    /*public boolean isLeaf() {
         for (File f : currentPath.listFiles()) {
             if (f.isDirectory()){
                 return false;
             }
         }
         return true;
+    }*/
+
+    private static JSONObject getMetaFile(String path, String file_name) {
+        File metaFile = new File(path+"/"+file_name);
+
+        try {
+            FileInputStream stream = new FileInputStream(metaFile);
+            try {
+                FileChannel fc = stream.getChannel();
+                MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                String json_string = Charset.defaultCharset().decode(bb).toString();
+                return new JSONObject(json_string);
+
+            } catch (JSONException e) {
+                Log.e("err", "JSONException");
+                e.printStackTrace();
+            } finally {
+                stream.close();
+            }
+        } catch (FileNotFoundException e) {
+            Log.i("info", "FileNotFoundException "+metaFile.toString());
+        } catch (IOException e) {
+            Log.e("err", "IOException");
+            e.printStackTrace();
+        }
+
+        return new JSONObject();
     }
 
     public ArrayList<MainModel> getRacks() {
@@ -88,29 +128,7 @@ public class Path{
             for (File f : fileList) {
                 if (!f.getName().startsWith(".")) {
                     if (f.isDirectory()) {
-                        File metaBucket = new File(f.toString()+"/.bucket.json");
-
-                        try {
-                            FileInputStream stream = new FileInputStream(metaBucket);
-                            try {
-                                FileChannel fc = stream.getChannel();
-                                MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-                                String json_string = Charset.defaultCharset().decode(bb).toString();
-                                racks.add(new SingleRack(f.getName(), f.toString(), new JSONObject(json_string)));
-
-                            } catch (JSONException e) {
-                                Log.e("err", "JSONException");
-                                e.printStackTrace();
-                            } finally {
-                                stream.close();
-                            }
-                        } catch (FileNotFoundException e) {
-                            Log.i("info", "FileNotFoundException "+metaBucket.toString());
-                            racks.add(new SingleRack(f.getName(), f.toString(), fileList.length));
-                        } catch (IOException e) {
-                            Log.e("err", "IOException");
-                            e.printStackTrace();
-                        }
+                        racks.add(new SingleRack(f.getName(), f.toString(), getMetaFile(f.toString(), ".bucket.json")));
                     }
                 }
             }
@@ -119,8 +137,37 @@ public class Path{
         return null;
     }
 
+    public String getQuickNotesPath() {
+        String quick_path = rootPath+"/_quick_notes/New Notes/";
+        File f = new File(quick_path);
+        if (!f.exists()) {
+            if (!f.mkdirs()) {
+                quick_path = null;
+            }
+        }
+        return quick_path;
+    }
+
+    public String getNotePath() {
+        File f = new File(this.getCurrentPath());
+        if (f.isFile()) {
+            return f.getParent();
+        }
+
+        return f.getPath();
+    }
+
+    public String getName() {
+        File f = new File(this.getCurrentPath());
+        return f.getName();
+    }
+
     public ArrayList<MainModel> getFoldersAndNotes() {
-        File dir = new File(this.getCurrentPath());
+        return getFoldersAndNotes(getCurrentPath(), isRoot());
+    }
+
+    public static ArrayList<MainModel> getFoldersAndNotes(String current_path, boolean is_root) {
+        File dir = new File(current_path);
         if (dir.exists()) {
             ArrayList<MainModel> filesArray = new ArrayList<>();
 
@@ -134,12 +181,17 @@ public class Path{
                             }
                         });
                         int numberOfNotes = files.length;
-                        filesArray.add(new SingleNotebook(f.getName(),f.toString(),numberOfNotes));
+                        if (is_root) {
+                            filesArray.add(new SingleRack(f.getName(), f.toString(), getMetaFile(f.toString(), ".bucket.json")));
+                        } else {
+                            filesArray.add(new SingleNotebook(f.getName(), f.toString(), numberOfNotes, getMetaFile(f.toString(), ".folder.json")));
+                        }
                     } else {
                         String extension = getFileExtension(f);
                         if ((extension.equalsIgnoreCase("txt"))||(extension.equalsIgnoreCase("md"))) {
-                            String notepath = dir + "/" + f.getName();
-                            filesArray.add(new SingleNote(dir.getPath(),getNoteTrunc(notepath,1,5),f.getName(), new Date(f.lastModified())));
+                            //String notepath = dir + "/" + f.getName();
+                            filesArray.add(new SingleNote(dir.getPath(),f.getName()));
+                            //filesArray.add(new SingleNote(dir.getPath(),getNoteTrunc(notepath,1,5),f.getName(), new Date(f.lastModified())));
                         }
                     }
                 }
@@ -149,61 +201,14 @@ public class Path{
         return null;
     }
 
-    public ArrayList<MainModel> getNotes() {
-        File dir = new File(getCurrentPath());
-        if (dir.exists()) {
-            ArrayList<MainModel> notes = new ArrayList<>();
-
-            for (File f : dir.listFiles()) {
-                if (!f.getName().startsWith(".")) {
-                    if (!f.isDirectory()) {
-                        String extension = getFileExtension(f);
-                        if ((extension.equalsIgnoreCase("txt"))||(extension.equalsIgnoreCase("md"))) {
-                            String note_path = dir+"/"+f.getName();
-                            notes.add(new SingleNote(dir.getPath(),getNoteTrunc(note_path,1,5),f.getName(), new Date(f.lastModified())));
-                        }
-                    }
-                }
-            }
-            return notes;
-        }
-        return null;
-    }
-
-    public String getFileExtension(File filename){
+    private static String getFileExtension(File filename){
         return filename.toString().substring(filename.toString().lastIndexOf('.') + 1);
     }
 
-    public String getNote(String noteName){
+    public String getNote(String noteName) {
         return getNoteTrunc(getCurrentPath()+"/"+noteName, 0,0);
     }
 
-    public String getNoteMarkdown (String absolutePath) {
-        File file = new File(absolutePath);
-        StringBuilder text = new StringBuilder();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-            int counter=0;
-
-            while ((line = br.readLine()) != null) {
-                if(counter==0) {
-                    text.append("##");
-                    counter++;
-                }
-                text.append(line);
-                text.append("  \n");
-            }
-            br.close();
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return text.toString();
-    }
     private String getNoteTrunc(String absolutePath, int fromLine, int toLine) {
         int counter = 0;
         File file = new File(absolutePath);
@@ -307,17 +312,41 @@ public class Path{
     public void createNotebook(String notebookname) {
         createFolder(getCurrentPath()+"/"+notebookname);
     }
-    public void createRack(String rackname) {
-        createFolder(rootPath+"/"+rackname);
+
+    public MainModel createRack(String rackname) {
+        if (createFolder(rootPath+"/"+rackname)) {
+            return new SingleRack(rackname, rootPath+"/"+rackname, null);
+        }
+        return null;
     }
+
     public void renameNotebook(String oldName, String newName) {
         File f1=new File(currentPath+"/"+oldName);
         f1.renameTo(new File(currentPath+"/"+newName));
     }
 
-    public void createFolder(String path) {
+    public boolean isDirectory() {
+        return currentPath.isDirectory();
+    }
+
+    public String newNoteName() {
+        int name_num = 0;
+        boolean found = false;
+        while(!found) {
+            found = true;
+            File f1 = new File(getCurrentPath()+"/note_"+name_num);
+            if (f1.exists()) {
+                name_num++;
+                found = false;
+            }
+        }
+
+        return "note_"+name_num;
+    }
+
+    public boolean createFolder(String path) {
         File dir = new File(path);
-        dir.mkdir();
+        return dir.mkdir();
     }
 
     public void deleteNotebook(String absoluteFolderPath){
@@ -339,12 +368,15 @@ public class Path{
         deleteNote(getCurrentPath()+"/"+notename+".md");
     }
     public String getTitle() {
-        if (isRack()) {
+        if (isRoot()) {
+            return "Epiphany Library";
+        }
+        if (isBucket()) {
             if (currentPath.getName().equals("_quick_notes")) return "Quick Notes";
             return currentPath.getName();
         }
 
-        return currentPath.getParentFile().getName()+"/"+currentPath.getName();
+        return currentPath.getName();
     }
 
 }

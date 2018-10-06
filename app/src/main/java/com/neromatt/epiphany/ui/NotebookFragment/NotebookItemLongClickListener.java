@@ -69,7 +69,7 @@ public class NotebookItemLongClickListener implements View.OnCreateContextMenuLi
         if(this.selectedItem!=null) {
             if(!text.equals("")) {
                 this.path.renameNotebook(selectedItem.getName(), text);
-                ((NotebookFragmentCallback) mFragmentCallback).refreshNotebooks();
+                ((NotebookFragment) mFragmentCallback).refreshNotebooks();
             }
         }
     }

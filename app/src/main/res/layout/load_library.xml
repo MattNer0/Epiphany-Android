@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAlignment="center"
+            android:layout_centerInParent="true"
+            android:textSize="18sp"
+            android:textColor="@color/textColor"
+            android:alpha="0.6"
+            android:text="loading your library...."/>
+
+        <com.github.rahatarmanahmed.cpv.CircularProgressView
+            android:id="@+id/progress_view"
+            android:layout_width="250sp"
+            android:layout_height="250sp"
+            android:layout_centerInParent="true"
+            app:cpv_color="@color/textColor"
+            app:cpv_animAutostart="false"
+            app:cpv_indeterminate="false" />
+
+    </RelativeLayout>
+
+</android.support.constraint.ConstraintLayout>
