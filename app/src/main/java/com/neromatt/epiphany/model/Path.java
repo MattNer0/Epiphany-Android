@@ -1,7 +1,9 @@
 package com.neromatt.epiphany.model;
 
+import android.os.Bundle;
 import android.util.Log;
 
+import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
@@ -137,15 +139,31 @@ public class Path{
         return null;
     }
 
-    public String getQuickNotesPath() {
-        String quick_path = rootPath+"/_quick_notes/New Notes/";
+    public Bundle getQuickNotesPath() {
+        Bundle ret = new Bundle();
+        boolean created_folder = false;
+        boolean created_bucket = false;
+        String bucket_quick_path = rootPath+"/"+Constants.QUICK_NOTES_BUCKET;
+        String quick_path = bucket_quick_path+"/New Notes";
+        File b = new File(bucket_quick_path);
         File f = new File(quick_path);
         if (!f.exists()) {
+            if (!b.exists()) {
+                created_bucket = true;
+            }
+            created_folder = true;
+
             if (!f.mkdirs()) {
-                quick_path = null;
+                quick_path = "";
+                created_folder = false;
+                created_bucket = false;
             }
         }
-        return quick_path;
+
+        ret.putString("path", quick_path);
+        ret.putBoolean("created_folder", created_folder);
+        ret.putBoolean("created_bucket", created_bucket);
+        return ret;
     }
 
     public String getNotePath() {
@@ -162,11 +180,8 @@ public class Path{
         return f.getName();
     }
 
-    public ArrayList<MainModel> getFoldersAndNotes() {
-        return getFoldersAndNotes(getCurrentPath(), isRoot());
-    }
-
-    public static ArrayList<MainModel> getFoldersAndNotes(String current_path, boolean is_root) {
+    public ArrayList<MainModel> getBuckets() {
+        String current_path = getRootPath();
         File dir = new File(current_path);
         if (dir.exists()) {
             ArrayList<MainModel> filesArray = new ArrayList<>();
@@ -174,18 +189,24 @@ public class Path{
             for (File f : dir.listFiles()) {
                 if (!f.getName().startsWith(".")) {
                     if (f.isDirectory()) {
-                        File[] files = f.listFiles(new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
-                                name = name.toLowerCase();
-                                return name.endsWith(".txt") || name.endsWith(".md");
-                            }
-                        });
-                        int numberOfNotes = files.length;
-                        if (is_root) {
-                            filesArray.add(new SingleRack(f.getName(), f.toString(), getMetaFile(f.toString(), ".bucket.json")));
-                        } else {
-                            filesArray.add(new SingleNotebook(f.getName(), f.toString(), numberOfNotes, getMetaFile(f.toString(), ".folder.json")));
-                        }
+                        filesArray.add(new SingleRack(f.getName(), f.toString(), getMetaFile(f.toString(), ".bucket.json")));
+                    }
+                }
+            }
+            return filesArray;
+        }
+        return null;
+    }
+
+    public static ArrayList<MainModel> getFoldersAndNotes(String current_path) {
+        File dir = new File(current_path);
+        if (dir.exists()) {
+            ArrayList<MainModel> filesArray = new ArrayList<>();
+
+            for (File f : dir.listFiles()) {
+                if (!f.getName().startsWith(".")) {
+                    if (f.isDirectory()) {
+                        filesArray.add(new SingleNotebook(f.getName(), f.toString(), getMetaFile(f.toString(), ".folder.json")));
                     } else {
                         String extension = getFileExtension(f);
                         if ((extension.equalsIgnoreCase("txt"))||(extension.equalsIgnoreCase("md"))) {
@@ -310,7 +331,13 @@ public class Path{
         toDelete.delete();
     }
     public void createNotebook(String notebookname) {
-        createFolder(getCurrentPath()+"/"+notebookname);
+        createNotebook(getCurrentPath(), notebookname);
+    }
+    public MainModel createNotebook(String path, String notebook_name) {
+        if (createFolder(path+"/"+notebook_name)) {
+            return new SingleNotebook(notebook_name, path+"/"+notebook_name, null);
+        }
+        return null;
     }
 
     public MainModel createRack(String rackname) {
@@ -329,19 +356,44 @@ public class Path{
         return currentPath.isDirectory();
     }
 
-    public String newNoteName() {
+    public static String newNoteName(String path, String extension) {
         int name_num = 0;
+        String new_filename = "";
         boolean found = false;
+
+        extension = extension.replace(".", "");
+
         while(!found) {
             found = true;
-            File f1 = new File(getCurrentPath()+"/note_"+name_num);
+            new_filename = "note_"+name_num+"."+extension;
+            File f1 = new File(path+"/"+new_filename);
             if (f1.exists()) {
                 name_num++;
                 found = false;
             }
         }
 
-        return "note_"+name_num;
+        return new_filename;
+    }
+
+    public static String newNoteNameFromCurrent(String path, String current_filename, String extension) {
+        int name_num = 0;
+        String new_filename = "";
+        boolean found = false;
+
+        extension = extension.replace(".", "");
+
+        while(!found) {
+            found = true;
+            new_filename = current_filename+"_"+name_num+"."+extension;
+            File f1 = new File(path+"/"+new_filename);
+            if (f1.exists()) {
+                name_num++;
+                found = false;
+            }
+        }
+
+        return new_filename;
     }
 
     public boolean createFolder(String path) {

@@ -25,12 +25,14 @@ import com.yydcdut.rxmarkdown.RxMDConfiguration;
 import com.yydcdut.rxmarkdown.RxMDEditText;
 import com.yydcdut.rxmarkdown.RxMarkdown;
 
+import java.io.File;
+
 public class EditorActivity extends AppCompatActivity {
 
     private String folderpath;
     private String noteToEdit;
     private Toolbar toolbar;
-    private Path path;
+    //private Path path;
     private RxMDEditText editTextField;
     private SingleNote note = null;
     private TextUndoRedo mTextUndoRedo;
@@ -38,35 +40,13 @@ public class EditorActivity extends AppCompatActivity {
     private boolean noteModified = false;
     private Menu optionsMenu = null;
 
+    private String root_path;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_note);
         setupToolBar();
-        Intent intent = getIntent();
-        Bundle notebundle = intent.getBundleExtra("note");
-        String folder = intent.getStringExtra("folder");
-        if (notebundle != null) {
-            note = new SingleNote(notebundle);
-        } else if (folder != null && !folder.isEmpty()) {
-            path = new Path(folder);
-
-            if (path.isDirectory()) {
-                noteToEdit = path.newNoteName();
-                folderpath = folder;
-            } else {
-                noteToEdit = path.getName();
-                folderpath = path.getNotePath();
-                path.setCurrentPath(folderpath);
-            }
-            note = new SingleNote(folderpath, noteToEdit);
-            note.markAsNewFile();
-
-            String note_body = intent.getStringExtra("body");
-            if (note_body != null && !note_body.isEmpty()) {
-                note.updateBody(note_body);
-            }
-        }
 
         editTextField = findViewById(R.id.edit_text);
         editTextField.setText("");
@@ -77,8 +57,38 @@ public class EditorActivity extends AppCompatActivity {
                 .intoObservable()
                 .subscribe();
 
+        Intent intent = getIntent();
+        Bundle notebundle = intent.getBundleExtra("note");
+        String folder = intent.getStringExtra("folder");
+
+        root_path = intent.getStringExtra("root");
+
+        if (notebundle != null) {
+            note = new SingleNote(notebundle);
+        } else if (folder != null && !folder.isEmpty()) {
+            File path = new File(folder);
+
+            if (path.isDirectory()) {
+                noteToEdit = Path.newNoteName(folder, "md");
+                folderpath = folder;
+            } else {
+                noteToEdit = path.getName();
+                folderpath = path.getParentFile().getPath();
+            }
+            note = new SingleNote(folderpath, noteToEdit);
+            note.markAsNewFile();
+
+            String note_body = intent.getStringExtra("body");
+            if (note_body != null && !note_body.isEmpty()) {
+                note.updateBody(note_body);
+                editTextField.setText(note_body);
+            }
+        }
+
+        //Log.i("log", note.getPathArray(root_path).toString());
+
         onBackPressed = false;
-        if (note.doesExist() || notebundle != null) {
+        if (notebundle != null) {
             this.setTitle(R.string.title_edit_note);
             if (note.doesExist()) {
                 note.refreshContent(new SingleNote.OnNoteLoadedListener() {
@@ -98,22 +108,6 @@ public class EditorActivity extends AppCompatActivity {
             this.setTitle(R.string.title_add_note);
             addTextChangeListener();
         }
-
-        /*FabSpeedDial noteFab = findViewById(R.id.noteeditFab);
-        noteFab.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
-            @Override
-            public void onMenuItemClick(FloatingActionButton miniFab, @Nullable TextView label, int itemId) {
-                if (itemId == R.id.preview_note) {
-                    saveNote();
-
-                    Intent intent = new Intent(EditorActivity.this, ViewNote.class);
-                    intent.putExtra("note", note.toBundle());
-                    startActivity(intent);
-
-                    finish();
-                }
-            }
-        });*/
     }
 
     @Override
@@ -169,27 +163,24 @@ public class EditorActivity extends AppCompatActivity {
                 return;
 
             note.updateBody(note_text);
-            if (!quit) {
-                noteModified = true;
-                note.saveNote(new SingleNote.OnNoteSavedListener() {
-                    @Override
-                    public void NoteSaved(boolean saved) {
-                        if (saved) {
-                            Toast.makeText(EditorActivity.this, "Note saved", Toast.LENGTH_LONG).show();
-                            if (quit) {
-                                /*Intent result = getIntent();
-                                result.putExtra("RESULT_STRING", note.getFullPath());
-                                setResult(Activity.RESULT_OK, result);
-                                finish();*/
-                                finishEditor(true);
-                            }
-                        } else {
-                            Toast.makeText(EditorActivity.this, "Note couldn't be saved", Toast.LENGTH_LONG).show();
+            noteModified = true;
+            note.saveNote(new SingleNote.OnNoteSavedListener() {
+                @Override
+                public void NoteSaved(boolean saved) {
+                    if (saved) {
+                        Toast.makeText(EditorActivity.this, "Note saved", Toast.LENGTH_LONG).show();
+                        if (quit) {
+                            /*Intent result = getIntent();
+                            result.putExtra("RESULT_STRING", note.getFullPath());
+                            setResult(Activity.RESULT_OK, result);
+                            finish();*/
+                            finishEditor(true);
                         }
+                    } else {
+                        Toast.makeText(EditorActivity.this, "Note couldn't be saved", Toast.LENGTH_LONG).show();
                     }
-                });
-            }
-
+                }
+            });
             //TODO, only overwrite when date is newer then the already synced version, else make a copy with _1
             //also some exception handling would be nice here
         }
@@ -271,6 +262,7 @@ public class EditorActivity extends AppCompatActivity {
     private void finishEditor(boolean modified) {
         Intent returnIntent = new Intent();
         returnIntent.putExtra("modified", modified);
+        returnIntent.putExtra("note", note.toBundle());
         setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }

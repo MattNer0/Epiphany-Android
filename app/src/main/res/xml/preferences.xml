@@ -8,6 +8,14 @@
             android:key="pref_root_directory"
             android:title="@string/pref_root_directory_title"/>
 
+        <CheckBoxPreference
+            android:id="@+id/pref_staggered_layout"
+            android:summary="Show note list with a staggered layout"
+            android:key="pref_staggered_layout"
+            android:title="Staggered Layout"
+            android:defaultValue="false"
+            />
+
         <!--Preference
             android:id="@+id/pref_default_notebook"
             android:summary=""

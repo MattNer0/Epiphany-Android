@@ -55,6 +55,7 @@ public class ViewNote extends AppCompatActivity {
                 note.updateBody(note_body);
             }
         });
+        markdownView.setNoteImagePath(note.getImageFolderPath());
 
         //TODO error handling if null
         markdownView.setMDText(note.getMarkdown());

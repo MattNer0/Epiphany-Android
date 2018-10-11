@@ -1,7 +1,11 @@
 package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
+
+import com.neromatt.epiphany.Constants;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -35,7 +39,7 @@ public class SingleRack extends MainModel {
         }
         this.modelType = MainModel.TYPE_RACK;
 
-        if (this.name.equals("_quick_notes")) this.isQuickNotes = true;
+        if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
 
     public SingleRack(Bundle args) {
@@ -48,7 +52,7 @@ public class SingleRack extends MainModel {
 
         this.folders = args.getParcelableArrayList("folders");
 
-        if (this.name.equals("_quick_notes")) this.isQuickNotes = true;
+        if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
 
     @Override
@@ -64,6 +68,11 @@ public class SingleRack extends MainModel {
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         holder.mNotebookTitle.setText(getTitle());
         holder.mNoteCount.setText("");
+
+        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+            StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
+            layoutParams.setFullSpan(true);
+        }
     }
 
     public boolean isQuickNotes() {

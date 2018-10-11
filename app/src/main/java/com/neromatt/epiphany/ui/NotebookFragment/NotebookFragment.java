@@ -1,25 +1,29 @@
 package com.neromatt.epiphany.ui.NotebookFragment;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
@@ -32,15 +36,12 @@ import com.neromatt.epiphany.ui.PathSupplier;
 import com.neromatt.epiphany.ui.R;
 import com.neromatt.epiphany.ui.ViewNote;
 
-import java.util.AbstractQueue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Stack;
 
 import eu.davidea.flexibleadapter.FlexibleAdapter;
-import eu.davidea.flexibleadapter.common.SmoothScrollGridLayoutManager;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 
@@ -49,7 +50,7 @@ import static android.app.Activity.RESULT_OK;
 public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener {
     private FabSpeedDial addNotebookButton;
     private RecyclerView notebookList;
-    private FlexibleAdapter<MainModel> adapter;
+    private MainAdapter<MainModel> adapter;
     private CreateNotebookHelper mCreateNotebookHelper;
     private CreateNoteHelper mCreateNoteHelper;
     private CreateBucketHelper mCreateBucketHelper;
@@ -135,6 +136,25 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
     }
 
+    public MainModel getCurrentModel() {
+        return current_model;
+    }
+
+    public void refreshNotebooks(MainModel current) {
+        if (current != null) {
+            this.current_model = current;
+            current.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
+                @Override
+                public void ModelLoaded() {
+                }
+            });
+
+            Log.i("log", current.getNotesCount()+" -");
+
+            refreshNotebooks(current.getContent());
+        }
+    }
+
     public void refreshNotebooks() {
         if (getActivity() == null || getContext() == null) return;
 
@@ -200,6 +220,23 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
     }
 
+    public void updateLayoutList(boolean staggered) {
+        if (notebookList != null) notebookList.setLayoutManager(getLayoutManager(staggered));
+        if (adapter != null) adapter.notifyDataSetChanged();
+    }
+
+    private RecyclerView.LayoutManager getLayoutManager(boolean staggered) {
+        if (getActivity() == null) return null;
+
+        if (staggered) {
+            if (adapter != null) adapter.setSpanCount(2);
+            return new StaggeredGridLayoutManager(2, 1);
+        }
+        if (adapter != null) adapter.setSpanCount(1);
+        return new StaggeredGridLayoutManager(1, 1);
+        //return new SmoothScrollGridLayoutManager(getActivity(), 1);
+    }
+
     public void refreshNotebooks(ArrayList<MainModel> items) {
         View v = getView();
         if (v == null) return;
@@ -225,7 +262,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (adapter == null) {
 
             FlexibleAdapter.useTag("adpt");
-            adapter = new FlexibleAdapter<>(items);
+            adapter = new MainAdapter<>(items);
             adapter.addListener(this);
             adapter.setAnimationEntryStep(true);
 
@@ -237,10 +274,10 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             adapter.setAnimationEntryStep(true);
             adapter.setAnimationDuration(1000);*/
 
-            GridLayoutManager gridLayoutManager = new SmoothScrollGridLayoutManager(getActivity(), 1);
-
             notebookList.setItemViewCacheSize(0);
-            notebookList.setLayoutManager(gridLayoutManager);
+            notebookList.setLayoutManager(getLayoutManager(
+                    PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_staggered_layout", false))
+            );
             notebookList.setAdapter(adapter);
             notebookList.setHasFixedSize(true);
 
@@ -253,7 +290,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
 
             mCreateBucketHelper = new CreateBucketHelper((MainActivity) getActivity());
-            mCreateNotebookHelper = new CreateNotebookHelper(this, path);
+            mCreateNotebookHelper = new CreateNotebookHelper((MainActivity) getActivity());
             mCreateNoteHelper = new CreateNoteHelper(this, path);
 
             addNotebookButton = v.findViewById(R.id.notebookFab);
@@ -266,7 +303,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                             mCreateBucketHelper.addBucket();
                         case FAB_MENU_NEW_FOLDER:
                             Log.i("menu", "new folder");
-                            mCreateNotebookHelper.addNotebook();
+                            mCreateNotebookHelper.addNotebook(current_model);
                             break;
                         case FAB_MENU_NEW_NOTE:
                             Log.i("menu", "new note");
@@ -287,7 +324,8 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 @Override
                 public void onClick(View v) {
                     EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
-                    mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString());
+                    MainActivity ma = (MainActivity) getActivity();
+                    mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
                 }
             });
             quickNoteEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -296,7 +334,8 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                     EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
 
                     if (hasFocus) {
-                        mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString());
+                        MainActivity ma = (MainActivity) getActivity();
+                        mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
                     }
                 }
             });
@@ -352,6 +391,20 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         moveInto(bucket);
     }
 
+    public boolean addNewNoteToCurrent(SingleNote new_note) {
+        if (current_model == null) return false;
+
+        new_note.refreshContent(new SingleNote.OnNoteLoadedListener() {
+            @Override
+            public void NoteLoaded(SingleNote note) {
+                current_model.addContent(note);
+                current_model.sortContents(getContext());
+                refreshNotebooks();
+            }
+        });
+        return true;
+    }
+
     @Override
     public boolean onItemClick(View view, int position) {
         MainActivity ma = (MainActivity) getActivity();
@@ -377,6 +430,54 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
     }
 
     @Override
+    public void onItemLongClick(int position) {
+        if (adapter.getItem(position) instanceof MainModel) {
+            final MainModel notebook = adapter.getItem(position);
+            Context context = getContext();
+
+            if (notebook == null || context == null) return;
+
+            if (notebook.isNote()) {
+                PopupMenu popup = new PopupMenu(context, adapter.getRecyclerView().getChildAt(position));
+                popup.getMenuInflater().inflate(R.menu.popup_note_menu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.note_delete:
+                                deleteNote((SingleNote) notebook);
+                                break;
+                        }
+                        return true;
+                    }
+                });
+
+                popup.show();
+            }
+        }
+    }
+
+    private void deleteNote(final SingleNote note) {
+        if (getContext() == null || note == null || current_model == null) return;
+        new AlertDialog.Builder(getContext())
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Delete Note")
+                .setMessage("Are you sure you want to delete this note?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (note.delete()) {
+                            Toast.makeText(getContext(), "Deleted Note: " + note.getTitle(), Toast.LENGTH_SHORT).show();
+                        }
+                        current_model.removeContent(note);
+                        current_model.sortContents(getContext());
+                        refreshNotebooks();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultIntent) {
         super.onActivityResult(requestCode, resultCode, resultIntent);
 
@@ -395,6 +496,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
                     Intent intent = new Intent(ma, EditorActivity.class);
                     intent.putExtra("note", resultIntent.getBundleExtra("note"));
+                    intent.putExtra("root", path.getRootPath());
                     startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
 
                 } else if (resultIntent.getBooleanExtra("modified", false)) {
@@ -402,10 +504,5 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 }
             }
         }
-    }
-
-    @Override
-    public void onItemLongClick(int position) {
-
     }
 }

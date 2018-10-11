@@ -6,9 +6,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -20,6 +23,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +41,7 @@ public final class MarkedView extends WebView {
     private static final String IMAGE_PATTERN = "!\\[(.*)\\]\\((.*)\\)";
 
     private String previewText;
+    private String noteImagePath;
     private boolean codeScrollDisable;
 
     private JavaScriptInterface JSInterface;
@@ -59,6 +67,29 @@ public final class MarkedView extends WebView {
         setWebViewClient(new WebViewClient() {
             public void onPageFinished(WebView view, String url) {
                 sendScriptAction();
+            }
+
+            @Nullable
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    String url = request.getUrl().toString();
+                    String scheme = request.getUrl().getScheme();
+                    Log.i("url", url);
+                    if (scheme != null && noteImagePath != null && scheme.equalsIgnoreCase("epiphany") && request.getRequestHeaders().get("Accept").contains("image")) {
+                        try {
+                            url = url.replace("epiphany://", "file:///"+noteImagePath+"/");
+                            URL urlImage = new URL(url);
+                            URLConnection connection = urlImage.openConnection();
+                            return new WebResourceResponse(connection.getContentType(), connection.getHeaderField("encoding"), connection.getInputStream());
+                        } catch (MalformedURLException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
             }
         });
 
@@ -93,7 +124,7 @@ public final class MarkedView extends WebView {
     }
 
     /** load Markdown text from file. **/
-    public void loadMDFile(File file){
+    public void loadMDFile(File file) {
         String mdText = "";
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -116,6 +147,10 @@ public final class MarkedView extends WebView {
             Log.e(TAG, "IOException:" + e);
         }
         setMDText(mdText);
+    }
+
+    public void setNoteImagePath(String path) {
+        this.noteImagePath = path;
     }
 
     /** set show the Markdown text. **/

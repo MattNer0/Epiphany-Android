@@ -44,9 +44,8 @@ public class NotebookAdapter extends RecyclerView.Adapter<NotebookAdapter.ViewHo
             if (obj.isBucket()) {
                 this.mNoteCount.setText("");
             } else if (obj.isFolder()) {
-                SingleNotebook objFolder = (SingleNotebook) obj;
-                if (objFolder.getNoteCount() > 0) {
-                    this.mNoteCount.setText(""+objFolder.getNoteCount());
+                if (obj.getNotesCount() > 0) {
+                    this.mNoteCount.setText(String.valueOf(obj.getNotesCount()));
                 } else {
                     this.mNoteCount.setText("");
                 }

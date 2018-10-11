@@ -3,11 +3,14 @@ package com.neromatt.epiphany.model.DataObjects;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
+import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.Adapters.SimpleHeader;
+import com.neromatt.epiphany.model.Path;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -54,8 +57,8 @@ public class SingleNote extends MainModel {
     public SingleNote(String path, String filename) {
         super(headerNotes);
 
-        this.path=path;
-        this.filename=filename;
+        this.path = path;
+        this.filename = filename;
         this.modelType = MainModel.TYPE_MARKDOWN_NOTE;
         this.metadata = new Bundle();
         this.noteLoaded = false;
@@ -94,12 +97,28 @@ public class SingleNote extends MainModel {
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         viewHolder = new WeakReference<>(holder);
         holder.mNotebookTitle.setText(getName());
-        if (summary != null) holder.mNoteSummary.setText(summary);
+        if (summary != null) {
+            if (summary.isEmpty()) {
+                holder.mNoteSummary.setVisibility(View.GONE);
+            } else {
+                holder.mNoteSummary.setVisibility(View.VISIBLE);
+                holder.mNoteSummary.setText(summary);
+            }
+        }
 
         if (wasLoaded()) {
             holder.itemView.setVisibility(View.VISIBLE);
         } else {
             holder.itemView.setVisibility(View.GONE);
+        }
+
+        if (adapter instanceof MainAdapter) {
+            MainAdapter ma = (MainAdapter) adapter;
+            if (ma.getSpanCount() == 1) {
+                holder.mNoteIcon.setVisibility(View.VISIBLE);
+            } else {
+                holder.mNoteIcon.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -128,6 +147,10 @@ public class SingleNote extends MainModel {
             this.body = null;
             this.metadata = new Bundle();
         }
+    }
+
+    public String getImageFolderPath() {
+        return getPath()+"/."+getFileNameNoExtension();
     }
 
     private void logNote() {
@@ -179,7 +202,7 @@ public class SingleNote extends MainModel {
                 ret.putString("title", line.replaceAll("^#+\\s*", ""));
                 List<String> one = Arrays.asList(lines).subList(0, i);
                 List<String> two = Arrays.asList(lines).subList(i+1, lines.length);
-                ret.putString("body", TextUtils.join(" ", one)+" "+TextUtils.join(" ", two));
+                ret.putString("body", TextUtils.join("\n", one)+"\n"+TextUtils.join("\n", two));
                 return ret;
             }
         }
@@ -220,22 +243,25 @@ public class SingleNote extends MainModel {
     }
 
     public void updateBody(String new_body) {
-        this.body = new_body;
-        this.noteModified = true;
+        body = new_body;
+        noteModified = true;
 
-        Bundle title_parse = parseTitle(new_body);
-
-        String title = title_parse.getString("title", "");
-        String summary = title_parse.getString("body", "");
-        if (summary.length() > 200) {
-            summary = summary.substring(0, 195).trim()+"...";
+        if (new_body.isEmpty()) {
+            summary = "";
+            title = "New Note";
+            updateFilename(title);
+            return;
         }
 
-        this.summary = summary;
+        Bundle title_parse = parseTitle(new_body);
+        String str_title = title_parse.getString("title", "");
 
-        if (this.title == null || !this.title.equals(title)) {
-            this.title = title;
-            if (!title.isEmpty()) updateFilename(title);
+        summary = parseSummary(title_parse.getString("body", ""));
+
+        if (title == null || !title.equals(str_title)) {
+            title = str_title;
+            if (title.isEmpty()) title = "New Note";
+            updateFilename(title);
         }
     }
 
@@ -243,8 +269,13 @@ public class SingleNote extends MainModel {
         String old_extension = getExtension();
         if (oldFilename == null) oldFilename = filename;
         filename = title.replaceAll("[^\\w _-]", "").replaceAll("\\s+", " ");
-        filename = filename.substring(0, Math.min(filename.length(), 40)).trim() + old_extension;
-        if (!filename.equals(oldFilename)) markAsNewFile();
+        filename = filename.substring(0, Math.min(filename.length(), 40)).trim() + "." + old_extension;
+
+        if (filename.equals(oldFilename)) {
+            oldFilename = null;
+        } else {
+            newFilename = true;
+        }
     }
 
     public boolean wasModified() {
@@ -254,26 +285,39 @@ public class SingleNote extends MainModel {
 
     public void markAsNewFile() {
         newFilename = true;
+        oldFilename = null;
     }
 
-    public void saveNote() {
-        saveNote(null);
+    public boolean delete() {
+        if (oldFilename != null && !oldFilename.isEmpty()) {
+            File old_file = new File(getPath()+"/"+oldFilename);
+            if (!old_file.exists()) {
+                oldFilename = null;
+            } if (old_file.delete()) {
+                oldFilename = null;
+            }
+        }
+
+        File file = new File(getFullPath());
+        if (file.exists()) return file.delete();
+
+        return false;
     }
 
     public void saveNote(OnNoteSavedListener mOnNoteSavedListener) {
         if (newFilename) {
             if (doesExist()) {
-                mOnNoteSavedListener.NoteSaved(false);
-                return;
+                filename = Path.newNoteNameFromCurrent(getPath(), getFileNameNoExtension(), getExtension());
+                Log.i("log", "new filename: "+filename);
             }
+            newFilename = false;
         }
 
         this.noteModified = false;
         if (oldFilename != null && !oldFilename.isEmpty()) {
-            File file = new File(getPath()+"/"+oldFilename);
-            if (file.exists()) file.delete();
+            File old_file = new File(getPath()+"/"+oldFilename);
+            if (old_file.exists()) old_file.delete();
             oldFilename = null;
-            newFilename = false;
         }
 
         StringBuilder text = new StringBuilder();
@@ -310,6 +354,7 @@ public class SingleNote extends MainModel {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            if (mOnNoteSavedListener != null) mOnNoteSavedListener.NoteSaved(false);
         }
     }
 
@@ -367,12 +412,31 @@ public class SingleNote extends MainModel {
     public String getExtension() {
         return this.filename.substring(this.filename.lastIndexOf('.') + 1);
     }
+    public String getFileNameNoExtension() {
+        return this.filename.substring(0, this.filename.lastIndexOf('.'));
+    }
+
     public String getFullPath() {
         return getPath()+"/"+filename;
     }
 
     public String getMarkdown() {
         return this.body;
+    }
+
+    public static String parseSummary(String body) {
+        String clean_body = body.replaceAll("[*_#]+", "").replaceAll("\n\\s+", "\n").trim();
+        String[] lines = clean_body.split("\\n");
+        StringBuilder summary = new StringBuilder();
+        for(String line: lines) {
+            summary.append(line);
+            if (summary.length() > 250) {
+                break;
+            }
+            if (!line.isEmpty()) summary.append("\n");
+        }
+
+        return summary.toString().trim();
     }
 
     @Override
@@ -418,10 +482,7 @@ public class SingleNote extends MainModel {
             Bundle title_parse = parseTitle(args.getString("body", ""));
 
             String title = title_parse.getString("title", "");
-            String summary = title_parse.getString("body", "");
-            if (summary.length() > 200) {
-                summary = summary.substring(0, 195).trim()+"...";
-            }
+            String summary = parseSummary(title_parse.getString("body", ""));
 
             args.putString("title", title);
             args.putString("summary", summary);
@@ -459,6 +520,19 @@ public class SingleNote extends MainModel {
 
             //note.logNote();
         }
+    }
+
+    public ArrayList<String> getPathArray(String root_path) {
+        ArrayList<String> path = new ArrayList<>();
+        File f = new File(root_path);
+        File n = new File(getPath());
+
+        while(!n.getPath().equals(f.getPath())) {
+            if (n.isDirectory()) path.add(n.getName());
+            n = n.getParentFile();
+        }
+
+        return path;
     }
 
     public interface OnNoteLoadedListener {

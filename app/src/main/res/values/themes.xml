@@ -13,7 +13,10 @@
         <item name="android:buttonStyle">@style/RobotoButtonStyle</item>
         <item name="android:activatedBackgroundIndicator">@drawable/list_activated_background</item>
         <item name="android:listDivider">@drawable/divider_gray</item>
-        <item name="android:itemTextAppearance">@style/your_new_text_appearance</item>
+        <item name="android:itemTextAppearance">@style/itemTextStyle</item>
+        <item name="android:itemBackground">@color/colorPrimary</item>
+        <item name="android:popupMenuStyle">@style/PopupMenuStyle</item>
+        <item name="android:popupBackground">@color/colorPrimaryDark</item>
     </style>
     <style name="AppFullScreenTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="windowNoTitle">true</item>
@@ -33,7 +36,11 @@
         <item name="color">@android:color/white</item>
     </style>
     <!-- This helps the PopupMenu stick with Light theme while the ActionBar is in Dark theme -->
-    <style name="your_new_text_appearance">
-        <item name="android:textColor">@color/background</item>
+    <style name="itemTextStyle">
+        <item name="android:textColor">@color/textColor</item>
+    </style>
+    <style name="PopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:textColor">@color/textColor</item>
+        <item name="android:itemBackground">@color/colorPrimary</item>
     </style>
 </resources>

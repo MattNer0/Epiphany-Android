@@ -1,6 +1,7 @@
 package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 
 import com.neromatt.epiphany.model.Adapters.SimpleHeader;
@@ -18,17 +19,15 @@ public class SingleNotebook extends MainModel {
 
     private String path;
     private String name;
-    private int noteCount;
     private int order;
 
-    public SingleNotebook(String name, String path, int noteCount, JSONObject data) {
+    public SingleNotebook(String name, String path, JSONObject data) {
         super(headerFolders);
 
         this.path = path;
         this.name = name;
-        this.noteCount = noteCount;
         try {
-            if (data.has("ordering")) {
+            if (data != null && data.has("ordering")) {
                 this.order = data.getInt("ordering");
             } else {
                 this.order = 0;
@@ -45,7 +44,6 @@ public class SingleNotebook extends MainModel {
 
         this.path = args.getString("path", "");
         this.name = args.getString("name", "");
-        this.noteCount = args.getInt("noteCount", 0);
         this.order = args.getInt("order", 0);
         this.modelType = MainModel.TYPE_FOLDER;
     }
@@ -55,7 +53,6 @@ public class SingleNotebook extends MainModel {
         Bundle args = super.toBundle();
         args.putString("path", path);
         args.putString("name", name);
-        args.putInt("noteCount", noteCount);
         args.putInt("order", order);
         return args;
     }
@@ -63,10 +60,16 @@ public class SingleNotebook extends MainModel {
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         holder.mNotebookTitle.setText(getName());
+        int noteCount = getNotesCount();
         if (noteCount > 0) {
-            holder.mNoteCount.setText(""+noteCount);
+            holder.mNoteCount.setText(String.valueOf(noteCount));
         } else {
             holder.mNoteCount.setText("");
+        }
+
+        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+            StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
+            layoutParams.setFullSpan(true);
         }
     }
 
@@ -85,9 +88,5 @@ public class SingleNotebook extends MainModel {
     @Override
     public String getPath() {
         return path;
-    }
-
-    public int getNoteCount(){
-        return this.noteCount;
     }
 }

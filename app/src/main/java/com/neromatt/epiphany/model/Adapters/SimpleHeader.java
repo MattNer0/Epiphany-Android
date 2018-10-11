@@ -1,5 +1,6 @@
 package com.neromatt.epiphany.model.Adapters;
 
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -46,6 +47,11 @@ public class SimpleHeader extends AbstractHeaderItem<SimpleHeader.HeaderViewHold
         }
         holder.setFullSpan(true);
         holder.mTitle.setText(getTitle());
+
+        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+            StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
+            layoutParams.setFullSpan(true);
+        }
     }
 
     @Override

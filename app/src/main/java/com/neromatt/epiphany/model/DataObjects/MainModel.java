@@ -11,6 +11,7 @@ import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.neromatt.epiphany.model.Adapters.SimpleHeader;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.AbstractSectionableItem;
@@ -41,6 +43,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
     public static final int TYPE_FOLDER = 2;
     public static final int TYPE_MARKDOWN_NOTE = 3;
 
+    private UUID uuid;
     int modelType;
 
     private OnModelLoadedListener mOnModelLoadedListener;
@@ -54,6 +57,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         this.modelType = TYPE_NULL;
         this.model_notes = new ArrayList<>();
         this.model_contents = new ArrayList<>();
+        this.uuid = UUID.randomUUID();
     }
 
     public MainModel(Bundle args, SimpleHeader header) {
@@ -61,6 +65,12 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         this.modelType = TYPE_NULL;
         this.model_notes = new ArrayList<>();
         this.model_contents = args.getParcelableArrayList("_contents");
+        String uuid = args.getString("_uuid", "");
+        if (uuid.isEmpty()) {
+            this.uuid = UUID.randomUUID();
+        } else {
+            this.uuid = UUID.fromString(uuid);
+        }
         if (model_contents != null) {
             for (MainModel model : model_contents) {
                 if (model.isNote()) {
@@ -84,6 +94,10 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         return modelType;
     }
 
+    public UUID getUuid() {
+        return uuid;
+    }
+
     public boolean isBucket() { return modelType == TYPE_RACK; }
     public boolean isFolder() {
         return modelType == TYPE_FOLDER;
@@ -105,7 +119,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
     public boolean equals(Object inObject) {
         if (inObject instanceof MainModel) {
             MainModel inItem = (MainModel) inObject;
-            return this.getType() == inItem.getType() && this.getPath().equals(inItem.getPath());
+            return this.getType() == inItem.getType() && this.getUuid().equals(inItem.getUuid());
         }
         return false;
     }
@@ -142,6 +156,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         Bundle args = new Bundle();
         args.putInt("modelType", this.modelType);
         args.putParcelableArrayList("_contents", this.model_contents);
+        args.putString("_uuid", this.uuid.toString());
         return args;
     }
 
@@ -152,6 +167,21 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
             }
         }
         this.model_contents = files;
+    }
+
+    public void addContent(MainModel file) {
+        if (file.isNote()) {
+            this.model_notes.add(file);
+        }
+        this.model_contents.add(file);
+    }
+
+    public void removeContent(MainModel obj) {
+        if (obj.isNote()) {
+            this.model_notes.remove(obj);
+        }
+
+        this.model_contents.remove(obj);
     }
 
     public ArrayList<MainModel> getContent() { return this.model_contents; }
@@ -313,7 +343,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
 
         @Override
         protected ArrayList<MainModel> doInBackground(String... paths) {
-            ArrayList<MainModel> folders = Path.getFoldersAndNotes(paths[0], false);
+            ArrayList<MainModel> folders = Path.getFoldersAndNotes(paths[0]);
             if (folders == null) return new ArrayList<>();
             return folders;
         }
@@ -370,12 +400,14 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         TextView mNotebookTitle;
         TextView mNoteCount;
         TextView mNoteSummary;
+        ImageView mNoteIcon;
 
         public MyViewHolder(View view, FlexibleAdapter adapter) {
             super(view, adapter);
             this.mNotebookTitle = view.findViewById(R.id.notebook_title);
             this.mNoteCount = view.findViewById(R.id.note_count);
             this.mNoteSummary = view.findViewById(R.id.notebook_summary);
+            this.mNoteIcon = view.findViewById(R.id.notebook_icon);
         }
 
         @Override

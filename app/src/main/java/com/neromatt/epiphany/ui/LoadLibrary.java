@@ -39,7 +39,7 @@ public class LoadLibrary extends AppCompatActivity {
         String rootPath = extras.getString("root", "");
         path = new Path(rootPath);
 
-        buckets = path.getFoldersAndNotes();
+        buckets = path.getBuckets();
         racks_loaded = 0;
 
         progressView = findViewById(R.id.progress_view);
