@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
 
             prefs_edit.putString("pref_root_directory", full);
             prefs_edit.putBoolean("firstrun", false);
-            prefs_edit.putInt("pref_note_order", 0);
+            prefs_edit.putString("pref_note_order", "0");
             prefs_edit.apply();
 
             this.path = new Path(full);

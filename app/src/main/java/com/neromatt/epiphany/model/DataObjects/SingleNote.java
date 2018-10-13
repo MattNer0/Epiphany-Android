@@ -14,10 +14,13 @@ import com.neromatt.epiphany.model.Path;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.text.ParseException;
@@ -106,6 +109,7 @@ public class SingleNote extends MainModel {
             }
         }
 
+        holder.itemView.setAlpha(1.0f);
         if (wasLoaded()) {
             holder.itemView.setVisibility(View.VISIBLE);
         } else {
@@ -118,6 +122,10 @@ public class SingleNote extends MainModel {
                 holder.mNoteIcon.setVisibility(View.VISIBLE);
             } else {
                 holder.mNoteIcon.setVisibility(View.GONE);
+            }
+
+            if (ma.isMovingNote() && ma.getMovingNote().getUuid().equals(getUuid())) {
+                holder.itemView.setAlpha(0.8f);
             }
         }
     }
@@ -304,6 +312,45 @@ public class SingleNote extends MainModel {
         return false;
     }
 
+    public boolean moveFile(String outputPath) {
+        InputStream in;
+        OutputStream out;
+        try {
+            File dir = new File (outputPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            in = new FileInputStream(getFullPath());
+            out = new FileOutputStream(outputPath + "/" + getFilename());
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+            in = null;
+
+            out.flush();
+            out.close();
+            out = null;
+
+            new File(getFullPath()).delete();
+
+            this.path = outputPath;
+            return true;
+
+        } catch (FileNotFoundException fnfe1) {
+            Log.e("tag", fnfe1.getMessage());
+            return false;
+
+        } catch (Exception e) {
+            Log.e("tag", e.getMessage());
+            return false;
+        }
+    }
+
     public void saveNote(OnNoteSavedListener mOnNoteSavedListener) {
         if (newFilename) {
             if (doesExist()) {
@@ -414,6 +461,9 @@ public class SingleNote extends MainModel {
     }
     public String getFileNameNoExtension() {
         return this.filename.substring(0, this.filename.lastIndexOf('.'));
+    }
+    public String getFilename() {
+        return this.filename;
     }
 
     public String getFullPath() {

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -18,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,6 +46,7 @@ import java.util.Stack;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
+import ru.whalemare.sheetmenu.SheetMenu;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -60,11 +63,9 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
     private LinkedList<MainModel> bucket_queue;
     private MainModel current_model;
 
-    private Path path;
+    private Handler handler;
 
-    private static final int FAB_MENU_NEW_BUCKET = 0;
-    private static final int FAB_MENU_NEW_FOLDER = 1;
-    private static final int FAB_MENU_NEW_NOTE = 2;
+    private Path path;
 
     public static NotebookFragment newInstance(ArrayList<MainModel> contents) {
         NotebookFragment f = new NotebookFragment();
@@ -288,7 +289,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
             notebookList.addItemDecoration(mItemDecoration);*/
 
-
             mCreateBucketHelper = new CreateBucketHelper((MainActivity) getActivity());
             mCreateNotebookHelper = new CreateNotebookHelper((MainActivity) getActivity());
             mCreateNoteHelper = new CreateNoteHelper(this, path);
@@ -298,16 +298,28 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 @Override
                 public void onMenuItemClick(FloatingActionButton fab, TextView textView, int itemId) {
                     switch (itemId) {
-                        case FAB_MENU_NEW_BUCKET:
+                        case Constants.FAB_MENU_NEW_BUCKET:
                             Log.i("menu", "new bucket");
                             mCreateBucketHelper.addBucket();
-                        case FAB_MENU_NEW_FOLDER:
+                        case Constants.FAB_MENU_NEW_FOLDER:
                             Log.i("menu", "new folder");
                             mCreateNotebookHelper.addNotebook(current_model);
                             break;
-                        case FAB_MENU_NEW_NOTE:
+                        case Constants.FAB_MENU_NEW_NOTE:
                             Log.i("menu", "new note");
                             if (current_model != null) mCreateNoteHelper.addNote(current_model);
+                            break;
+                        case Constants.FAB_MENU_RENAME_BUCKET:
+                            Log.i("menu", "rename bucket");
+                            if (current_model instanceof SingleRack) {
+                                renameModel();
+                            }
+                            break;
+                        case Constants.FAB_MENU_RENAME_FOLDER:
+                            Log.i("menu", "rename folder");
+                            if (current_model instanceof SingleNotebook) {
+                                renameModel();
+                            }
                             break;
                     }
                 }
@@ -342,29 +354,122 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
 
         LinearLayout inputNote = v.findViewById(R.id.quickNoteInput);
-        if (current_model == null) {
+        TextView inputNoteText = v.findViewById(R.id.quickNoteEdit);
+        LinearLayout inputNoteMove = v.findViewById(R.id.noteMoveContainer);
 
-            if (inputNote != null) inputNote.setVisibility(View.VISIBLE);
+        if (current_model == null && !adapter.isMovingNote()) {
 
-            FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-            menu.add(1,FAB_MENU_NEW_BUCKET,0, "New Bucket").setIcon(R.drawable.ic_action_add);
-            addNotebookButton.setMenu(menu);
-        } else if (current_model instanceof SingleRack) {
-
-            if (inputNote != null) inputNote.setVisibility(View.GONE);
-
-            FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-            menu.add(1,FAB_MENU_NEW_FOLDER,0, "New Folder").setIcon(R.drawable.ic_action_add);
-            addNotebookButton.setMenu(menu);
-        } else {
-
-            if (inputNote != null) inputNote.setVisibility(View.GONE);
+            addNotebookButton.setVisibility(View.VISIBLE);
+            inputNote.setVisibility(View.VISIBLE);
+            inputNoteText.setVisibility(View.VISIBLE);
+            inputNoteMove.setVisibility(View.GONE);
 
             FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-            menu.add(1,FAB_MENU_NEW_FOLDER,0, "New Folder").setIcon(R.drawable.ic_action_add);
-            menu.add(1,FAB_MENU_NEW_NOTE,0, "New Note").setIcon(R.drawable.ic_action_add);
+            menu.add(1, Constants.FAB_MENU_NEW_BUCKET, 0, "New Bucket").setIcon(R.drawable.ic_action_add);
             addNotebookButton.setMenu(menu);
+
+        } else if (adapter.isMovingNote()) {
+
+            addNotebookButton.setVisibility(View.GONE);
+            inputNote.setVisibility(View.VISIBLE);
+            inputNoteMove.setVisibility(View.VISIBLE);
+            inputNoteText.setVisibility(View.GONE);
+
+            ImageView undo_move = v.findViewById(R.id.undo_move);
+            TextView current_note_move = v.findViewById(R.id.current_note_move);
+            TextView move_note_button = v.findViewById(R.id.move_note_button);
+
+            undo_move.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    adapter.clearMovingNote();
+                    refreshNotebooks();
+                }
+            });
+
+            if (current_model != null && current_model.isFolder() && !adapter.sameFolderAsMovingNote(current_model)) {
+                move_note_button.setAlpha(1.0f);
+                move_note_button.setText(R.string.move_note_here);
+                move_note_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        SingleNote note = adapter.getMovingNote();
+                        if (note.moveFile(current_model.getPath())) {
+                            adapter.getMovingNoteFolder().removeContent(note);
+                            adapter.clearMovingNote();
+                            addNewNoteToCurrent(note);
+                        } else {
+                            Toast.makeText(getContext(), "Couldn't move note!", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            } else {
+                move_note_button.setAlpha(0.8f);
+                move_note_button.setOnClickListener(null);
+                move_note_button.setText(R.string.cant_move_here);
+            }
+
+            current_note_move.setText(adapter.getMovingNote().getName());
+
+        } else if (current_model != null) {
+
+            addNotebookButton.setVisibility(View.VISIBLE);
+            inputNote.setVisibility(View.GONE);
+
+            if (current_model instanceof SingleRack) {
+
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, "New Folder").setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_RENAME_BUCKET, 1, "Rename Bucket").setIcon(R.drawable.ic_mode_edit_white_24dp);
+                addNotebookButton.setMenu(menu);
+            } else {
+
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 3, "New Note").setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, "New Folder").setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_RENAME_FOLDER, 1, "Rename Folder").setIcon(R.drawable.ic_mode_edit_white_24dp);
+                addNotebookButton.setMenu(menu);
+            }
         }
+    }
+
+    public void renameModel() {
+        CreateNotebookDialog dialog = new CreateNotebookDialog();
+        Bundle args = new Bundle();
+        args.putInt("positive", R.string.rename_notebook);
+        args.putString("placeholder", current_model.getName());
+        dialog.setArguments(args);
+        dialog.setDialogListener(new CreateNotebookDialog.CreateNotebookDialogListener() {
+            @Override
+            public void onDialogPositiveClick(CreateNotebookDialog dialog, String text) {
+                MainActivity ma = (MainActivity) getActivity();
+                if (ma == null) return;
+
+                boolean renamed = false;
+                if (current_model instanceof SingleRack) {
+                    SingleRack bucket = (SingleRack) current_model;
+                    renamed = bucket.renameDirectory(text);
+                    if (renamed) ma.refreshRackDrawer();
+
+                } else if (current_model instanceof SingleNotebook) {
+                    SingleNotebook folder = (SingleNotebook) current_model;
+                    renamed = folder.renameDirectory(text);
+                }
+
+                if (renamed) {
+                    refreshNotebooks();
+                } else {
+                    Toast.makeText(getContext(), "Couldn't rename folder!", Toast.LENGTH_LONG).show();
+                }
+                dialog.dismiss();
+            }
+
+            @Override
+            public void onDialogNegativeClick(CreateNotebookDialog dialog) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show(getActivity().getSupportFragmentManager(), "CreateNotebookDialogFragment");
     }
 
     public void openBucket(MainModel bucket) {
@@ -438,20 +543,24 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             if (notebook == null || context == null) return;
 
             if (notebook.isNote()) {
-                PopupMenu popup = new PopupMenu(context, adapter.getRecyclerView().getChildAt(position));
-                popup.getMenuInflater().inflate(R.menu.popup_note_menu, popup.getMenu());
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.note_delete:
-                                deleteNote((SingleNote) notebook);
-                                break;
+                SheetMenu.with(context)
+                    .setMenu(R.menu.popup_note_menu)
+                    .setAutoCancel(true)
+                    .setClick(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.note_delete:
+                                    deleteNote((SingleNote) notebook);
+                                    break;
+                                case R.id.note_move:
+                                    adapter.setMovingNote((SingleNote) notebook, current_model);
+                                    refreshNotebooks();
+                                    break;
+                            }
+                            return true;
                         }
-                        return true;
-                    }
-                });
-
-                popup.show();
+                    }).show();
             }
         }
     }

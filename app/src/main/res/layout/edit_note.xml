@@ -34,10 +34,17 @@
                 android:id="@+id/edit_text"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
+                android:textColor="@color/textColor"
+                android:textColorHint="@color/textColorGrey"
                 android:gravity="top"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@color/colorPrimary"
+
+                android:enabled="true"
+                android:focusable="true"
+                android:isScrollContainer="true"
+
                 android:inputType="textMultiLine|textNoSuggestions"
                 android:hint="@string/add_note_hint" />
 

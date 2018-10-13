@@ -30,22 +30,69 @@
             android:layout_height="@dimen/quick_note_input_height"
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_gravity="bottom"
-            android:background="@drawable/input_quick_note"
-            android:padding="5dp">
+            android:orientation="horizontal">
 
             <EditText
                 android:id="@+id/quickNoteEdit"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_gravity="center"
+                android:visibility="gone"
                 android:gravity="start|center"
-                android:background="@color/textColor"
+                android:background="@drawable/input_quick_note"
                 android:textColor="@color/colorPrimary"
                 android:textColorHint="@color/listSubColor"
                 android:inputType="textNoSuggestions"
                 android:imeOptions="actionGo"
                 android:hint="New Quick Note..."
-                android:padding="5dp"/>
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"/>
+
+            <LinearLayout
+                android:id="@+id/noteMoveContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimaryDark"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/undo_move"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/quick_note_input_height"
+                    android:src="@drawable/ic_undo_white_24dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"/>
+
+                <TextView
+                    android:id="@+id/current_note_move"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/textColor"
+                    android:maxLines="1"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="10dp"
+                    android:text=""/>
+
+                <TextView
+                    android:id="@+id/move_note_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/textColor"
+                    android:background="@color/colorPrimary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:text="@string/move_note_here"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 

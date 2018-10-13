@@ -8,6 +8,8 @@ import com.neromatt.epiphany.Constants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +55,19 @@ public class SingleRack extends MainModel {
         this.folders = args.getParcelableArrayList("folders");
 
         if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
+    }
+
+    public boolean renameDirectory(String new_name) {
+        new_name = new_name.replaceAll("[^\\w. _-]", "");
+        File fileFrom = new File(path);
+        File fileTo = new File(fileFrom.getParentFile().getPath()+"/"+new_name);
+        if (fileFrom.renameTo(fileTo)) {
+            this.path = fileTo.getPath();
+            this.name = new_name;
+            return true;
+        }
+
+        return false;
     }
 
     @Override

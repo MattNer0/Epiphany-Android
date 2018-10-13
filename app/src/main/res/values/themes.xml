@@ -1,46 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <declare-styleable name="cardStyle">
+        <attr name="cardStyle" format="reference" />
+    </declare-styleable>
+
     <style name="AppTheme" parent="AppTheme.Base"/>
-    <style name="AppTheme.Base" parent="Theme.AppCompat">
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
-        <item name="android:colorBackground">@color/background</item>
+
+    <style name="AppTheme.Base" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="preferenceTheme">@style/PreferenceStyle</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/background</item>
+
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <item name="cardStyle">@style/CardViewStyle</item>
+
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
         <item name="android:textViewStyle">@style/RobotoTextViewStyle</item>
         <item name="android:buttonStyle">@style/RobotoButtonStyle</item>
         <item name="android:activatedBackgroundIndicator">@drawable/list_activated_background</item>
         <item name="android:listDivider">@drawable/divider_gray</item>
-        <item name="android:itemTextAppearance">@style/itemTextStyle</item>
-        <item name="android:itemBackground">@color/colorPrimary</item>
-        <item name="android:popupMenuStyle">@style/PopupMenuStyle</item>
-        <item name="android:popupBackground">@color/colorPrimaryDark</item>
+
+        <item name="android:alertDialogTheme">@style/MyAlertDialogTheme</item>
+        <item name="alertDialogTheme">@style/MyAlertDialogTheme</item>
     </style>
+
     <style name="AppFullScreenTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
+
     <style name="RobotoTextViewStyle" parent="android:Widget.TextView">
         <item name="android:fontFamily">sans-serif-light</item>
     </style>
+
     <style name="RobotoButtonStyle" parent="android:Widget.Holo.Button">
         <item name="android:fontFamily">sans-serif-light</item>
     </style>
-    <style name="ThemeOverlay.Epiphany" parent="ThemeOverlay.AppCompat.Light">
+
+    <style name="ThemeOverlay.Epiphany" parent="ThemeOverlay.AppCompat">
         <item name="android:textColor">@color/textColor</item>
     </style>
+
     <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
         <item name="color">@android:color/white</item>
     </style>
-    <!-- This helps the PopupMenu stick with Light theme while the ActionBar is in Dark theme -->
-    <style name="itemTextStyle">
+
+    <style name="PreferenceStyle" parent="PreferenceThemeOverlay.v14.Material">
         <item name="android:textColor">@color/textColor</item>
+        <item name="android:textColorSecondary">@color/textColorGrey</item>
     </style>
-    <style name="PopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+
+    <style name="CardViewStyle" parent="CardView.Dark">
+        <item name="cardCornerRadius">4dp</item>
+        <item name="cardElevation">2dp</item>
+    </style>
+
+    <style name="MyAlertDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:colorBackground">@color/black</item>
+        <item name="android:windowBackground">@color/colorPrimary</item>
+
+        <item name="android:buttonBarStyle">@style/MyButtonBar</item>
+        <item name="android:buttonBarButtonStyle">@style/MyBorderlessButton</item>
+
+        <item name="buttonBarStyle">@style/MyButtonBar</item>
+        <item name="buttonBarButtonStyle">@style/MyBorderlessButton</item>
+    </style>
+
+    <style name="MyBorderlessButton" parent="Widget.AppCompat.Button">
+        <!-- Set background drawable and text size of the buttons here -->
+        <item name="android:background">@color/colorPrimary</item>
         <item name="android:textColor">@color/textColor</item>
-        <item name="android:itemBackground">@color/colorPrimary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
     </style>
+
+    <style name="MyButtonBar" parent="Widget.AppCompat.ButtonBar">
+        <!-- Define a background for the button bar and a divider between the buttons here -->
+        <item name="android:showDividers">none</item>
+        <item name="android:background">@color/colorPrimaryDark</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
+    </style>
+
 </resources>

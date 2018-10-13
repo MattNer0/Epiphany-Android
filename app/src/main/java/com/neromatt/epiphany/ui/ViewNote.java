@@ -75,14 +75,6 @@ public class ViewNote extends AppCompatActivity {
             }
         });
 
-        TextView note_created_at = findViewById(R.id.note_created_at);
-        TextView note_updated_at = findViewById(R.id.note_updated_at);
-        TextView note_lines = findViewById(R.id.note_lines);
-
-        note_created_at.setText(note.getCreatedString(MainModel.getCurrentLocale(this)));
-        note_updated_at.setText(note.getLastModifiedString(MainModel.getCurrentLocale(this)));
-        note_lines.setText(""+note.getLinesNumber());
-
         FloatingActionButton close_info = findViewById(R.id.close_info);
         close_info.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,9 +108,24 @@ public class ViewNote extends AppCompatActivity {
         }
     }
 
+    public void updateInfo() {
+        TextView note_created_at = findViewById(R.id.note_created_at);
+        TextView note_updated_at = findViewById(R.id.note_updated_at);
+        TextView note_lines = findViewById(R.id.note_lines);
+
+        note_created_at.setText(note.getCreatedString(MainModel.getCurrentLocale(this)));
+        note_updated_at.setText(note.getLastModifiedString(MainModel.getCurrentLocale(this)));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(note.getLinesNumber());
+        note_lines.setText(sb.toString());
+    }
+
     public void showInfo() {
         RelativeLayout bInfo = findViewById(R.id.bottom_info);
         FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
+
+        updateInfo();
 
         noteFab.hide();
         slideUp(bInfo);
@@ -137,11 +144,11 @@ public class ViewNote extends AppCompatActivity {
             note.saveNote(new SingleNote.OnNoteSavedListener() {
                 @Override
                 public void NoteSaved(boolean saved) {
-                    if (saved) {
-                        editNote();
-                    } else {
-                        Toast.makeText(ViewNote.this, "Note couldn't be saved", Toast.LENGTH_LONG).show();
-                    }
+                if (saved) {
+                    editNote();
+                } else {
+                    Toast.makeText(ViewNote.this, "Note couldn't be saved", Toast.LENGTH_LONG).show();
+                }
                 }
             });
         } else {

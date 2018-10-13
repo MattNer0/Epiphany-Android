@@ -8,6 +8,9 @@
     <string name="action_reload">Reload Library</string>
     <string name="settings_title">Settings</string>
 
+    <string name="move_note_here">Move here</string>
+    <string name="cant_move_here">Can\'t move here</string>
+
     <!--Strings for Settings-->
     <string name="general_preferences_title">Epiphany Preferences</string>
     <string name="app_settings">App Settings</string>
@@ -36,14 +39,11 @@
 
     <!--Strngs for CreateNotebookDialog-->
     <string name="create_notebook">Create</string>
+    <string name="rename_notebook">Rename</string>
     <string name="cancel">Cancel</string>
 
     <string name="delete_note">Delete Note</string>
     <string name="move_note">Move Note</string>
-
-    <!--Strings for NotebookFragment Context Menu-->
-    <string name="delete_notebook">Delete Notebook</string>
-    <string name="rename_notebook">Rename Notebook</string>
 
     <string-array name="pref_note_order_entries">
         <item>Modified Date</item>
