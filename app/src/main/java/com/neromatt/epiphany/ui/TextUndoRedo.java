@@ -61,7 +61,7 @@ public class TextUndoRedo implements TextWatcher {
         return offset.next != null;
     }
 
-    public void cleanRecord(){
+    public void cleanRecord() {
         cleanPrior();
         cleanNext();
     }

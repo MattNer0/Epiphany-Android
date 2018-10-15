@@ -4,24 +4,23 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.Path;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 
 public class ViewNote extends AppCompatActivity {
 
-    //private Toolbar toolbar;
     private Path path;
     private SingleNote note;
     private boolean from_editor;
@@ -56,11 +55,7 @@ public class ViewNote extends AppCompatActivity {
             }
         });
         markdownView.setNoteImagePath(note.getImageFolderPath());
-
-        //TODO error handling if null
         markdownView.setMDText(note.getMarkdown());
-        // "file:///android_asset/markdownview.css"
-        //getSupportActionBar().hide();
 
         FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
         noteFab.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {

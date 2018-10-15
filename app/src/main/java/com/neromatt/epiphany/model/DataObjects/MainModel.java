@@ -6,11 +6,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -29,7 +26,6 @@ import java.util.UUID;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.AbstractSectionableItem;
 import eu.davidea.flexibleadapter.items.IFlexible;
-import eu.davidea.viewholders.AnimatedViewHolder;
 import eu.davidea.viewholders.FlexibleViewHolder;
 
 public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, SimpleHeader> implements Parcelable {
@@ -46,7 +42,6 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
     private UUID uuid;
     int modelType;
 
-    private OnModelLoadedListener mOnModelLoadedListener;
     private ArrayList<MainModel> model_contents;
     private ArrayList<MainModel> model_notes;
     private WeakReference<Context> _context_ref;
@@ -93,6 +88,8 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
     public int getType() {
         return modelType;
     }
+
+    public boolean isQuickNotes() { return false; }
 
     public UUID getUuid() {
         return uuid;
@@ -161,12 +158,12 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
     }
 
     void addContents(ArrayList<MainModel> files) {
+        this.model_contents = files;
         for (MainModel model : files) {
             if (model.isNote()) {
                 this.model_notes.add(model);
             }
         }
-        this.model_contents = files;
     }
 
     public void addContent(MainModel file) {
@@ -187,6 +184,10 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
     public ArrayList<MainModel> getContent() { return this.model_contents; }
     public ArrayList<MainModel> getNotes() { return this.model_notes; }
 
+    public MainModel getFirstFolder() {
+        return this.model_contents.size() > 0 && this.model_contents.get(0) instanceof SingleNotebook ? this.model_contents.get(0) : null;
+    }
+
     public int getContentCount() {
         return this.getContent().size();
     }
@@ -203,7 +204,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
 
     public void sortContents() {
         try {
-            if (_context_ref != null && _context_ref.get() != null) {
+            if (_context_ref != null && _context_ref.get() != null && getContentCount() > 1) {
                 Collections.sort(model_contents, new NotebooksComparator(_context_ref.get()));
             }
         } catch (NullPointerException e) { }
@@ -218,8 +219,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         }
     }
 
-    public void unloadNotes(OnModelLoadedListener model_loaded_listener) {
-        this.mOnModelLoadedListener = model_loaded_listener;
+    public void unloadNotes(final OnModelLoadedListener mOnModelLoadedListener) {
         this._load_count = 0;
 
         if (this.isNote()) {
@@ -252,8 +252,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         reloadNotes(false, context, model_loaded_listener);
     }
 
-    public void reloadNotes(boolean reload, Context context, OnModelLoadedListener model_loaded_listener) {
-        this.mOnModelLoadedListener = model_loaded_listener;
+    public void reloadNotes(boolean reload, Context context, final OnModelLoadedListener mOnModelLoadedListener) {
         this._load_count = 0;
         this._context_ref = new WeakReference<>(context);
 
@@ -267,19 +266,18 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
             if (!reload && note.wasLoaded()) {
                 _load_count++;
                 if (_load_count >= getNotesCount()) {
-                    //sortContents();
+                    sortContents();
                     if (mOnModelLoadedListener != null) mOnModelLoadedListener.ModelLoaded();
                 }
             } else {
                 note.refreshContent(new SingleNote.OnNoteLoadedListener() {
                     @Override
                     public void NoteLoaded(SingleNote note) {
-                        _load_count++;
-
-                        if (_load_count >= getNotesCount()) {
-                            sortContents();
-                            if (mOnModelLoadedListener != null) mOnModelLoadedListener.ModelLoaded();
-                        }
+                    _load_count++;
+                    if (_load_count >= getNotesCount()) {
+                        sortContents();
+                        if (mOnModelLoadedListener != null) mOnModelLoadedListener.ModelLoaded();
+                    }
                     }
                 });
             }
@@ -291,19 +289,12 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         this.model_notes.clear();
     }
 
-    public void loadContent(Context context, OnModelLoadedListener model_loaded_listener) {
-        this.mOnModelLoadedListener = model_loaded_listener;
+    public void loadContent(Context context, final OnModelLoadedListener mOnModelLoadedListener) {
         this._load_count = 0;
         this._context_ref = new WeakReference<>(context);
 
         if (this.isNote()) {
             if (mOnModelLoadedListener != null) mOnModelLoadedListener.ModelLoaded();
-            /*((SingleNote) this).refreshContent(new SingleNote.OnNoteLoadedListener() {
-                @Override
-                public void NoteLoaded(SingleNote note) {
-                    mOnModelLoadedListener.ModelLoaded();
-                }
-            });*/
             return;
         }
 
@@ -319,7 +310,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
                             @Override
                             public void ModelLoaded() {
                                 _load_count++;
-
+                                //Log.i("log", "load: "+_load_count+" / "+getContentCount());
                                 if (_load_count >= getContentCount()) {
                                     sortContents();
                                     if (mOnModelLoadedListener != null) mOnModelLoadedListener.ModelLoaded();
@@ -362,6 +353,10 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         void ModelLoaded();
     }
 
+    @Override
+    public String toString() {
+        return "Model[ " + getPath() + " ][ "+getName()+" ]";
+    }
 
     @Override
     public int describeContents() {
@@ -374,8 +369,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         else dest.writeBundle(toBundle());
     }
 
-    public static final Parcelable.Creator<MainModel> CREATOR
-        = new Parcelable.Creator<MainModel>() {
+    public static final Parcelable.Creator<MainModel> CREATOR = new Parcelable.Creator<MainModel>() {
             public MainModel createFromParcel(Parcel in) {
                 Bundle args = in.readBundle(getClass().getClassLoader());
                 switch(args.getInt("modelType", 0)) {

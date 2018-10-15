@@ -3,18 +3,20 @@ package com.neromatt.epiphany.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.github.rahatarmanahmed.cpv.CircularProgressViewListener;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
+import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
 import com.neromatt.epiphany.model.DataObjects.SingleRack;
 import com.neromatt.epiphany.model.NotebooksComparator;
 import com.neromatt.epiphany.model.Path;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class LoadLibrary extends AppCompatActivity {
 
@@ -78,12 +80,17 @@ public class LoadLibrary extends AppCompatActivity {
     private void loadNextModel(MainModel model) {
         Log.i("log", "loading model...");
         if (model instanceof SingleRack) {
-            SingleRack modelRack = (SingleRack) model;
+            final SingleRack modelRack = (SingleRack) model;
             modelRack.loadContent(this, new MainModel.OnModelLoadedListener() {
                 @Override
                 public void ModelLoaded() {
                     racks_loaded++;
                     progressView.setProgress(racks_loaded);
+
+                    if (modelRack.isQuickNotes()) {
+                        SingleNotebook folder = (SingleNotebook) modelRack.getFirstFolder();
+                        if (folder != null) folder.setQuickNotesFolder();
+                    }
 
                     if (racks_loaded >= buckets.size()) {
                         Log.i("log", "all folders loaded");

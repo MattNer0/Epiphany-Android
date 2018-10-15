@@ -1,10 +1,5 @@
 package com.neromatt.epiphany.ui.NotebookFragment;
 
-import android.support.v4.app.Fragment;
-
-import com.neromatt.epiphany.model.DataObjects.MainModel;
-import com.neromatt.epiphany.model.DataObjects.SingleRack;
-import com.neromatt.epiphany.model.Path;
 import com.neromatt.epiphany.ui.MainActivity;
 
 public class CreateBucketHelper implements CreateNotebookDialog.CreateNotebookDialogListener{

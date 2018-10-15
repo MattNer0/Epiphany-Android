@@ -1,23 +1,21 @@
 package com.neromatt.epiphany.model.Adapters;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.neromatt.epiphany.model.DataObjects.MainModel;
-import com.neromatt.epiphany.model.DataObjects.SingleNote;
-import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
 import com.neromatt.epiphany.model.SortBy;
-import com.neromatt.epiphany.ui.NotebookFragment.NotebookItemClickListener;
 import com.neromatt.epiphany.ui.R;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class RackAdapter extends RecyclerView.Adapter<RackAdapter.ViewHolder> {
 

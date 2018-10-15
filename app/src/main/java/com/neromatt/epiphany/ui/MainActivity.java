@@ -6,25 +6,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.constraint.ConstraintLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.Toast;
-
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
@@ -42,10 +27,21 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class MainActivity extends AppCompatActivity implements BitteBitte, PathSupplier, CreateNoteHelper.OnQuickPathListener {
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+public class MainActivity extends AppCompatActivity implements BitteBitte, PathSupplier, CreateNoteHelper.OnQuickPathListener {
     private Toolbar toolbar; // Declaring the Toolbar Object
-    android.support.v7.app.ActionBarDrawerToggle mDrawerToggle;
+    private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
     private ConstraintLayout mDrawerNavigation;
     private RecyclerView mDrawerList;
@@ -55,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
 
     private MenuItem action_list_layout;
     private MenuItem action_staggered_layout;
+
+    private String shared_text;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,10 +76,6 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             this.yesYouCan();
         }
 
-        if (savedInstanceState == null) {
-            loadLibrary();
-        }
-
         Intent intent = getIntent();
         if (intent == null) return;
         String type = intent.getType();
@@ -90,13 +84,20 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             if ("text/plain".equals(type)) {
                 newSharedNote(intent); // Handle text being sent
             }
+        } else if (savedInstanceState == null) {
+            loadLibrary();
         }
     }
 
     private void newSharedNote(Intent intent) {
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (sharedText != null) {
-            Log.i("text", sharedText);
+            this.shared_text = sharedText;
+            if (library_list == null || library_list.size() == 0) {
+                loadLibrary(Constants.LOADING_REQUEST_CODE_SHARE);
+            } else {
+                newNoteFromShared(sharedText);
+            }
         }
     }
 
@@ -143,16 +144,8 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     }
 
     void setupDrawerToggle() {
-        mDrawerToggle = new android.support.v7.app.ActionBarDrawerToggle(this, mDrawerLayout, toolbar, R.string.app_name, R.string.app_name);
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar, R.string.app_name, R.string.app_name);
         mDrawerToggle.syncState();
-    }
-
-    private class DrawerItemClickListener implements ListView.OnItemClickListener {
-
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            selectItem(position);
-        }
     }
 
     private void selectItem(int position) {
@@ -204,9 +197,17 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     }
 
     private void loadLibrary() {
+        loadLibrary(Constants.LOADING_REQUEST_CODE);
+    }
+
+    private void loadLibrary(int request_code) {
         Intent intent = new Intent(this, LoadLibrary.class);
-        intent.putExtra("root", path.getRootPath());
-        startActivityForResult(intent, Constants.LOADING_REQUEST_CODE);
+        if (this.path == null) {
+            String path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
+            this.path = new Path(path);
+        }
+        intent.putExtra("root", this.path.getRootPath());
+        startActivityForResult(intent, request_code);
     }
 
     private boolean createNotebookFragment() {
@@ -261,8 +262,6 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             String path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
             this.path = new Path(path);
         }
-
-        //setupDrawerHeader();
     }
 
     @Override
@@ -351,20 +350,14 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
 
     @Override
     public void onBackPressed() {
-        if (mDrawerLayout.isDrawerOpen(Gravity.START)) {
-            this.mDrawerLayout.closeDrawer(Gravity.START, true);
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            this.mDrawerLayout.closeDrawer(GravityCompat.START, true);
         } else {
             NotebookFragment notebookFragment = (NotebookFragment) getSupportFragmentManager().findFragmentByTag("Notebook_Fragment");
             if (notebookFragment != null && notebookFragment.isVisible()) {
                 if (!notebookFragment.moveBack()) {
                     askAndClose();
                 }
-                /*if (path.isRoot()) {
-                    askAndClose();
-                } else {
-                    path.getBack();
-
-                }*/
             } else {
                 askAndClose();
             }
@@ -396,10 +389,36 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         bucket.loadContent(this, new MainModel.OnModelLoadedListener() {
             @Override
             public void ModelLoaded() {
+                Log.i("log", "model loaded");
                 NotebookFragment notebookFragment = (NotebookFragment) getSupportFragmentManager().findFragmentByTag("Notebook_Fragment");
                 if (notebookFragment != null && notebookFragment.isVisible()) {
-                    notebookFragment.refreshNotebooks(bucket);
+                    if (bucket instanceof SingleRack) {
+                        notebookFragment.openBucket(bucket);
+                    } else {
+                        notebookFragment.refreshNotebooks(bucket);
+                    }
                 }
+            }
+        });
+    }
+
+    public void openQuickNotesBucket() {
+        for (MainModel m : library_list) {
+            if (m.isBucket() && m.getName().equals(Constants.QUICK_NOTES_BUCKET)) {
+                reloadAndOpenFolder(m);
+                break;
+            }
+        }
+    }
+
+    private void newNoteFromShared(String text) {
+        if (text == null) return;
+        CreateNoteHelper mCreateNoteHelper = new CreateNoteHelper(this, path);
+        mCreateNoteHelper.addQuickNoteAndSave(text, this, new SingleNote.OnNoteSavedListener() {
+            @Override
+            public void NoteSaved(boolean saved) {
+                shared_text = null;
+                openQuickNotesBucket();
             }
         });
     }
@@ -407,19 +426,17 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultIntent) {
         super.onActivityResult(requestCode, resultCode, resultIntent);
-        if (requestCode == Constants.LOADING_REQUEST_CODE) {
+        if (requestCode == Constants.LOADING_REQUEST_CODE || requestCode == Constants.LOADING_REQUEST_CODE_SHARE) {
             if (resultCode == RESULT_OK) {
                 library_list = resultIntent.getParcelableArrayListExtra("buckets");
                 createNotebookFragment();
+                if (requestCode == Constants.LOADING_REQUEST_CODE_SHARE) {
+                    newNoteFromShared(shared_text);
+                }
             }
         } else if (requestCode == Constants.NEW_QUICK_NOTE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                for (MainModel m : library_list) {
-                    if (m.isBucket() && m.getName().equals(Constants.QUICK_NOTES_BUCKET)) {
-                        reloadAndOpenFolder(m);
-                        break;
-                    }
-                }
+                openQuickNotesBucket();
             }
         } else if (requestCode == Constants.NEW_NOTE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
@@ -441,23 +458,26 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         return this.path;
     }
 
-    /*public void pushFragment(Fragment myFragment) {
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fm.beginTransaction();
-        fragmentTransaction.replace(R.id.content_frame, myFragment, "Notebook_Fragment");
-        fragmentTransaction.commit();
-    }*/
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putString("rootPath", this.path.getRootPath());
         outState.putString("currentPath", this.path.getCurrentPath());
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+        if (this.path == null) {
+            this.path = new Path(savedInstanceState.getString("rootPath"));
+        } else {
+            this.path.setRootPath(savedInstanceState.getString("rootPath"));
+        }
         this.path.setCurrentPath(savedInstanceState.getString("currentPath"));
+
+        if (this.library_list.size() == 0) {
+            loadLibrary();
+        }
     }
 
     @Override
@@ -469,6 +489,7 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         if (created_folder) {
             File f = new File(folder_path);
             SingleNotebook quick_note_folder = new SingleNotebook(f.getName(), f.toString(), null);
+            quick_note_folder.setQuickNotesFolder();
 
             if (created_bucket) {
                 SingleRack quick_note_bucket = new SingleRack(Constants.QUICK_NOTES_BUCKET, path.getRootPath()+"/"+Constants.QUICK_NOTES_BUCKET, null);

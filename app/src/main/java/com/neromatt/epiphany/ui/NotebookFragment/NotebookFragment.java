@@ -1,18 +1,11 @@
 package com.neromatt.epiphany.ui.NotebookFragment;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.PopupMenu;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -24,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
@@ -43,6 +37,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Stack;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
@@ -149,9 +147,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 public void ModelLoaded() {
                 }
             });
-
-            Log.i("log", current.getNotesCount()+" -");
-
             refreshNotebooks(current.getContent());
         }
     }
@@ -165,30 +160,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
 
         refreshNotebooks(getCurrentList());
-    }
-
-    public void moveInto(MainModel model) {
-        if (current_model != null) {
-            if (history_list == null) history_list = new Stack<>();
-            history_list.push(current_model);
-        }
-
-        current_model = model;
-        refreshNotebooks(getCurrentList());
-    }
-
-    public boolean moveBack() {
-        if (history_list != null && history_list.size() > 0) {
-            current_model = history_list.pop();
-            refreshNotebooks(getCurrentList());
-            return true;
-        } else if (current_model != null) {
-            current_model = null;
-            refreshNotebooks(getCurrentList());
-            return true;
-        }
-
-        return false;
     }
 
     public void refreshFolder() {
@@ -353,13 +324,20 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             });
         }
 
+        LinearLayout emptyView = v.findViewById(R.id.notebook_emptyview);
+        if (items.size() == 0) {
+            emptyView.setVisibility(View.VISIBLE);
+        } else {
+            emptyView.setVisibility(View.GONE);
+        }
+
         LinearLayout inputNote = v.findViewById(R.id.quickNoteInput);
         TextView inputNoteText = v.findViewById(R.id.quickNoteEdit);
         LinearLayout inputNoteMove = v.findViewById(R.id.noteMoveContainer);
 
-        if (current_model == null && !adapter.isMovingNote()) {
+        if ((current_model == null || current_model.isQuickNotes()) && !adapter.isMovingNote()) {
 
-            addNotebookButton.setVisibility(View.VISIBLE);
+            //addNotebookButton.setVisibility(View.VISIBLE);
             inputNote.setVisibility(View.VISIBLE);
             inputNoteText.setVisibility(View.VISIBLE);
             inputNoteMove.setVisibility(View.GONE);
@@ -370,7 +348,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         } else if (adapter.isMovingNote()) {
 
-            addNotebookButton.setVisibility(View.GONE);
+            //addNotebookButton.setVisibility(View.GONE);
             inputNote.setVisibility(View.VISIBLE);
             inputNoteMove.setVisibility(View.VISIBLE);
             inputNoteText.setVisibility(View.GONE);
@@ -413,17 +391,25 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         } else if (current_model != null) {
 
-            addNotebookButton.setVisibility(View.VISIBLE);
             inputNote.setVisibility(View.GONE);
 
-            if (current_model instanceof SingleRack) {
+            if (getContext() == null) {
+                addNotebookButton.setVisibility(View.GONE);
+                return;
+            }
 
+            addNotebookButton.setVisibility(View.VISIBLE);
+            if (current_model instanceof SingleRack) {
                 FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
                 menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, "New Folder").setIcon(R.drawable.ic_action_add);
                 menu.add(1, Constants.FAB_MENU_RENAME_BUCKET, 1, "Rename Bucket").setIcon(R.drawable.ic_mode_edit_white_24dp);
                 addNotebookButton.setMenu(menu);
-            } else {
 
+            } else if (current_model.isQuickNotes()) {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 1, "New Note").setIcon(R.drawable.ic_action_add);
+                addNotebookButton.setMenu(menu);
+            } else {
                 FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
                 menu.add(1, Constants.FAB_MENU_NEW_NOTE, 3, "New Note").setIcon(R.drawable.ic_action_add);
                 menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, "New Folder").setIcon(R.drawable.ic_action_add);
@@ -472,11 +458,34 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         dialog.show(getActivity().getSupportFragmentManager(), "CreateNotebookDialogFragment");
     }
 
+    public void moveInto(MainModel model) {
+        if (current_model != null) {
+            if (history_list == null) history_list = new Stack<>();
+            history_list.push(current_model);
+        }
+
+        current_model = model;
+        refreshNotebooks(getCurrentList());
+    }
+
+    public boolean moveBack() {
+        if (history_list != null && history_list.size() > 0) {
+            current_model = history_list.pop();
+            refreshNotebooks(getCurrentList());
+            return true;
+        } else if (current_model != null) {
+            current_model = null;
+            refreshNotebooks(getCurrentList());
+            return true;
+        }
+
+        return false;
+    }
+
     public void openBucket(MainModel bucket) {
         current_model = null;
-        if (history_list != null) history_list.clear();
-        this.path.resetPath();
-        this.path.goForward(bucket.getName());
+        if (history_list == null) history_list = new Stack<>();
+        history_list.clear();
 
         if (bucket_queue == null) bucket_queue = new LinkedList<>();
         bucket_queue.add(bucket);
@@ -490,6 +499,22 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                         //Log.i("log", "notes unloaded!");
                     }
                 });
+            }
+        }
+
+        if (bucket.isQuickNotes()) {
+            MainModel quick_notes_folder = bucket.getFirstFolder();
+            if (quick_notes_folder != null) {
+                history_list.push(current_model);
+                current_model = quick_notes_folder;
+                ((SingleNotebook) quick_notes_folder).setQuickNotesFolder();
+                quick_notes_folder.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
+                    @Override
+                    public void ModelLoaded() {
+                        refreshNotebooks(getCurrentList());
+                    }
+                });
+                return;
             }
         }
 
@@ -518,12 +543,9 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
             if (ma == null || notebook == null) return false;
 
-            String selectedModelName = notebook.getName();
-
             if (notebook instanceof SingleRack) {
                 openBucket(notebook);
             } else if (notebook instanceof SingleNotebook) {
-                this.path.goForward(selectedModelName);
                 moveInto(notebook);
             } else if (notebook.getType() == MainModel.TYPE_MARKDOWN_NOTE) {
                 Intent intent = new Intent(ma, ViewNote.class);

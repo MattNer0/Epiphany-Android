@@ -8,6 +8,8 @@ public class Constants {
     public static final int NEW_NOTE_REQUEST_CODE = 1653;
     public static final int NEW_QUICK_NOTE_REQUEST_CODE = 1654;
 
+    public static final int LOADING_REQUEST_CODE_SHARE = 1655;
+
     public static final int FAB_MENU_NEW_BUCKET = 0;
     public static final int FAB_MENU_NEW_FOLDER = 1;
     public static final int FAB_MENU_NEW_NOTE = 2;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/colorPrimaryDark"
@@ -31,13 +32,4 @@
         android:paddingEnd="5dp"
         android:id="@+id/header_rack_title" />
 
-    <!--ImageView
-        android:id="@+id/addRackButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|center"
-        android:paddingStart="5dp"
-        android:paddingEnd="10dp"
-        android:src="@drawable/ic_plus"
-        /-->
 </LinearLayout>

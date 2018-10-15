@@ -1,18 +1,15 @@
 package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
-
-import com.neromatt.epiphany.model.Adapters.SimpleHeader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Date;
 import java.util.List;
 
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.IFlexible;
 
@@ -21,6 +18,8 @@ public class SingleNotebook extends MainModel {
     private String path;
     private String name;
     private int order;
+
+    private boolean isQuickNotes = false;
 
     public SingleNotebook(String name, String path, JSONObject data) {
         super(headerFolders);
@@ -46,6 +45,7 @@ public class SingleNotebook extends MainModel {
         this.path = args.getString("path", "");
         this.name = args.getString("name", "");
         this.order = args.getInt("order", 0);
+        this.isQuickNotes = args.getBoolean("quickNotes", false);
         this.modelType = MainModel.TYPE_FOLDER;
     }
 
@@ -55,6 +55,7 @@ public class SingleNotebook extends MainModel {
         args.putString("path", path);
         args.putString("name", name);
         args.putInt("order", order);
+        args.putBoolean("quickNotes", isQuickNotes);
         return args;
     }
 
@@ -87,8 +88,23 @@ public class SingleNotebook extends MainModel {
         }
     }
 
+    @Override
+    public boolean isQuickNotes() {
+        return isQuickNotes;
+    }
+
+    public void setQuickNotesFolder() {
+        this.isQuickNotes = true;
+    }
+
     public int compareOrderTo(SingleNotebook n1) {
         return Integer.valueOf(order).compareTo(n1.getOrder());
+    }
+
+    @Override
+    public String getTitle() {
+        if (isQuickNotes) return "Quick Notes";
+        return name;
     }
 
     @Override

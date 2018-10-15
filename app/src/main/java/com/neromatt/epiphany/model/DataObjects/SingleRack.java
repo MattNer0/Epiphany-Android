@@ -1,7 +1,6 @@
 package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 
 import com.neromatt.epiphany.Constants;
@@ -13,6 +12,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.IFlexible;
 
@@ -90,6 +90,7 @@ public class SingleRack extends MainModel {
         }
     }
 
+    @Override
     public boolean isQuickNotes() {
         return isQuickNotes;
     }

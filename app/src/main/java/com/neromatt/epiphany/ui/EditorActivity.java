@@ -5,10 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +22,10 @@ import com.yydcdut.rxmarkdown.RxMDEditText;
 import com.yydcdut.rxmarkdown.RxMarkdown;
 
 import java.io.File;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class EditorActivity extends AppCompatActivity {
 
@@ -113,6 +113,21 @@ public class EditorActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        checkUndoRedo();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("root", this.root_path);
+        outState.putBundle("note", this.note.toBundle());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        this.note = new SingleNote(savedInstanceState.getBundle("note"));
+        this.root_path = savedInstanceState.getString("root", "");
     }
 
     private void checkUndoRedo() {
@@ -145,7 +160,6 @@ public class EditorActivity extends AppCompatActivity {
                 checkUndoRedo();
             }
         });
-        checkUndoRedo();
     }
 
     private void setupToolBar() {
@@ -227,6 +241,7 @@ public class EditorActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_note_edit, menu);
         optionsMenu = menu;
+        checkUndoRedo();
         return super.onCreateOptionsMenu(menu);
     }
 

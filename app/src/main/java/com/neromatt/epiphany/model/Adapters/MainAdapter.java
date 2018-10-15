@@ -1,12 +1,11 @@
 package com.neromatt.epiphany.model.Adapters;
 
-import android.support.annotation.Nullable;
-
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 
 import java.util.List;
 
+import androidx.annotation.Nullable;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.IFlexible;
 

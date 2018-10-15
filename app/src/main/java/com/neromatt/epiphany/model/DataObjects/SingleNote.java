@@ -2,14 +2,11 @@ package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
-import com.neromatt.epiphany.model.Adapters.SimpleHeader;
 import com.neromatt.epiphany.model.Path;
 
 import java.io.BufferedReader;
@@ -21,7 +18,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

@@ -3,10 +3,7 @@ package com.neromatt.epiphany.ui;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
@@ -26,9 +23,10 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import androidx.annotation.Nullable;
 
 /**
  * The MarkedView is the Markdown viewer.

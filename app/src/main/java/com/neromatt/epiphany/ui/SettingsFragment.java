@@ -2,11 +2,10 @@ package com.neromatt.epiphany.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceFragmentCompat;
-import android.support.v7.preference.PreferenceManager;
-
 import java.io.File;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
 
@@ -50,6 +49,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         editor.putString("pref_root_directory", currentRootDirectory.toString());
         editor.apply();
     }
+
     public void updateRootDirSummary() {
         rootDirPref.setSummary(PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("pref_root_directory", ""));
         currentRootDirectory = new File(rootDirPref.getSummary().toString());

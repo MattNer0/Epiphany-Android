@@ -38,23 +38,6 @@ public class Path{
         depth = 0;
     }
 
-    public void getBack() {
-        if (!currentPath.toString().equals(rootPath)) {
-            currentPath = this.currentPath.getParentFile();
-            depth -= 1;
-        } else {
-            depth = 0;
-        }
-    }
-
-    public void goForward(String path) {
-        File newPath = new File(currentPath.toString()+"/"+path);
-        if (newPath.exists() && newPath.isDirectory()) {
-            depth+=1;
-            this.currentPath = newPath;
-        }
-    }
-
     public void resetPath() {
         currentPath = new File(rootPath);
         depth = 0;
@@ -85,14 +68,9 @@ public class Path{
         }
     }
 
-    /*public boolean isLeaf() {
-        for (File f : currentPath.listFiles()) {
-            if (f.isDirectory()){
-                return false;
-            }
-        }
-        return true;
-    }*/
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+    }
 
     private static JSONObject getMetaFile(String path, String file_name) {
         File metaFile = new File(path+"/"+file_name);

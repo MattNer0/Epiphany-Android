@@ -1,8 +1,6 @@
 package com.neromatt.epiphany.model.Adapters;
 
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
@@ -10,6 +8,7 @@ import com.neromatt.epiphany.ui.R;
 
 import java.util.List;
 
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.AbstractHeaderItem;
 import eu.davidea.viewholders.FlexibleViewHolder;
