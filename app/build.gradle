@@ -37,6 +37,8 @@ dependencies {
     implementation 'com.github.kobakei:MaterialFabSpeedDial:1.2.0'
     implementation 'com.sensorberg.libs:permission-bitte:0.2.2'
 
+    implementation 'com.google.code.gson:gson:2.8.5'
+
     // Using JCenter
     implementation 'eu.davidea:flexible-adapter:5.1.0'
     implementation 'eu.davidea:flexible-adapter-ui:1.0.0'

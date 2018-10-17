@@ -14,6 +14,7 @@ import androidx.fragment.app.DialogFragment;
 
 public class CreateNotebookDialog extends DialogFragment {
 
+    private boolean dialog_open = false;
     private int positive_button_label = R.string.create_notebook;
 
     CreateNotebookDialogListener mListener;
@@ -24,6 +25,7 @@ public class CreateNotebookDialog extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        if (dialog_open) return null;
         AlertDialog.Builder builder;
 
         LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -39,12 +41,14 @@ public class CreateNotebookDialog extends DialogFragment {
             notebookName.setText(args.getString("placeholder", ""));
         }
 
+        dialog_open = true;
         builder = new AlertDialog.Builder(getActivity())
             .setView(view)
             .setTitle("")
             .setPositiveButton(positive_button_label, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int id) {
+                    dialog_open = false;
                     if (mListener != null) {
                         EditText notebookName = view.findViewById(R.id.folder_name);
                         mListener.onDialogPositiveClick(CreateNotebookDialog.this, notebookName.getText().toString());
@@ -53,6 +57,7 @@ public class CreateNotebookDialog extends DialogFragment {
             })
             .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
+                    dialog_open = false;
                     if(mListener!=null)
                         mListener.onDialogNegativeClick(CreateNotebookDialog.this);
                 }

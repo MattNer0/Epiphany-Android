@@ -3,6 +3,7 @@ package com.neromatt.epiphany.model.DataObjects;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.gson.JsonObject;
 import com.neromatt.epiphany.Constants;
 
 import org.json.JSONException;
@@ -22,7 +23,6 @@ public class SingleRack extends MainModel {
     private int order;
 
     private boolean isQuickNotes = false;
-    private ArrayList<MainModel> folders;
 
     public SingleRack(String name, String path, JSONObject data) {
         super(headerBuckets);
@@ -51,11 +51,27 @@ public class SingleRack extends MainModel {
         this.name = args.getString("name", "");
         this.order = args.getInt("order", 0);
         this.modelType = MainModel.TYPE_RACK;
-
-        this.folders = args.getParcelableArrayList("folders");
-
         if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
+
+    public SingleRack(JsonObject args) {
+        super(args, headerBuckets);
+
+        this.path = args.get("path").getAsString();
+        this.name = args.get("name").getAsString();
+        this.order = args.get("order").getAsInt();
+        this.modelType = MainModel.TYPE_RACK;
+        if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
+    }
+
+    /*@Override
+    public JsonObject toJson() {
+        JsonObject obj = super.toJson();
+        obj.addProperty("path", path);
+        obj.addProperty("name", name);
+        obj.addProperty("order", order);
+        return obj;
+    }*/
 
     public boolean renameDirectory(String new_name) {
         new_name = new_name.replaceAll("[^\\w. _-]", "");
@@ -77,6 +93,15 @@ public class SingleRack extends MainModel {
         args.putString("name", name);
         args.putInt("order", order);
         return args;
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject obj = super.toJson();
+        obj.addProperty("path", path);
+        obj.addProperty("name", name);
+        obj.addProperty("order", order);
+        return obj;
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
+import com.google.gson.JsonObject;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.Path;
 
@@ -73,8 +74,8 @@ public class SingleNote extends MainModel {
         this.noteModified = false;
         this.newFilename = false;
         this.oldFilename = null;
-        this.modelType = args.getInt("modelType", MainModel.TYPE_MARKDOWN_NOTE);
 
+        this.modelType = MainModel.TYPE_MARKDOWN_NOTE;
         this.path = args.getString("path", "");
         this.filename = args.getString("filename", "");
 
@@ -90,6 +91,20 @@ public class SingleNote extends MainModel {
         } else {
             this.metadata = new Bundle();
         }
+    }
+
+    public SingleNote(JsonObject args) {
+        super(args, headerNotes);
+
+        this.noteLoaded = false;
+        this.noteModified = false;
+        this.newFilename = false;
+        this.oldFilename = null;
+
+        this.modelType = MainModel.TYPE_MARKDOWN_NOTE;
+        this.path = args.get("path").getAsString();
+        this.filename = args.get("filename").getAsString();
+        this.metadata = new Bundle();
     }
 
     @Override
@@ -510,6 +525,16 @@ public class SingleNote extends MainModel {
         args.putString("filename", filename);
         args.putBoolean("noteLoaded", false);
         return args;
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject obj = super.toJson();
+        obj.addProperty("path", path);
+        obj.addProperty("filename", filename);
+        obj.addProperty("noteLoaded", false);
+
+        return obj;
     }
 
     private static class LoadNoteTask extends AsyncTask<String, Void, Bundle> {

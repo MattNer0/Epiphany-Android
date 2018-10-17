@@ -73,20 +73,10 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         return f;
     }
 
-    public static NotebookFragment newInstance(ArrayList<MainModel> contents, MainModel current) {
-        NotebookFragment f = new NotebookFragment();
-        Bundle args = new Bundle();
-        args.putParcelableArrayList("contents", contents);
-        args.putParcelable("current", current);
-        f.setArguments(args);
-        return f;
-    }
-
     public NotebookFragment() { }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_notebook, container, false);
     }
 
@@ -99,10 +89,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (args == null) {
             library_list = new ArrayList<>();
             return;
-        }
-
-        if (args.containsKey("current")) {
-            current_model = args.getParcelable("current");
         }
 
         library_list = args.getParcelableArrayList("contents");
@@ -121,10 +107,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (current_model != null) current_model.sortContents(getContext());
 
         refreshNotebooks();
-    }
-
-    private void sortNotebooks(ArrayList<MainModel> items) {
-        Collections.sort(items, new NotebooksComparator(getContext()));
     }
 
     public ArrayList<MainModel> getCurrentList() {
@@ -162,7 +144,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         refreshNotebooks(getCurrentList());
     }
 
-    public void refreshFolder() {
+    private void refreshFolder() {
         if (current_model != null) {
             current_model.clearContent();
             current_model.loadContent(getContext(), new MainModel.OnModelLoadedListener() {
@@ -171,7 +153,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                     current_model.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
                         @Override
                         public void ModelLoaded() {
-                            Log.i("log", "notes refreshed");
                             refreshNotebooks(getCurrentList());
                         }
                     });
@@ -180,12 +161,11 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
     }
 
-    public void refreshNotes() {
+    private void refreshNotes() {
         if (current_model != null) {
             current_model.reloadNotes(true, getContext(), new MainModel.OnModelLoadedListener() {
                 @Override
                 public void ModelLoaded() {
-                    Log.i("log", "notes refreshed");
                     refreshNotebooks(getCurrentList());
                 }
             });
@@ -206,7 +186,13 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
         if (adapter != null) adapter.setSpanCount(1);
         return new StaggeredGridLayoutManager(1, 1);
-        //return new SmoothScrollGridLayoutManager(getActivity(), 1);
+    }
+
+    public void reloadLibrary(ArrayList<MainModel> items) {
+        library_list = items;
+        current_model = null;
+        history_list = new Stack<>();
+        refreshNotebooks(items);
     }
 
     public void refreshNotebooks(ArrayList<MainModel> items) {
@@ -217,7 +203,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (current_model != null) {
             getActivity().setTitle(current_model.getTitle());
         } else {
-            getActivity().setTitle("Library");
+            getActivity().setTitle(R.string.title_library);
         }
 
         for (MainModel m: items) {
@@ -270,24 +256,19 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 public void onMenuItemClick(FloatingActionButton fab, TextView textView, int itemId) {
                     switch (itemId) {
                         case Constants.FAB_MENU_NEW_BUCKET:
-                            Log.i("menu", "new bucket");
                             mCreateBucketHelper.addBucket();
                         case Constants.FAB_MENU_NEW_FOLDER:
-                            Log.i("menu", "new folder");
                             mCreateNotebookHelper.addNotebook(current_model);
                             break;
                         case Constants.FAB_MENU_NEW_NOTE:
-                            Log.i("menu", "new note");
                             if (current_model != null) mCreateNoteHelper.addNote(current_model);
                             break;
                         case Constants.FAB_MENU_RENAME_BUCKET:
-                            Log.i("menu", "rename bucket");
                             if (current_model instanceof SingleRack) {
                                 renameModel();
                             }
                             break;
                         case Constants.FAB_MENU_RENAME_FOLDER:
-                            Log.i("menu", "rename folder");
                             if (current_model instanceof SingleNotebook) {
                                 renameModel();
                             }
@@ -337,14 +318,20 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         if ((current_model == null || current_model.isQuickNotes()) && !adapter.isMovingNote()) {
 
-            //addNotebookButton.setVisibility(View.VISIBLE);
             inputNote.setVisibility(View.VISIBLE);
             inputNoteText.setVisibility(View.VISIBLE);
             inputNoteMove.setVisibility(View.GONE);
 
-            FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-            menu.add(1, Constants.FAB_MENU_NEW_BUCKET, 0, "New Bucket").setIcon(R.drawable.ic_action_add);
-            addNotebookButton.setMenu(menu);
+            addNotebookButton.setVisibility(View.VISIBLE);
+            if (current_model != null && current_model.isQuickNotes()) {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 0, R.string.fab_new_quick_note).setIcon(R.drawable.ic_action_add);
+                addNotebookButton.setMenu(menu);
+            } else {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_BUCKET, 0, R.string.fab_new_bucket).setIcon(R.drawable.ic_action_add);
+                addNotebookButton.setMenu(menu);
+            }
 
         } else if (adapter.isMovingNote()) {
 
@@ -401,25 +388,25 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             addNotebookButton.setVisibility(View.VISIBLE);
             if (current_model instanceof SingleRack) {
                 FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, "New Folder").setIcon(R.drawable.ic_action_add);
-                menu.add(1, Constants.FAB_MENU_RENAME_BUCKET, 1, "Rename Bucket").setIcon(R.drawable.ic_mode_edit_white_24dp);
+                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_RENAME_BUCKET, 1, R.string.fab_rename_bucket).setIcon(R.drawable.ic_mode_edit_white_24dp);
                 addNotebookButton.setMenu(menu);
 
             } else if (current_model.isQuickNotes()) {
                 FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 1, "New Note").setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 1, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
                 addNotebookButton.setMenu(menu);
             } else {
                 FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 3, "New Note").setIcon(R.drawable.ic_action_add);
-                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, "New Folder").setIcon(R.drawable.ic_action_add);
-                menu.add(1, Constants.FAB_MENU_RENAME_FOLDER, 1, "Rename Folder").setIcon(R.drawable.ic_mode_edit_white_24dp);
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 3, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_RENAME_FOLDER, 1, R.string.fab_rename_folder).setIcon(R.drawable.ic_mode_edit_white_24dp);
                 addNotebookButton.setMenu(menu);
             }
         }
     }
 
-    public void renameModel() {
+    private void renameModel() {
         CreateNotebookDialog dialog = new CreateNotebookDialog();
         Bundle args = new Bundle();
         args.putInt("positive", R.string.rename_notebook);
@@ -558,7 +545,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
     @Override
     public void onItemLongClick(int position) {
-        if (adapter.getItem(position) instanceof MainModel) {
+        if (adapter.getItem(position) != null) {
             final MainModel notebook = adapter.getItem(position);
             Context context = getContext();
 
@@ -591,9 +578,9 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (getContext() == null || note == null || current_model == null) return;
         new AlertDialog.Builder(getContext())
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle("Delete Note")
-                .setMessage("Are you sure you want to delete this note?")
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.dialog_delete_note_title)
+                .setMessage(R.string.dialog_delete_note_message)
+                .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (note.delete()) {
@@ -604,7 +591,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                         refreshNotebooks();
                     }
                 })
-                .setNegativeButton("No", null)
+                .setNegativeButton(R.string.dialog_no, null)
                 .show();
     }
 
@@ -614,7 +601,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         if (requestCode == Constants.NOTE_EDITOR_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Log.i("log", "editor exit");
                 if (resultIntent.getBooleanExtra("modified", false)) {
                     refreshFolder();
                 }

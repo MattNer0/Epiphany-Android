@@ -29,10 +29,6 @@ import androidx.appcompat.widget.Toolbar;
 
 public class EditorActivity extends AppCompatActivity {
 
-    private String folderpath;
-    private String noteToEdit;
-    private Toolbar toolbar;
-    //private Path path;
     private RxMDEditText editTextField;
     private SingleNote note = null;
     private TextUndoRedo mTextUndoRedo;
@@ -67,15 +63,17 @@ public class EditorActivity extends AppCompatActivity {
             note = new SingleNote(notebundle);
         } else if (folder != null && !folder.isEmpty()) {
             File path = new File(folder);
+            String folder_path;
+            String note_name_edit;
 
             if (path.isDirectory()) {
-                noteToEdit = Path.newNoteName(folder, "md");
-                folderpath = folder;
+                note_name_edit = Path.newNoteName(folder, "md");
+                folder_path = folder;
             } else {
-                noteToEdit = path.getName();
-                folderpath = path.getParentFile().getPath();
+                note_name_edit = path.getName();
+                folder_path = path.getParentFile().getPath();
             }
-            note = new SingleNote(folderpath, noteToEdit);
+            note = new SingleNote(folder_path, note_name_edit);
             note.markAsNewFile();
 
             String note_body = intent.getStringExtra("body");
@@ -84,8 +82,6 @@ public class EditorActivity extends AppCompatActivity {
                 editTextField.setText(note_body);
             }
         }
-
-        //Log.i("log", note.getPathArray(root_path).toString());
 
         onBackPressed = false;
         if (notebundle != null) {
@@ -163,9 +159,9 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void setupToolBar() {
-        toolbar = findViewById(R.id.toolbar); // Attaching the layout to the toolbar object
-        if (toolbar!=null) {
-            setSupportActionBar(toolbar);    // Setting toolbar as the ActionBar with setSupportActionBar() call
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         }
     }
@@ -182,16 +178,12 @@ public class EditorActivity extends AppCompatActivity {
                 @Override
                 public void NoteSaved(boolean saved) {
                     if (saved) {
-                        Toast.makeText(EditorActivity.this, "Note saved", Toast.LENGTH_LONG).show();
+                        Toast.makeText(EditorActivity.this, R.string.toast_note_saved, Toast.LENGTH_LONG).show();
                         if (quit) {
-                            /*Intent result = getIntent();
-                            result.putExtra("RESULT_STRING", note.getFullPath());
-                            setResult(Activity.RESULT_OK, result);
-                            finish();*/
                             finishEditor(true);
                         }
                     } else {
-                        Toast.makeText(EditorActivity.this, "Note couldn't be saved", Toast.LENGTH_LONG).show();
+                        Toast.makeText(EditorActivity.this, R.string.toast_note_saved_fail, Toast.LENGTH_LONG).show();
                     }
                 }
             });
@@ -293,15 +285,15 @@ public class EditorActivity extends AppCompatActivity {
         if (note.wasModified()) {
             new AlertDialog.Builder(this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setTitle("Epiphany")
-                    .setMessage("Do you want to save before exiting?")
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    .setTitle(R.string.dialog_save_note_title)
+                    .setMessage(R.string.dialog_save_note_message)
+                    .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             saveNote(true);
                         }
                     })
-                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    .setNegativeButton(R.string.dialog_no, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             onBackPressed = true;

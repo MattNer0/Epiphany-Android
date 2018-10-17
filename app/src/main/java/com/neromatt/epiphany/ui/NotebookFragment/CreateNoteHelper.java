@@ -59,7 +59,7 @@ public class CreateNoteHelper {
         return false;
     }
 
-    public boolean addQuickNoteAndSave(String initial_text, OnQuickPathListener mOnQuickPathListener, SingleNote.OnNoteSavedListener mOnNoteSavedListener) {
+    public boolean addQuickNoteAndSave(String initial_text, OnQuickPathListener mOnQuickPathListener, final OnQUickNoteSaved mOnNoteSavedListener) {
         if (getActivity() == null) return false;
         Bundle quick_bundle = path.getQuickNotesPath();
 
@@ -73,11 +73,16 @@ public class CreateNoteHelper {
                 mOnQuickPathListener.QuickPathCreated(quick_bundle);
             }
 
-            SingleNote note = new SingleNote(folder_path, Path.newNoteName(folder_path, "md"));
+            final SingleNote note = new SingleNote(folder_path, Path.newNoteName(folder_path, "md"));
             initial_text = "# New Quick Note\n\n" + initial_text;
             note.markAsNewFile();
             note.updateBody(initial_text);
-            note.saveNote(mOnNoteSavedListener);
+            note.saveNote(new SingleNote.OnNoteSavedListener() {
+                @Override
+                public void NoteSaved(boolean saved) {
+                    mOnNoteSavedListener.QuickNoteSaved(note);
+                }
+            });
             return true;
         }
 
@@ -95,5 +100,9 @@ public class CreateNoteHelper {
 
     public interface OnQuickPathListener {
         void QuickPathCreated(Bundle quick_bundle);
+    }
+
+    public interface OnQUickNoteSaved {
+        void QuickNoteSaved(SingleNote note);
     }
 }

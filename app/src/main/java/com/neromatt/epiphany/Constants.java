@@ -17,4 +17,8 @@ public class Constants {
     public static final int FAB_MENU_RENAME_FOLDER = 4;
 
     public static final String QUICK_NOTES_BUCKET = "_quick_notes";
+
+    public static final String BROADCAST_FILTER = "LIBRARY";
+
+    public static final String NOTEBOOK_FRAGMENT_TAG = "Notebook_Fragment";
 }

@@ -3,6 +3,9 @@ package com.neromatt.epiphany.model.DataObjects;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.gson.JsonObject;
+import com.neromatt.epiphany.Constants;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,8 +48,18 @@ public class SingleNotebook extends MainModel {
         this.path = args.getString("path", "");
         this.name = args.getString("name", "");
         this.order = args.getInt("order", 0);
-        this.isQuickNotes = args.getBoolean("quickNotes", false);
         this.modelType = MainModel.TYPE_FOLDER;
+        this.isQuickNotes = args.getBoolean("quickNotes", false);
+    }
+
+    public SingleNotebook(JsonObject args) {
+        super(args, headerFolders);
+
+        this.path = args.get("path").getAsString();
+        this.name = args.get("name").getAsString();
+        this.order = args.get("order").getAsInt();
+        this.modelType = MainModel.TYPE_FOLDER;
+        this.isQuickNotes = args.has("quickNotes");
     }
 
     @Override
@@ -57,6 +70,16 @@ public class SingleNotebook extends MainModel {
         args.putInt("order", order);
         args.putBoolean("quickNotes", isQuickNotes);
         return args;
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject obj = super.toJson();
+        obj.addProperty("path", path);
+        obj.addProperty("name", name);
+        obj.addProperty("order", order);
+        if (isQuickNotes) obj.addProperty("quickNotes", true);
+        return obj;
     }
 
     public boolean renameDirectory(String new_name) {

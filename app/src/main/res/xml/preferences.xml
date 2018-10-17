@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="@string/app_settings">
+    <PreferenceCategory android:title="">
         <Preference
             android:id="@+id/pref_root_directory"
             android:summary=""
             android:key="pref_root_directory"
+            app:iconSpaceReserved="false"
             android:title="@string/pref_root_directory_title"/>
 
         <CheckBoxPreference
             android:id="@+id/pref_staggered_layout"
             android:summary="Show note list with a staggered layout"
             android:key="pref_staggered_layout"
+            app:iconSpaceReserved="false"
             android:title="Staggered Layout"
             android:defaultValue="false"
             />
@@ -28,6 +32,7 @@
             android:summary="%s"
             android:entries="@array/pref_note_order_entries"
             android:entryValues="@array/pref_note_entries_values"
+            app:iconSpaceReserved="false"
             android:defaultValue="0" />
     </PreferenceCategory>
 

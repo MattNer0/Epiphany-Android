@@ -11,6 +11,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.neromatt.epiphany.model.Adapters.SimpleHeader;
 import com.neromatt.epiphany.model.NotebooksComparator;
 import com.neromatt.epiphany.model.Path;
@@ -66,11 +69,46 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         } else {
             this.uuid = UUID.fromString(uuid);
         }
-        if (model_contents != null) {
+        if (model_contents == null) {
+            this.model_contents = new ArrayList<>();
+        } else {
             for (MainModel model : model_contents) {
                 if (model.isNote()) {
                     this.model_notes.add(model);
                 }
+            }
+        }
+    }
+
+    public MainModel(JsonObject args, SimpleHeader header) {
+        super(header);
+        this.modelType = TYPE_NULL;
+        this.model_notes = new ArrayList<>();
+        this.model_contents = new ArrayList<>();
+        //this.model_contents = args.getParcelableArrayList("_contents");
+
+        String uuid = args.get("_uuid").getAsString();
+        if (uuid.isEmpty()) {
+            this.uuid = UUID.randomUUID();
+        } else {
+            this.uuid = UUID.fromString(uuid);
+        }
+
+        JsonArray json_contents = args.getAsJsonArray("_contents");
+        for (JsonElement element : json_contents) {
+            int type = element.getAsJsonObject().get("modelType").getAsInt();
+            switch (type) {
+                case TYPE_RACK:
+                    model_contents.add(new SingleRack(element.getAsJsonObject()));
+                    break;
+                case TYPE_FOLDER:
+                    model_contents.add(new SingleNotebook(element.getAsJsonObject()));
+                    break;
+                case TYPE_MARKDOWN_NOTE:
+                    SingleNote n = new SingleNote(element.getAsJsonObject());
+                    model_contents.add(n);
+                    model_notes.add(n);
+                    break;
             }
         }
     }
@@ -155,6 +193,20 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         args.putParcelableArrayList("_contents", this.model_contents);
         args.putString("_uuid", this.uuid.toString());
         return args;
+    }
+
+    public JsonObject toJson() {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("modelType", this.modelType);
+        obj.addProperty("_uuid", this.uuid.toString());
+
+        JsonArray content_array = new JsonArray();
+        for (MainModel model: model_contents) {
+            content_array.add(model.toJson());
+        }
+
+        obj.add("_contents", content_array);
+        return obj;
     }
 
     void addContents(ArrayList<MainModel> files) {

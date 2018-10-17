@@ -5,18 +5,18 @@
 
     <item
         android:id="@+id/action_list_layout"
-        android:title="List"
+        android:title="@string/action_list"
         android:visible="false"
         android:icon="@drawable/ic_view_stream_white_24dp"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         android:orderInCategory="1"/>
 
     <item
         android:id="@+id/action_staggered_layout"
-        android:title="Staggered"
+        android:title="@string/action_staggered"
         android:visible="false"
         android:icon="@drawable/ic_dashboard_white_24dp"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         android:orderInCategory="2"/>
 
     <item
