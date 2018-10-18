@@ -54,7 +54,12 @@
         <activity
             android:name="com.neromatt.epiphany.ui.ViewNote"
             android:theme="@style/AppFullScreenTheme"
-            android:noHistory="true"
             android:label="@string/title_view_note" />
+
+        <activity
+            android:name="com.neromatt.epiphany.ui.ViewPhoto"
+            android:theme="@style/AppFullScreenTheme"
+            android:noHistory="true"
+            android:label="@string/title_view_photo" />
     </application>
 </manifest>

@@ -74,7 +74,6 @@ public class CreateNoteHelper {
             }
 
             final SingleNote note = new SingleNote(folder_path, Path.newNoteName(folder_path, "md"));
-            initial_text = "# New Quick Note\n\n" + initial_text;
             note.markAsNewFile();
             note.updateBody(initial_text);
             note.saveNote(new SingleNote.OnNoteSavedListener() {

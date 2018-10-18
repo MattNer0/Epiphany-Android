@@ -3,7 +3,6 @@ package com.neromatt.epiphany.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
 import android.widget.RelativeLayout;
@@ -11,9 +10,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.neromatt.epiphany.helper.IttyBitty;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
-import com.neromatt.epiphany.model.Path;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,18 +20,15 @@ import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 
 public class ViewNote extends AppCompatActivity {
 
-    private Path path;
     private SingleNote note;
     private boolean from_editor;
+
+    private String html_body;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.view_note);
-
-        String path= PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
-        this.path = new Path(path);
-        //setupToolBar();
 
         Intent intent = getIntent();
         Bundle note_bundle = intent.getBundleExtra("note");
@@ -48,24 +44,46 @@ public class ViewNote extends AppCompatActivity {
 
         MarkedView markdownView = findViewById(R.id.markdownView);
 
-        markdownView.setCheckboxCallback(new MarkedView.OnCheckboxChangedListener() {
-            @Override
-            public void CheckboxChange(String note_body, int num, boolean checked) {
-                note.updateBody(note_body);
-            }
-        });
-        markdownView.setNoteImagePath(note.getImageFolderPath());
-        markdownView.setMDText(note.getMarkdown());
+        markdownView
+            .setCheckboxCallback(new MarkedView.OnCheckboxChangedListener() {
+                @Override
+                public void CheckboxChange(String note_body, int num, boolean checked) {
+                    note.updateBody(note_body);
+                }
+            })
+            .setHtmlBodyCallback(new MarkedView.OnHTMLBodyListener() {
+                @Override
+                public void HTMLBody(String note_body) {
+                    html_body = note_body;
+                }
+            })
+            .setImageClickCallback(new MarkedView.OnImageClickListener() {
+                @Override
+                public void ImageClick(String image_url) {
+                    if (image_url == null) return;
+                    Intent intent = new Intent(ViewNote.this, ViewPhoto.class);
+                    intent.putExtra("image", image_url);
+                    startActivity(intent);
+                }
+            })
+            .setNoteImagePath(note.getImageFolderPath())
+            .setMDText(note.getMarkdown());
 
         FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
         noteFab.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
             @Override
             public void onMenuItemClick(FloatingActionButton miniFab, @Nullable TextView label, int itemId) {
                 if (label == null) return;
-                if (label.getText().toString().equals("Edit")) {
-                    editNote();
-                } else {
-                    showInfo();
+                switch (itemId) {
+                    case R.id.edit_note:
+                        editNote();
+                        break;
+                    case R.id.info_note:
+                        showInfo();
+                        break;
+                    case R.id.share_note:
+                        shareNote();
+                        break;
                 }
             }
         });
@@ -134,6 +152,26 @@ public class ViewNote extends AppCompatActivity {
         slideDown(bInfo);
     }
 
+    public void shareNote() {
+        if (html_body == null || html_body.isEmpty()) {
+            Toast.makeText(this, "Can't share note!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        IttyBitty.createLink(html_body, note.getFileNameNoExtension(), new IttyBitty.OnLinkCreated() {
+            @Override
+            public void LinkCreated(String url) {
+                if (url == null) return;
+                Intent share = new Intent(android.content.Intent.ACTION_SEND);
+                share.setType("text/plain");
+                share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+                share.putExtra(Intent.EXTRA_SUBJECT, note.getName());
+                share.putExtra(Intent.EXTRA_TEXT, url);
+                startActivity(Intent.createChooser(share, "Share link!"));
+            }
+        });
+    }
+
     public void editNote() {
         if (note != null && note.wasModified()) {
             note.saveNote(new SingleNote.OnNoteSavedListener() {
@@ -162,10 +200,10 @@ public class ViewNote extends AppCompatActivity {
     public void slideUp(View view){
         view.setVisibility(View.VISIBLE);
         TranslateAnimation animate = new TranslateAnimation(
-                0,                 // fromXDelta
-                0,                 // toXDelta
-                view.getHeight(),  // fromYDelta
-                0);                // toYDelta
+            0,
+            0,
+            view.getHeight(),
+            0);
         animate.setDuration(500);
         animate.setFillAfter(true);
         view.startAnimation(animate);
@@ -174,10 +212,10 @@ public class ViewNote extends AppCompatActivity {
     // slide the view from its current position to below itself
     public void slideDown(View view){
         TranslateAnimation animate = new TranslateAnimation(
-                0,                 // fromXDelta
-                0,                 // toXDelta
-                0,                 // fromYDelta
-                view.getHeight()); // toYDelta
+            0,
+            0,
+            0,
+            view.getHeight());
         animate.setDuration(500);
         animate.setFillAfter(true);
         view.startAnimation(animate);

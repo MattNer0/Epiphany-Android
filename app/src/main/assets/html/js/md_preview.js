@@ -1,7 +1,7 @@
 var forEach = function(array, callback, scope) {
-	for (var i = 0; i < array.length; i++) {
-		callback.call(scope, i, array[i]);
-	}
+    for (var i = 0; i < array.length; i++) {
+        callback.call(scope, i, array[i]);
+    }
 };
 
 hljs.configure({
@@ -32,40 +32,40 @@ md.use(window.markdownitCheckbox, {
     liClass: 'checkbox',
     liClassChecked: 'checkbox-checked'
 });
-//md.use(window.markdownitImage);
+
+md.use(window.markdownitImage);
 md.use(window.markdownitHeadinganchor, { anchorClass: 'epiphany-heading' });
-//md.use(window.markdownItLinkAttributes);
 
 var note_text = "";
 var code_scroll = true;
 
 function clickCheckbox(index, el) {
-	el.onclick = function(event) {
-		event.preventDefault();
-		if (event.target.tagName == 'A') return;
-		var i = 0;
-		var checked;
-		var ok = note_text.replace(/[*-]\s*(\[[x ]\])/g, function(x) {
-			x = x.replace(/\s/g, ' ');
-			var start = x.charAt(0);
-			if (i == index) {
-				i++;
-				if (x == start + ' [x]') {
+    el.onclick = function(event) {
+        event.preventDefault();
+        if (event.target.tagName == 'A') return;
+        var i = 0;
+        var checked;
+        var ok = note_text.replace(/[*-]\s*(\[[x ]\])/g, function(x) {
+            x = x.replace(/\s/g, ' ');
+            var start = x.charAt(0);
+            if (i == index) {
+                i++;
+                if (x == start + ' [x]') {
                     checked = false;
-					return start + ' [ ]';
-				}
-				checked = true;
-				return start + ' [x]';
-			}
-			i++;
-			return x;
-		});
-		note_text = ok;
-		if (typeof JSInterface !== undefined) {
+                    return start + ' [ ]';
+                }
+                checked = true;
+                return start + ' [x]';
+            }
+            i++;
+            return x;
+        });
+        note_text = ok;
+        if (typeof JSInterface !== undefined) {
             JSInterface.checkbox(note_text, index, checked);
         }
         preview(note_text, code_scroll);
-	};
+    };
 }
 
 function preview(md_text, codeScrollDisable) {
@@ -75,13 +75,16 @@ function preview(md_text, codeScrollDisable) {
     note_text = md_text;
     code_scroll = codeScrollDisable;
 
-    // markdown html
     var md_html = md.render(note_text);
     /*if (codeScrollDisable) {
         md_html = marked(md_text);
     }else{
         md_html = marked(md_text, {renderer: rend});
     }*/
+
+    if (typeof JSInterface !== undefined) {
+        JSInterface.body(md_html);
+    }
 
     document.getElementById('preview').innerHTML = md_html;
 

@@ -3,10 +3,13 @@ package com.neromatt.epiphany.ui;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
+import android.webkit.ConsoleMessage;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -43,7 +46,10 @@ public final class MarkedView extends WebView {
     private boolean codeScrollDisable;
 
     private JavaScriptInterface JSInterface;
+
     private OnCheckboxChangedListener mOnCheckboxChangedListener;
+    private OnHTMLBodyListener mOnHTMLBodyListener;
+    private OnImageClickListener mOnImageClickListener;
 
     public MarkedView(Context context) {
         this(context, null);
@@ -73,7 +79,6 @@ public final class MarkedView extends WebView {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     String url = request.getUrl().toString();
                     String scheme = request.getUrl().getScheme();
-                    Log.i("url", url);
                     if (scheme != null && noteImagePath != null && scheme.equalsIgnoreCase("epiphany") && request.getRequestHeaders().get("Accept").contains("image")) {
                         try {
                             url = url.replace("epiphany://", "file:///"+noteImagePath+"/");
@@ -81,8 +86,10 @@ public final class MarkedView extends WebView {
                             URLConnection connection = urlImage.openConnection();
                             return new WebResourceResponse(connection.getContentType(), connection.getHeaderField("encoding"), connection.getInputStream());
                         } catch (MalformedURLException e) {
+                            Log.e("err", "MalformedURLException");
                             e.printStackTrace();
                         } catch (IOException e) {
+                            Log.e("err", "IOException");
                             e.printStackTrace();
                         }
                     }
@@ -91,37 +98,55 @@ public final class MarkedView extends WebView {
             }
         });
 
+        setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d("epiphany", consoleMessage.message() + " -- From line "
+                        + consoleMessage.lineNumber() + " of "
+                        + consoleMessage.sourceId());
+                return super.onConsoleMessage(consoleMessage);
+            }
+        });
+
+        JSInterface = new JavaScriptInterface();
+        addJavascriptInterface(JSInterface, "JSInterface");
+
         getSettings().setJavaScriptEnabled(true);
         loadUrl("file:///android_asset/html/md_preview.html");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            getSettings().setAllowUniversalAccessFromFileURLs(true);
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
     }
 
     private void sendScriptAction() {
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            loadUrl(previewText);
-        } else {
-            evaluateJavascript(previewText, null);
-        }
+        evaluateJavascript(previewText, null);
     }
 
-    public void setCheckboxCallback(OnCheckboxChangedListener mOnCheckboxChangedListener) {
+    public MarkedView setCheckboxCallback(OnCheckboxChangedListener mOnCheckboxChangedListener) {
         this.mOnCheckboxChangedListener = mOnCheckboxChangedListener;
-        JSInterface = new JavaScriptInterface();
-        addJavascriptInterface(JSInterface, "JSInterface");
+        return this;
     }
 
-    /** load Markdown text from file path. **/
+    public MarkedView setHtmlBodyCallback(OnHTMLBodyListener mOnHTMLBodyListener) {
+        this.mOnHTMLBodyListener = mOnHTMLBodyListener;
+        return this;
+    }
+
+    public MarkedView setImageClickCallback(OnImageClickListener mOnImageClickListener) {
+        this.mOnImageClickListener = mOnImageClickListener;
+        return this;
+    }
+
+    public MarkedView setNoteImagePath(String path) {
+        this.noteImagePath = path;
+        return this;
+    }
+
     public void loadMDFilePath(String filePath){
         loadMDFile(new File(filePath));
     }
 
-    /** load Markdown text from file. **/
     public void loadMDFile(File file) {
         String mdText = "";
         try {
@@ -147,26 +172,14 @@ public final class MarkedView extends WebView {
         setMDText(mdText);
     }
 
-    public void setNoteImagePath(String path) {
-        this.noteImagePath = path;
-    }
-
-    /** set show the Markdown text. **/
     public void setMDText(String text){
         text2Mark(text);
     }
 
     private void text2Mark(String mdText){
-
-        String bs64MdText = imgToBase64(mdText);
-        String escMdText = escapeForText(bs64MdText);
-
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            previewText = String.format("javascript:preview('%s', %b)", escMdText, isCodeScrollDisable());
-
-        } else {
-            previewText = String.format("preview('%s', %b)", escMdText, isCodeScrollDisable());
-        }
+        //String bs64MdText = imgToBase64(mdText);
+        String escMdText = escapeForText(mdText);
+        previewText = String.format("preview('%s', %b)", escMdText, isCodeScrollDisable());
         sendScriptAction();
     }
 
@@ -178,7 +191,18 @@ public final class MarkedView extends WebView {
         return escText;
     }
 
-    private String imgToBase64(String mdText){
+    private String epiphanyUrl(String request_url) {
+        Uri uri = Uri.parse(request_url);
+        String scheme = uri.getScheme();
+
+        if (scheme != null && noteImagePath != null && scheme.equalsIgnoreCase("epiphany")) {
+            return request_url.replace("epiphany://", "file:///" + noteImagePath + "/");
+        }
+
+        return null;
+    }
+
+    /*private String imgToBase64(String mdText){
         Pattern ptn = Pattern.compile(IMAGE_PATTERN);
         Matcher matcher = ptn.matcher(mdText);
         if(!matcher.find()){
@@ -232,7 +256,7 @@ public final class MarkedView extends WebView {
         } else {
             return "";
         }
-    }
+    }*/
 
     /* options */
 
@@ -248,6 +272,14 @@ public final class MarkedView extends WebView {
         void CheckboxChange(String note_body, int num, boolean checked);
     }
 
+    public interface OnHTMLBodyListener {
+        void HTMLBody(String note_body);
+    }
+
+    public interface OnImageClickListener {
+        void ImageClick(String image_url);
+    }
+
     public class JavaScriptInterface {
 
         JavaScriptInterface() { }
@@ -256,6 +288,16 @@ public final class MarkedView extends WebView {
         public void checkbox(String note_body, int num, boolean checked) {
             if (mOnCheckboxChangedListener != null) mOnCheckboxChangedListener.CheckboxChange(note_body, num, checked);
 
+        }
+
+        @android.webkit.JavascriptInterface
+        public void body(String note_body) {
+            if (mOnHTMLBodyListener != null) mOnHTMLBodyListener.HTMLBody(note_body);
+        }
+
+        @android.webkit.JavascriptInterface
+        public void image(String image_url) {
+            if (mOnImageClickListener != null) mOnImageClickListener.ImageClick(epiphanyUrl(image_url));
         }
     }
 }

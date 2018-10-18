@@ -18,6 +18,10 @@
     <string name="fab_rename_folder">Rename Folder</string>
     <string name="fab_new_quick_note">New Quick Note</string>
 
+    <string name="fab_edit_note">Edit</string>
+    <string name="fab_share_note">Share</string>
+    <string name="fab_info_note">Info</string>
+
     <!--Strings for Dialogs-->
     <string name="dialog_yes">Yes</string>
     <string name="dialog_no">No</string>
@@ -39,6 +43,7 @@
     <string name="title_add_note">Add Note</string>
     <string name="title_edit_note">Edit Note</string>
     <string name="title_view_note">View Note</string>
+    <string name="title_view_photo">View Photo</string>
 
     <string name="title_activity_editor">Edit Note</string>
 

@@ -282,7 +282,7 @@ public class EditorActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (note.wasModified()) {
+        if (note != null && note.wasModified()) {
             new AlertDialog.Builder(this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setTitle(R.string.dialog_save_note_title)
