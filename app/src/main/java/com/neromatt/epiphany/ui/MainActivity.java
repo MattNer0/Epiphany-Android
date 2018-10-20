@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -329,7 +328,12 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         if (id == R.id.action_settings) {
             showSettings();
             return true;
-        } else if (id == R.id.action_reload) {
+        } else if (id == R.id.action_quick_notes) {
+            NotebookFragment notebookFragment = getNotebookFragment();
+            if (notebookFragment != null && notebookFragment.isVisible()) {
+                openQuickNotesBucket();
+            }
+        /*} else if (id == R.id.action_reload) {
             if (library_list != null) library_list.clear();
             NotebookFragment notebookFragment = getNotebookFragment();
             if (notebookFragment != null && notebookFragment.isVisible()) {
@@ -337,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             }
             showLoading();
             Library.launchService(this, path);
-            return true;
+            return true;*/
         } else if (id == R.id.action_list_layout) {
             if (action_list_layout != null && action_staggered_layout != null) {
                 action_staggered_layout.setVisible(true);
@@ -396,12 +400,15 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     }
 
     public void reloadAndOpenFolder(final MainModel bucket) {
-        if (bucket == null) return;
+        if (bucket == null) {
+            showLoading();
+            Library.launchService(this, path);
+            return;
+        }
         bucket.clearContent();
         bucket.loadContent(this, new MainModel.OnModelLoadedListener() {
             @Override
             public void ModelLoaded() {
-                Log.i("log", "model loaded");
                 NotebookFragment notebookFragment = getNotebookFragment();
                 if (notebookFragment != null && notebookFragment.isVisible()) {
                     if (bucket instanceof SingleRack) {

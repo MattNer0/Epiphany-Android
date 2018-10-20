@@ -126,7 +126,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="bottom|end"
-        app:fab_menu="@menu/menu_note_view"
         app:fab_fabDrawable="@drawable/ic_menu_white_24dp"
         app:fab_fabBackgroundColor="@color/colorPrimaryDark"
         app:fab_miniFabBackgroundColor="@color/textColor"

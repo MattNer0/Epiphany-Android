@@ -17,9 +17,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preferences);
-        toolbar = findViewById(R.id.toolbar); // Attaching the layout to the toolbar object
+        toolbar = findViewById(R.id.toolbar);
         if (toolbar!=null) {
-            setSupportActionBar(toolbar);    // Setting toolbar as the ActionBar with setSupportActionBar() call
+            setSupportActionBar(toolbar);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 

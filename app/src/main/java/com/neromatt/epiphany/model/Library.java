@@ -1,6 +1,5 @@
 package com.neromatt.epiphany.model;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.preference.PreferenceManager;

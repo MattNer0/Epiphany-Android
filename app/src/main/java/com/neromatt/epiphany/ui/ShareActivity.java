@@ -49,14 +49,8 @@ public class ShareActivity extends AppCompatActivity implements CreateNoteHelper
     private void newNoteFromShared(String title, String text) {
         if (text == null) return;
 
-        if (title == null) {
-            text = "# New Quick Note\n\n" + text;
-        } else {
-            text = "# "+title.trim()+"\n\n" + text;
-        }
-
         CreateNoteHelper mCreateNoteHelper = new CreateNoteHelper(this, new Path(root_path));
-        mCreateNoteHelper.addQuickNoteAndSave(text, this, new CreateNoteHelper.OnQUickNoteSaved() {
+        mCreateNoteHelper.addQuickNoteAndSave(title, text, this, new CreateNoteHelper.OnQUickNoteSaved() {
             @Override
             public void QuickNoteSaved(SingleNote note) {
                 Intent intent = new Intent(ShareActivity.this, EditorActivity.class);

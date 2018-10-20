@@ -2,6 +2,7 @@ package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.google.gson.JsonObject;
 import com.neromatt.epiphany.Constants;
@@ -106,10 +107,11 @@ public class SingleRack extends MainModel {
 
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
-        holder.mNotebookTitle.setText(getTitle());
-        holder.mNoteCount.setText("");
+        if (holder.mNotebookTitle != null) {
+            holder.mNotebookTitle.setText(getTitle());
+        }
 
-        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+        if (isQuickNotes() && holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
             StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
             layoutParams.setFullSpan(true);
         }

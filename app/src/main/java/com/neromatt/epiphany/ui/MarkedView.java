@@ -39,7 +39,7 @@ import androidx.annotation.Nullable;
 public final class MarkedView extends WebView {
 
     private static final String TAG = MarkedView.class.getSimpleName();
-    private static final String IMAGE_PATTERN = "!\\[(.*)\\]\\((.*)\\)";
+    //private static final String IMAGE_PATTERN = "!\\[(.*)\\]\\((.*)\\)";
 
     private String previewText;
     private String noteImagePath;

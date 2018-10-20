@@ -31,7 +31,7 @@ public class SimpleHeader extends AbstractHeaderItem<SimpleHeader.HeaderViewHold
 
     @Override
     public int getLayoutRes() {
-        return R.layout.header_row;
+        return R.layout.row_header;
     }
 
     @Override

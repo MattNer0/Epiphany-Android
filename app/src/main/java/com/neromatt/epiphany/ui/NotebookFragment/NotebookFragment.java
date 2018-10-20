@@ -41,6 +41,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
@@ -49,8 +50,11 @@ import ru.whalemare.sheetmenu.SheetMenu;
 import static android.app.Activity.RESULT_OK;
 
 public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener {
+
+    private SwipeRefreshLayout pullToRefresh;
     private FabSpeedDial addNotebookButton;
     private RecyclerView notebookList;
+
     private MainAdapter<MainModel> adapter;
     private CreateNotebookHelper mCreateNotebookHelper;
     private CreateNoteHelper mCreateNoteHelper;
@@ -106,10 +110,24 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         if (current_model != null) current_model.sortContents(getContext());
 
+        View v = getView();
+        if (v == null) return;
+        pullToRefresh = v.findViewById(R.id.pullToRefresh);
+        pullToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                MainActivity ma = (MainActivity) getActivity();
+                if (ma != null) {
+                    ma.reloadAndOpenFolder(current_model);
+                }
+                pullToRefresh.setRefreshing(false);
+            }
+        });
+
         refreshNotebooks();
     }
 
-    public ArrayList<MainModel> getCurrentList() {
+    private ArrayList<MainModel> getCurrentList() {
         if (current_model != null) {
             return current_model.getContent();
         } else {
@@ -117,9 +135,9 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
     }
 
-    public MainModel getCurrentModel() {
+    /*public MainModel getCurrentModel() {
         return current_model;
-    }
+    }*/
 
     public void refreshNotebooks(MainModel current) {
         if (current != null) {
@@ -127,9 +145,9 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             current.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
                 @Override
                 public void ModelLoaded() {
+                    refreshNotebooks(current_model.getContent());
                 }
             });
-            refreshNotebooks(current.getContent());
         }
     }
 
@@ -195,7 +213,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         refreshNotebooks(items);
     }
 
-    public void refreshNotebooks(ArrayList<MainModel> items) {
+    private void refreshNotebooks(ArrayList<MainModel> items) {
         View v = getView();
         if (v == null) return;
         if (getActivity() == null || getContext() == null) return;
@@ -445,7 +463,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         dialog.show(getActivity().getSupportFragmentManager(), "CreateNotebookDialogFragment");
     }
 
-    public void moveInto(MainModel model) {
+    private void moveInto(MainModel model) {
         if (current_model != null) {
             if (history_list == null) history_list = new Stack<>();
             history_list.push(current_model);

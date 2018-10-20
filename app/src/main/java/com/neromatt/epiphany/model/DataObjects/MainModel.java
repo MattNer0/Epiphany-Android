@@ -170,11 +170,16 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
             case MainModel.TYPE_MARKDOWN_NOTE:
                 return R.layout.markdown_note_row;
             case MainModel.TYPE_RACK:
+                if (this.isQuickNotes()) {
+                    return R.layout.row_quick_notes;
+                } else {
+                    return R.layout.row_bucket;
+                }
             case MainModel.TYPE_FOLDER:
-                return R.layout.notebook_row;
+                return R.layout.row_folder;
             default:
                 Log.w("adapter", "invalid view type: "+modelType);
-                return R.layout.notebook_row;
+                return R.layout.row_folder;
         }
     }
 

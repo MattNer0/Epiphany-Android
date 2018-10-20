@@ -45,7 +45,7 @@ public class RackAdapter extends RecyclerView.Adapter<RackAdapter.ViewHolder> {
     @Override
     public RackAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View v = inflater.inflate(R.layout.rack_row, parent, false);
+        View v = inflater.inflate(R.layout.row_bucket_sidebar, parent, false);
         return new RackAdapter.ViewHolder(v);
     }
 

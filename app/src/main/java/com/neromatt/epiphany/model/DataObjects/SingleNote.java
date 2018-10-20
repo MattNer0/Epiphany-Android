@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.google.gson.JsonObject;
+import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.Path;
 
@@ -168,6 +169,16 @@ public class SingleNote extends MainModel {
         }
     }
 
+    public void addMetadata(String key, String value) {
+        if (metadata == null) metadata = new Bundle();
+        metadata.putString(key, value);
+    }
+
+    public String getMetaString(String key) {
+        if (metadata == null) return null;
+        return metadata.getString(key, null);
+    }
+
     public String getImageFolderPath() {
         return getPath()+"/."+getFileNameNoExtension();
     }
@@ -198,10 +209,10 @@ public class SingleNote extends MainModel {
                 String metaKey = matcher.group(3);
                 String metaValue = matcher.group(4).trim();
                 metadata.putString(metaKey, metaValue);
-                if (metaKey.equals("updatedAt")) {
-                    result.putString("updatedAt", metaValue);
-                } else if (metaKey.equals("createdAt")) {
-                    result.putString("createdAt", metaValue);
+                if (metaKey.equals(Constants.METATAG_UPDATED)) {
+                    result.putString(Constants.METATAG_UPDATED, metaValue);
+                } else if (metaKey.equals(Constants.METATAG_CREATED)) {
+                    result.putString(Constants.METATAG_CREATED, metaValue);
                 }
             }
         }
@@ -382,12 +393,14 @@ public class SingleNote extends MainModel {
 
         text.append("+++\n");
         for (String key: this.metadata.keySet()) {
-            if (key.equals("updatedAt")) {
-                text.append("updatedAt = \"");
+            if (key.equals(Constants.METATAG_UPDATED)) {
+                text.append(Constants.METATAG_UPDATED);
+                text.append(" = \"");
                 text.append(formatDate(null));
                 text.append("\"\n");
-            } else if (key.equals("createdAt")) {
-                text.append("createdAt = \"");
+            } else if (key.equals(Constants.METATAG_CREATED)) {
+                text.append(Constants.METATAG_CREATED);
+                text.append(" = \"");
                 text.append(formatDate(this.createdAt));
                 text.append("\"\n");
             } else {

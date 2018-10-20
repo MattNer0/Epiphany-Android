@@ -2,6 +2,7 @@ package com.neromatt.epiphany.ui.NotebookFragment;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Patterns;
 
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
@@ -59,13 +60,20 @@ public class CreateNoteHelper {
         return false;
     }
 
-    public boolean addQuickNoteAndSave(String initial_text, OnQuickPathListener mOnQuickPathListener, final OnQUickNoteSaved mOnNoteSavedListener) {
+    public boolean addQuickNoteAndSave(String title, String text, OnQuickPathListener mOnQuickPathListener, final OnQUickNoteSaved mOnNoteSavedListener) {
         if (getActivity() == null) return false;
         Bundle quick_bundle = path.getQuickNotesPath();
 
         String folder_path = quick_bundle.getString("path", "");
         Boolean created_folder = quick_bundle.getBoolean("created_folder", false);
         Boolean created_bucket = quick_bundle.getBoolean("created_bucket", false);
+
+        String note_body;
+        if (title == null) {
+            note_body = "# New Quick Note\n\n" + text;
+        } else {
+            note_body = "# "+title.trim()+"\n\n" + text;
+        }
 
         if (folder_path != null && !folder_path.isEmpty()) {
 
@@ -75,7 +83,11 @@ public class CreateNoteHelper {
 
             final SingleNote note = new SingleNote(folder_path, Path.newNoteName(folder_path, "md"));
             note.markAsNewFile();
-            note.updateBody(initial_text);
+            note.updateBody(note_body);
+
+            if (Patterns.WEB_URL.matcher(text.toLowerCase()).matches()) {
+                note.addMetadata(Constants.METATAG_WEB, text.toLowerCase());
+            }
             note.saveNote(new SingleNote.OnNoteSavedListener() {
                 @Override
                 public void NoteSaved(boolean saved) {

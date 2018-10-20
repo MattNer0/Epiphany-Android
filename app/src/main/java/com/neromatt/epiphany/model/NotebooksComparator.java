@@ -40,9 +40,9 @@ public class NotebooksComparator implements Comparator<MainModel> {
         if (v1 instanceof SingleRack && v2 instanceof SingleRack) {
 
             if (v1.isQuickNotes()) {
-                result = 1;
-            } else if (v2.isQuickNotes()) {
                 result = -1;
+            } else if (v2.isQuickNotes()) {
+                result = 1;
             } else if (sortByFolders == SortBy.NAME) {
                 result = v1.getName().compareTo(v2.getName());
             } else {

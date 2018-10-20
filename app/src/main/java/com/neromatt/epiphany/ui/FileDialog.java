@@ -49,11 +49,7 @@ public class FileDialog {
         loadFileList(initialPath);
     }
 
-    /**
-     * @return file dialog
-     */
-    public Dialog createFileDialog() {
-        Dialog dialog = null;
+    private Dialog createFileDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
         builder.setTitle(currentPath.getPath());
@@ -79,8 +75,7 @@ public class FileDialog {
             }
         });
 
-        dialog = builder.show();
-        return dialog;
+        return builder.show();
     }
 
 

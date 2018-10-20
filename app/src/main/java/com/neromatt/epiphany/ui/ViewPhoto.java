@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.load.DataSource;
@@ -23,15 +22,13 @@ public class ViewPhoto extends AppCompatActivity {
     private static final float BITMAP_SCALE = 0.4f;
     private static final int BLUR_RADIUS = 8;
 
-    private String image_url;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.view_photo);
 
         Intent intent = getIntent();
-        image_url = intent.getStringExtra("image");
+        String image_url = intent.getStringExtra("image");
         if (image_url == null) {
             onBackPressed();
             return;
@@ -40,31 +37,27 @@ public class ViewPhoto extends AppCompatActivity {
         final PhotoView photoView = findViewById(R.id.image);
         final LinearLayout parent = findViewById(R.id.imageparent);
 
-
         photoView.setMinimumScale(0.6f);
         photoView.setMaximumScale(6.0f);
 
         GlideApp.with(this)
-                .asBitmap()
-                .load(image_url)
-                .listener(new RequestListener<Bitmap>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
-                        //loading.setIndeterminate(false);
-                        //loading.setBackgroundColor(Color.LTGRAY);
-                        return false;
-                    }
+            .asBitmap()
+            .load(image_url)
+            .listener(new RequestListener<Bitmap>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                    return false;
+                }
 
-                    @Override
-                    public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
-                        parent.setBackground(new BitmapDrawable(getResources(), fastblur(Bitmap.createScaledBitmap(resource, 50, 50, true))));
-                        photoView.setImageBitmap(resource);
-                        //loading.setVisibility(View.GONE);
-                        return false;
-                    }
-                })
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .into(photoView);
+                @Override
+                public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                    parent.setBackground(new BitmapDrawable(getResources(), fastblur(Bitmap.createScaledBitmap(resource, 50, 50, true))));
+                    photoView.setImageBitmap(resource);
+                    return false;
+                }
+            })
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .into(photoView);
     }
 
     public static Bitmap fastblur(Bitmap sentBitmap) {
@@ -76,9 +69,9 @@ public class ViewPhoto extends AppCompatActivity {
 
         Bitmap bitmap = sentBitmap.copy(sentBitmap.getConfig(), true);
 
-        if (radius < 1) {
+        /*if (radius < 1) {
             return (null);
-        }
+        }*/
 
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
