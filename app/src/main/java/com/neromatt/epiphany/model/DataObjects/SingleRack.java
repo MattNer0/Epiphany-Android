@@ -111,7 +111,7 @@ public class SingleRack extends MainModel {
             holder.mNotebookTitle.setText(getTitle());
         }
 
-        if (isQuickNotes() && holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
             StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
             layoutParams.setFullSpan(true);
         }

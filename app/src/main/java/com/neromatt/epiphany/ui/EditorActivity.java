@@ -117,6 +117,9 @@ public class EditorActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putString("root", this.root_path);
         outState.putBundle("note", this.note.toBundle());
+        if (editTextField != null) {
+            outState.putString("body", editTextField.getText().toString());
+        }
     }
 
     @Override
@@ -124,6 +127,10 @@ public class EditorActivity extends AppCompatActivity {
         super.onRestoreInstanceState(savedInstanceState);
         this.note = new SingleNote(savedInstanceState.getBundle("note"));
         this.root_path = savedInstanceState.getString("root", "");
+
+        if (editTextField != null && savedInstanceState.containsKey("body")) {
+            editTextField.setText(savedInstanceState.getString("body", ""));
+        }
     }
 
     private void checkUndoRedo() {
@@ -275,9 +282,19 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (!onBackPressed && note.wasModified() && note.isNewFile() && editTextField != null) {
+            saveNote(false);
+            onBackPressed = true;
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(!onBackPressed) saveNote(true);
+        if (!onBackPressed) saveNote(true);
     }
 
     @Override

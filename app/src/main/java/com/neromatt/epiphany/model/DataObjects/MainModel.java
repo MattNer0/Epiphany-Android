@@ -1,5 +1,6 @@
 package com.neromatt.epiphany.model.DataObjects;
 
+import android.animation.Animator;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -8,6 +9,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,9 +28,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewPropertyAnimatorListener;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
+import eu.davidea.flexibleadapter.helpers.AnimatorHelper;
 import eu.davidea.flexibleadapter.items.AbstractSectionableItem;
 import eu.davidea.flexibleadapter.items.IFlexible;
+import eu.davidea.viewholders.AnimatedViewHolder;
 import eu.davidea.viewholders.FlexibleViewHolder;
 
 public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, SimpleHeader> implements Parcelable {
@@ -446,7 +453,7 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
             }
         };
 
-    public class MyViewHolder extends FlexibleViewHolder {
+    public class MyViewHolder extends FlexibleViewHolder implements AnimatedViewHolder {
 
         TextView mNotebookTitle;
         TextView mNoteCount;
@@ -470,6 +477,31 @@ public class MainModel extends AbstractSectionableItem<MainModel.MyViewHolder, S
         @Override
         public String toString() {
             return "MainModel[" + super.toString() + "]";
+        }
+
+        @Override
+        public void scrollAnimators(@NonNull List<Animator> animators, int position, boolean isForward) {
+            AnimatorHelper.alphaAnimator(animators, itemView, 0f);
+        }
+
+        @Override
+        public boolean preAnimateAddImpl() {
+            return false;
+        }
+
+        @Override
+        public boolean preAnimateRemoveImpl() {
+            return false;
+        }
+
+        @Override
+        public boolean animateAddImpl(ViewPropertyAnimatorListener listener, long addDuration, int index) {
+            return false;
+        }
+
+        @Override
+        public boolean animateRemoveImpl(ViewPropertyAnimatorListener listener, long removeDuration, int index) {
+            return false;
         }
     }
 }

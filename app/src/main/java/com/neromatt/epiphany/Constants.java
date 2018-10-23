@@ -21,11 +21,16 @@ public class Constants {
     public static final int FAB_MENU_INFO_NOTE = 7;
     public static final int FAB_MENU_OPEN_LINK_NOTE = 8;
 
+    public static final String LOG = "lgg";
+
     public static final String QUICK_NOTES_BUCKET = "_quick_notes";
 
     public static final String BROADCAST_FILTER = "LIBRARY";
 
     public static final String NOTEBOOK_FRAGMENT_TAG = "Notebook_Fragment";
+
+    public static final String NOTEBOOK_FOLDER_FRAGMENT_TAG = "Notebook_Folder_Fragment";
+    public static final String NOTEBOOK_BUCKET_FRAGMENT_TAG = "Notebook_Bucket_Fragment";
 
     public static final String METATAG_UPDATED = "updatedAt";
     public static final String METATAG_CREATED = "createdAt";

@@ -19,7 +19,7 @@ public class CreateNotebookDialog extends DialogFragment {
 
     CreateNotebookDialogListener mListener;
 
-    public void setDialogListener(CreateNotebookDialogListener mListener){
+    void setDialogListener(CreateNotebookDialogListener mListener){
         this.mListener = mListener;
     }
 

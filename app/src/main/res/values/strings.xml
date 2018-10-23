@@ -31,6 +31,8 @@
     <string name="dialog_delete_note_message">Are you sure you want to delete this note?</string>
     <string name="dialog_save_note_title">Note Modified</string>
     <string name="dialog_save_note_message">Do you want to save before exiting?</string>
+    <string name="dialog_close_title">Closing Epiphany</string>
+    <string name="dialog_close_message">Are you sure you want to quit?</string>
 
     <!--Strings for Toasts-->
     <string name="toast_note_saved">Note saved</string>

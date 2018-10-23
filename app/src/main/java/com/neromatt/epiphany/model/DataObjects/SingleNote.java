@@ -66,7 +66,6 @@ public class SingleNote extends MainModel {
         this.noteModified = false;
         this.newFilename = false;
         this.oldFilename = null;
-        //refreshContent();
     }
 
     public SingleNote(Bundle args) {
@@ -122,11 +121,11 @@ public class SingleNote extends MainModel {
         }
 
         holder.itemView.setAlpha(1.0f);
-        if (wasLoaded()) {
+        /*if (wasLoaded()) {
             holder.itemView.setVisibility(View.VISIBLE);
         } else {
             holder.itemView.setVisibility(View.GONE);
-        }
+        }*/
 
         if (adapter instanceof MainAdapter) {
             MainAdapter ma = (MainAdapter) adapter;
@@ -316,6 +315,10 @@ public class SingleNote extends MainModel {
     public void markAsNewFile() {
         newFilename = true;
         oldFilename = null;
+    }
+
+    public boolean isNewFile() {
+        return this.newFilename;
     }
 
     public boolean delete() {

@@ -1,37 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    style="?attr/cardStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp">
+    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp">
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="5dp"
-            android:src="@drawable/ic_folder_white_24dp"/>
-
-        <TextView
-            android:id="@+id/notebook_title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Item Name"
-            android:textSize="18sp"
-            android:layout_gravity="center"
-            android:textAlignment="center"
-            android:textColor="@color/textColor"/>
+            android:orientation="horizontal"
+            android:background="@drawable/border_bottom_row"
+            android:paddingTop="20dp"
+            android:paddingBottom="21dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|top"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_folder_white_24dp"/>
+
+            <TextView
+                android:id="@+id/notebook_title"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Item Name"
+                android:textSize="18sp"
+                android:layout_gravity="center"
+                android:textColor="@color/textColor"/>
+
+        </LinearLayout>
 
     </LinearLayout>
-
-</androidx.cardview.widget.CardView>
+</FrameLayout>

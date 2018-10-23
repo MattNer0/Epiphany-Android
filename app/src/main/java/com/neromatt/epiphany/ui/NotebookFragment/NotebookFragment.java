@@ -24,16 +24,13 @@ import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
 import com.neromatt.epiphany.model.DataObjects.SingleRack;
-import com.neromatt.epiphany.model.NotebooksComparator;
 import com.neromatt.epiphany.model.Path;
 import com.neromatt.epiphany.ui.EditorActivity;
 import com.neromatt.epiphany.ui.MainActivity;
-import com.neromatt.epiphany.ui.PathSupplier;
 import com.neromatt.epiphany.ui.R;
 import com.neromatt.epiphany.ui.ViewNote;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Stack;
 
@@ -43,6 +40,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
+import eu.davidea.flexibleadapter.common.FlexibleItemAnimator;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 import ru.whalemare.sheetmenu.SheetMenu;
@@ -61,8 +59,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
     private CreateBucketHelper mCreateBucketHelper;
 
     private ArrayList<MainModel> library_list;
-    private Stack<MainModel> history_list;
-    private LinkedList<MainModel> bucket_queue;
     private MainModel current_model;
 
     private Handler handler;
@@ -73,6 +69,14 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         NotebookFragment f = new NotebookFragment();
         Bundle args = new Bundle();
         args.putParcelableArrayList("contents", contents);
+        f.setArguments(args);
+        return f;
+    }
+
+    public static NotebookFragment newInstance(MainModel current) {
+        NotebookFragment f = new NotebookFragment();
+        Bundle args = new Bundle();
+        args.putParcelable("current", current);
         f.setArguments(args);
         return f;
     }
@@ -95,9 +99,25 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             return;
         }
 
-        library_list = args.getParcelableArrayList("contents");
+        if (args.containsKey("contents")) {
+            library_list = args.getParcelableArrayList("contents");
+        } else if (args.containsKey("current")) {
+            current_model = args.getParcelable("current");
+        }
 
         //FlexibleAdapter.enableLogs(eu.davidea.flexibleadapter.utils.Log.Level.DEBUG);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        path = getMainActivity().getPath();
+        if (!path.isRoot()) {
+            path.resetPath();
+        }
+
+        initializeRecyclerView(savedInstanceState);
     }
 
     @Override
@@ -106,25 +126,17 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         setHasOptionsMenu(true);
 
         if (getActivity() == null) return;
-        if (adapter != null) adapter.clear();
 
-        if (current_model != null) current_model.sortContents(getContext());
+        path = getMainActivity().getPath();
+        if (!path.isRoot()) {
+            path.resetPath();
+        }
 
-        View v = getView();
-        if (v == null) return;
-        pullToRefresh = v.findViewById(R.id.pullToRefresh);
-        pullToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                MainActivity ma = (MainActivity) getActivity();
-                if (ma != null) {
-                    ma.reloadAndOpenFolder(current_model);
-                }
-                pullToRefresh.setRefreshing(false);
-            }
-        });
+        //if (adapter != null) adapter.clear();
+        //if (current_model != null) current_model.sortContents(getContext());
 
-        refreshNotebooks();
+        initializeTitle();
+        initializeUI();
     }
 
     private ArrayList<MainModel> getCurrentList() {
@@ -135,11 +147,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
     }
 
-    /*public MainModel getCurrentModel() {
-        return current_model;
-    }*/
-
-    public void refreshNotebooks(MainModel current) {
+    /*public void refreshNotebooks(MainModel current) {
         if (current != null) {
             this.current_model = current;
             current.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
@@ -149,18 +157,255 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 }
             });
         }
+    }*/
+
+    private void initializeRecyclerView(Bundle savedInstanceState) {
+        FlexibleAdapter.useTag("adpt");
+
+        adapter = new MainAdapter<>(getMainActivity(), getCurrentList());
+        adapter.addListener(this);
+
+        adapter
+            .setStickyHeaderElevation(5)
+            .setDisplayHeadersAtStartUp(true)
+            .setStickyHeaders(true)
+            .setOnlyEntryAnimation(false)
+            .setAnimationOnForwardScrolling(true)
+            .setAnimationOnReverseScrolling(true)
+            .setAnimationEntryStep(true)
+            .setAnimationDelay(50)
+            .setAnimationDuration(200);
+
+        notebookList = getView().findViewById(R.id.notebookview);
+        notebookList.setItemViewCacheSize(0);
+        notebookList.setLayoutManager(getLayoutManager(
+                PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_staggered_layout", false))
+        );
+
+        notebookList.setHasFixedSize(true);
+        notebookList.setItemAnimator(new FlexibleItemAnimator());
+        notebookList.setAdapter(adapter);
+
+        /*FlexibleItemDecoration mItemDecoration = new FlexibleItemDecoration(getActivity())
+                .withOffset(3)
+                .withTopEdge(true)
+                .withBottomEdge(true);
+        notebookList.addItemDecoration(mItemDecoration);*/
+
+        mCreateBucketHelper = new CreateBucketHelper(this);
+        mCreateNotebookHelper = new CreateNotebookHelper(this);
+        mCreateNoteHelper = new CreateNoteHelper(this, path);
+
+        pullToRefresh = getView().findViewById(R.id.pullToRefresh);
+        pullToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                MainActivity ma = getMainActivity();
+                if (ma != null) {
+                    ma.reloadAndOpenFolder(current_model, true);
+                }
+                pullToRefresh.setRefreshing(false);
+            }
+        });
+
+        //loadFullList();
     }
 
-    public void refreshNotebooks() {
-        if (getActivity() == null || getContext() == null) return;
+    private void initializeTitle() {
+        if (current_model != null) {
+            getActivity().setTitle(current_model.getTitle());
+        } else {
+            getActivity().setTitle(R.string.title_library);
+        }
+    }
 
-        path = ((PathSupplier) getActivity()).getPath();
-        if (!path.isRoot()) {
-            path.resetPath();
+    private void initializeUI() {
+        initializeFab();
+        initializeQuickNote();
+        initializeBottomBar();
+
+        LinearLayout emptyView = getView().findViewById(R.id.notebook_emptyview);
+        if (getCurrentList().size() == 0) {
+            Log.i(Constants.LOG, "visible");
+            emptyView.setVisibility(View.VISIBLE);
+        } else {
+            Log.i(Constants.LOG, "gone");
+            emptyView.setVisibility(View.GONE);
+        }
+    }
+
+    private void initializeFab() {
+        if (addNotebookButton == null) addNotebookButton = getView().findViewById(R.id.notebookFab);;
+
+        addNotebookButton.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
+            @Override
+            public void onMenuItemClick(FloatingActionButton fab, TextView textView, int itemId) {
+                switch (itemId) {
+                    case Constants.FAB_MENU_NEW_BUCKET:
+                        mCreateBucketHelper.addBucket();
+                    case Constants.FAB_MENU_NEW_FOLDER:
+                        mCreateNotebookHelper.addNotebook(current_model);
+                        break;
+                    case Constants.FAB_MENU_NEW_NOTE:
+                        if (current_model != null) mCreateNoteHelper.addNote(current_model);
+                        break;
+                    case Constants.FAB_MENU_RENAME_BUCKET:
+                        if (current_model instanceof SingleRack) {
+                            renameModel();
+                        }
+                        break;
+                    case Constants.FAB_MENU_RENAME_FOLDER:
+                        if (current_model instanceof SingleNotebook) {
+                            renameModel();
+                        }
+                        break;
+                }
+            }
+        });
+    }
+
+    private void initializeQuickNote() {
+        EditText quickNoteEdit = getView().findViewById(R.id.quickNoteEdit);
+        if (quickNoteEdit != null) {
+            quickNoteEdit.clearFocus();
+            quickNoteEdit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
+                    MainActivity ma = getMainActivity();
+                    mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
+                }
+            });
+            quickNoteEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
+
+                    if (hasFocus) {
+                        MainActivity ma = getMainActivity();
+                        mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
+                    }
+                }
+            });
+        }
+    }
+
+    private void initializeBottomBar() {
+        View v = getView();
+
+        LinearLayout inputNote = v.findViewById(R.id.quickNoteInput);
+        TextView inputNoteText = v.findViewById(R.id.quickNoteEdit);
+        LinearLayout inputNoteMove = v.findViewById(R.id.noteMoveContainer);
+
+        final MainActivity ma = getMainActivity();
+
+        if ((current_model == null || current_model.isQuickNotes()) && !ma.isMovingNote()) {
+
+            inputNote.setVisibility(View.VISIBLE);
+            inputNoteText.setVisibility(View.VISIBLE);
+            inputNoteMove.setVisibility(View.GONE);
+
+            addNotebookButton.setVisibility(View.VISIBLE);
+            if (current_model != null && current_model.isQuickNotes()) {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 0, R.string.fab_new_quick_note).setIcon(R.drawable.ic_action_add);
+                addNotebookButton.setMenu(menu);
+            } else {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_BUCKET, 0, R.string.fab_new_bucket).setIcon(R.drawable.ic_action_add);
+                addNotebookButton.setMenu(menu);
+            }
+
+        } else if (ma.isMovingNote()) {
+            initializeMovingNoteUI();
+
+        } else if (current_model != null) {
+
+            inputNote.setVisibility(View.GONE);
+
+            if (getContext() == null) {
+                addNotebookButton.setVisibility(View.GONE);
+                return;
+            }
+
+            addNotebookButton.setVisibility(View.VISIBLE);
+            if (current_model instanceof SingleRack) {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_RENAME_BUCKET, 1, R.string.fab_rename_bucket).setIcon(R.drawable.ic_mode_edit_white_24dp);
+                addNotebookButton.setMenu(menu);
+
+            } else if (current_model.isQuickNotes()) {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 1, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
+                addNotebookButton.setMenu(menu);
+            } else {
+                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 3, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
+                menu.add(1, Constants.FAB_MENU_RENAME_FOLDER, 1, R.string.fab_rename_folder).setIcon(R.drawable.ic_mode_edit_white_24dp);
+                addNotebookButton.setMenu(menu);
+            }
+        }
+    }
+
+    private void initializeMovingNoteUI() {
+        View v = getView();
+
+        LinearLayout inputNote = v.findViewById(R.id.quickNoteInput);
+        TextView inputNoteText = v.findViewById(R.id.quickNoteEdit);
+        LinearLayout inputNoteMove = v.findViewById(R.id.noteMoveContainer);
+
+        final MainActivity ma = getMainActivity();
+
+        inputNote.setVisibility(View.VISIBLE);
+        inputNoteMove.setVisibility(View.VISIBLE);
+        inputNoteText.setVisibility(View.GONE);
+
+        ImageView undo_move = v.findViewById(R.id.undo_move);
+        TextView current_note_move = v.findViewById(R.id.current_note_move);
+        TextView move_note_button = v.findViewById(R.id.move_note_button);
+
+        undo_move.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ma.clearMovingNote();
+                initializeBottomBar();
+                reloadAdapter(false);
+            }
+        });
+
+        if (current_model != null && current_model.isFolder() && !ma.sameFolderAsMovingNote(current_model)) {
+            move_note_button.setAlpha(1.0f);
+            move_note_button.setText(R.string.move_note_here);
+            move_note_button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    SingleNote note = ma.getMovingNote();
+                    if (note.moveFile(current_model.getPath())) {
+                        ma.getMovingNoteFolder().removeContent(note);
+                        ma.clearMovingNote();
+                        addNewNoteToCurrent(note);
+                        initializeBottomBar();
+                    } else {
+                        Toast.makeText(getContext(), "Couldn't move note!", Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+        } else {
+            move_note_button.setAlpha(0.8f);
+            move_note_button.setOnClickListener(null);
+            move_note_button.setText(R.string.cant_move_here);
         }
 
-        refreshNotebooks(getCurrentList());
+        current_note_move.setText(ma.getMovingNote().getName());
     }
+
+    /*public void refreshNotebooks() {
+        if (getActivity() == null || getContext() == null) return;
+
+        refreshNotebooks(getCurrentList());
+    }*/
 
     private void refreshFolder() {
         if (current_model != null) {
@@ -196,8 +441,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
     }
 
     private RecyclerView.LayoutManager getLayoutManager(boolean staggered) {
-        if (getActivity() == null) return null;
-
         if (staggered) {
             if (adapter != null) adapter.setSpanCount(2);
             return new StaggeredGridLayoutManager(2, 1);
@@ -206,23 +449,10 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         return new StaggeredGridLayoutManager(1, 1);
     }
 
-    public void reloadLibrary(ArrayList<MainModel> items) {
-        library_list = items;
-        current_model = null;
-        history_list = new Stack<>();
-        refreshNotebooks(items);
-    }
-
     private void refreshNotebooks(ArrayList<MainModel> items) {
         View v = getView();
         if (v == null) return;
         if (getActivity() == null || getContext() == null) return;
-
-        if (current_model != null) {
-            getActivity().setTitle(current_model.getTitle());
-        } else {
-            getActivity().setTitle(R.string.title_library);
-        }
 
         for (MainModel m: items) {
             m.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
@@ -231,196 +461,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
                 }
             });
-        }
-
-        notebookList = v.findViewById(R.id.notebookview);
-
-        if (adapter == null) {
-
-            FlexibleAdapter.useTag("adpt");
-            adapter = new MainAdapter<>(items);
-            adapter.addListener(this);
-            adapter.setAnimationEntryStep(true);
-
-            adapter.setStickyHeaderElevation(5);
-            adapter.setDisplayHeadersAtStartUp(true);
-            adapter.setStickyHeaders(true);
-            /*adapter.setAnimationOnForwardScrolling(true);
-            adapter.setAnimationOnReverseScrolling(true);
-            adapter.setAnimationEntryStep(true);
-            adapter.setAnimationDuration(1000);*/
-
-            notebookList.setItemViewCacheSize(0);
-            notebookList.setLayoutManager(getLayoutManager(
-                    PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_staggered_layout", false))
-            );
-            notebookList.setAdapter(adapter);
-            notebookList.setHasFixedSize(true);
-
-            /*FlexibleItemDecoration mItemDecoration = new FlexibleItemDecoration(getActivity())
-                    .withOffset(3)
-                    .withTopEdge(true)
-                    .withBottomEdge(true);
-
-            notebookList.addItemDecoration(mItemDecoration);*/
-
-            mCreateBucketHelper = new CreateBucketHelper((MainActivity) getActivity());
-            mCreateNotebookHelper = new CreateNotebookHelper((MainActivity) getActivity());
-            mCreateNoteHelper = new CreateNoteHelper(this, path);
-
-            addNotebookButton = v.findViewById(R.id.notebookFab);
-            addNotebookButton.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
-                @Override
-                public void onMenuItemClick(FloatingActionButton fab, TextView textView, int itemId) {
-                    switch (itemId) {
-                        case Constants.FAB_MENU_NEW_BUCKET:
-                            mCreateBucketHelper.addBucket();
-                        case Constants.FAB_MENU_NEW_FOLDER:
-                            mCreateNotebookHelper.addNotebook(current_model);
-                            break;
-                        case Constants.FAB_MENU_NEW_NOTE:
-                            if (current_model != null) mCreateNoteHelper.addNote(current_model);
-                            break;
-                        case Constants.FAB_MENU_RENAME_BUCKET:
-                            if (current_model instanceof SingleRack) {
-                                renameModel();
-                            }
-                            break;
-                        case Constants.FAB_MENU_RENAME_FOLDER:
-                            if (current_model instanceof SingleNotebook) {
-                                renameModel();
-                            }
-                            break;
-                    }
-                }
-            });
-
-        } else {
-            adapter.updateDataSet(items);
-        }
-
-        EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
-        if (quickNoteEdit != null) {
-            quickNoteEdit.clearFocus();
-            quickNoteEdit.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
-                    MainActivity ma = (MainActivity) getActivity();
-                    mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
-                }
-            });
-            quickNoteEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
-
-                    if (hasFocus) {
-                        MainActivity ma = (MainActivity) getActivity();
-                        mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
-                    }
-                }
-            });
-        }
-
-        LinearLayout emptyView = v.findViewById(R.id.notebook_emptyview);
-        if (items.size() == 0) {
-            emptyView.setVisibility(View.VISIBLE);
-        } else {
-            emptyView.setVisibility(View.GONE);
-        }
-
-        LinearLayout inputNote = v.findViewById(R.id.quickNoteInput);
-        TextView inputNoteText = v.findViewById(R.id.quickNoteEdit);
-        LinearLayout inputNoteMove = v.findViewById(R.id.noteMoveContainer);
-
-        if ((current_model == null || current_model.isQuickNotes()) && !adapter.isMovingNote()) {
-
-            inputNote.setVisibility(View.VISIBLE);
-            inputNoteText.setVisibility(View.VISIBLE);
-            inputNoteMove.setVisibility(View.GONE);
-
-            addNotebookButton.setVisibility(View.VISIBLE);
-            if (current_model != null && current_model.isQuickNotes()) {
-                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 0, R.string.fab_new_quick_note).setIcon(R.drawable.ic_action_add);
-                addNotebookButton.setMenu(menu);
-            } else {
-                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_BUCKET, 0, R.string.fab_new_bucket).setIcon(R.drawable.ic_action_add);
-                addNotebookButton.setMenu(menu);
-            }
-
-        } else if (adapter.isMovingNote()) {
-
-            //addNotebookButton.setVisibility(View.GONE);
-            inputNote.setVisibility(View.VISIBLE);
-            inputNoteMove.setVisibility(View.VISIBLE);
-            inputNoteText.setVisibility(View.GONE);
-
-            ImageView undo_move = v.findViewById(R.id.undo_move);
-            TextView current_note_move = v.findViewById(R.id.current_note_move);
-            TextView move_note_button = v.findViewById(R.id.move_note_button);
-
-            undo_move.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    adapter.clearMovingNote();
-                    refreshNotebooks();
-                }
-            });
-
-            if (current_model != null && current_model.isFolder() && !adapter.sameFolderAsMovingNote(current_model)) {
-                move_note_button.setAlpha(1.0f);
-                move_note_button.setText(R.string.move_note_here);
-                move_note_button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        SingleNote note = adapter.getMovingNote();
-                        if (note.moveFile(current_model.getPath())) {
-                            adapter.getMovingNoteFolder().removeContent(note);
-                            adapter.clearMovingNote();
-                            addNewNoteToCurrent(note);
-                        } else {
-                            Toast.makeText(getContext(), "Couldn't move note!", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
-            } else {
-                move_note_button.setAlpha(0.8f);
-                move_note_button.setOnClickListener(null);
-                move_note_button.setText(R.string.cant_move_here);
-            }
-
-            current_note_move.setText(adapter.getMovingNote().getName());
-
-        } else if (current_model != null) {
-
-            inputNote.setVisibility(View.GONE);
-
-            if (getContext() == null) {
-                addNotebookButton.setVisibility(View.GONE);
-                return;
-            }
-
-            addNotebookButton.setVisibility(View.VISIBLE);
-            if (current_model instanceof SingleRack) {
-                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
-                menu.add(1, Constants.FAB_MENU_RENAME_BUCKET, 1, R.string.fab_rename_bucket).setIcon(R.drawable.ic_mode_edit_white_24dp);
-                addNotebookButton.setMenu(menu);
-
-            } else if (current_model.isQuickNotes()) {
-                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 1, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
-                addNotebookButton.setMenu(menu);
-            } else {
-                FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
-                menu.add(1, Constants.FAB_MENU_NEW_NOTE, 3, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
-                menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 2, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
-                menu.add(1, Constants.FAB_MENU_RENAME_FOLDER, 1, R.string.fab_rename_folder).setIcon(R.drawable.ic_mode_edit_white_24dp);
-                addNotebookButton.setMenu(menu);
-            }
         }
     }
 
@@ -433,7 +473,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         dialog.setDialogListener(new CreateNotebookDialog.CreateNotebookDialogListener() {
             @Override
             public void onDialogPositiveClick(CreateNotebookDialog dialog, String text) {
-                MainActivity ma = (MainActivity) getActivity();
+                MainActivity ma = getMainActivity();
                 if (ma == null) return;
 
                 boolean renamed = false;
@@ -448,7 +488,8 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 }
 
                 if (renamed) {
-                    refreshNotebooks();
+                    initializeTitle();
+                    reloadAdapter(false);
                 } else {
                     Toast.makeText(getContext(), "Couldn't rename folder!", Toast.LENGTH_LONG).show();
                 }
@@ -463,69 +504,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         dialog.show(getActivity().getSupportFragmentManager(), "CreateNotebookDialogFragment");
     }
 
-    private void moveInto(MainModel model) {
-        if (current_model != null) {
-            if (history_list == null) history_list = new Stack<>();
-            history_list.push(current_model);
-        }
-
-        current_model = model;
-        refreshNotebooks(getCurrentList());
-    }
-
-    public boolean moveBack() {
-        if (history_list != null && history_list.size() > 0) {
-            current_model = history_list.pop();
-            refreshNotebooks(getCurrentList());
-            return true;
-        } else if (current_model != null) {
-            current_model = null;
-            refreshNotebooks(getCurrentList());
-            return true;
-        }
-
-        return false;
-    }
-
-    public void openBucket(MainModel bucket) {
-        current_model = null;
-        if (history_list == null) history_list = new Stack<>();
-        history_list.clear();
-
-        if (bucket_queue == null) bucket_queue = new LinkedList<>();
-        bucket_queue.add(bucket);
-
-        if (bucket_queue.size() > 2) {
-            MainModel old_bucket = bucket_queue.removeFirst();
-            if (!old_bucket.getPath().equals(bucket.getPath())) {
-                old_bucket.unloadNotes(new MainModel.OnModelLoadedListener() {
-                    @Override
-                    public void ModelLoaded() {
-                        //Log.i("log", "notes unloaded!");
-                    }
-                });
-            }
-        }
-
-        if (bucket.isQuickNotes()) {
-            MainModel quick_notes_folder = bucket.getFirstFolder();
-            if (quick_notes_folder != null) {
-                history_list.push(current_model);
-                current_model = quick_notes_folder;
-                ((SingleNotebook) quick_notes_folder).setQuickNotesFolder();
-                quick_notes_folder.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
-                    @Override
-                    public void ModelLoaded() {
-                        refreshNotebooks(getCurrentList());
-                    }
-                });
-                return;
-            }
-        }
-
-        moveInto(bucket);
-    }
-
     public boolean addNewNoteToCurrent(SingleNote new_note) {
         if (current_model == null) return false;
 
@@ -534,7 +512,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             public void NoteLoaded(SingleNote note) {
                 current_model.addContent(note);
                 current_model.sortContents(getContext());
-                refreshNotebooks();
+                reloadAdapter(true);
             }
         });
         return true;
@@ -542,16 +520,15 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
     @Override
     public boolean onItemClick(View view, int position) {
-        MainActivity ma = (MainActivity) getActivity();
-        if (adapter.getItem(position) instanceof MainModel) {
+        MainActivity ma = getMainActivity();
+        if (adapter.getItem(position) != null) {
             MainModel notebook = adapter.getItem(position);
 
             if (ma == null || notebook == null) return false;
 
-            if (notebook instanceof SingleRack) {
-                openBucket(notebook);
-            } else if (notebook instanceof SingleNotebook) {
-                moveInto(notebook);
+            if (notebook instanceof SingleRack || notebook instanceof SingleNotebook) {
+                ma.pushFragment(notebook);
+
             } else if (notebook.getType() == MainModel.TYPE_MARKDOWN_NOTE) {
                 Intent intent = new Intent(ma, ViewNote.class);
                 intent.putExtra("note", notebook.toBundle());
@@ -580,14 +557,37 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                                 case R.id.note_delete:
                                     deleteNote((SingleNote) notebook);
                                     break;
+                                case R.id.note_edit:
+                                    SingleNote note = (SingleNote) notebook;
+                                    Intent intent = new Intent(getActivity(), EditorActivity.class);
+                                    intent.putExtra("note", note.toBundle());
+                                    intent.putExtra("root", path.getRootPath());
+                                    startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
+                                    break;
                                 case R.id.note_move:
-                                    adapter.setMovingNote((SingleNote) notebook, current_model);
-                                    refreshNotebooks();
+                                    getMainActivity().setMovingNote((SingleNote) notebook, current_model);
+                                    initializeMovingNoteUI();
+                                    reloadAdapter(false);
                                     break;
                             }
                             return true;
                         }
                     }).show();
+            }
+        }
+    }
+
+    public MainActivity getMainActivity() {
+        return (MainActivity) getActivity();
+    }
+
+    public void reloadAdapter(boolean refresh_list) {
+        if (adapter != null) {
+            if (refresh_list) {
+                adapter.updateDataSet(getCurrentList());
+                //loadFullList();
+            } else {
+                adapter.notifyDataSetChanged();
             }
         }
     }
@@ -606,7 +606,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                         }
                         current_model.removeContent(note);
                         current_model.sortContents(getContext());
-                        refreshNotebooks();
+                        reloadAdapter(true);
                     }
                 })
                 .setNegativeButton(R.string.dialog_no, null)
@@ -626,7 +626,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         } else if (requestCode == Constants.NOTE_PREVIEW_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 if (resultIntent.getBooleanExtra("edit", false)) {
-                    MainActivity ma = (MainActivity) getActivity();
+                    MainActivity ma = getMainActivity();
                     if (ma == null) return;
 
                     Intent intent = new Intent(ma, EditorActivity.class);
