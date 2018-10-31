@@ -1,6 +1,5 @@
 package com.neromatt.epiphany.model.Adapters;
 
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -8,7 +7,6 @@ import com.neromatt.epiphany.ui.R;
 
 import java.util.List;
 
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.AbstractHeaderItem;
 import eu.davidea.viewholders.FlexibleViewHolder;
@@ -41,16 +39,8 @@ public class SimpleHeader extends AbstractHeaderItem<SimpleHeader.HeaderViewHold
 
     @Override
     public void bindViewHolder(FlexibleAdapter adapter, HeaderViewHolder holder, int position, List payloads) {
-        if (payloads.size() > 0) {
-            Log.d(this.getClass().getSimpleName(), "HeaderItem Payload " + payloads);
-        }
         holder.setFullSpan(true);
         holder.mTitle.setText(getTitle());
-
-        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-            StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
-            layoutParams.setFullSpan(true);
-        }
     }
 
     @Override

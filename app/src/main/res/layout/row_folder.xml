@@ -16,15 +16,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="@drawable/border_bottom_row"
-            android:paddingTop="20dp"
-            android:paddingBottom="21dp"
             android:paddingStart="10dp"
-            android:paddingEnd="10dp">
+            android:paddingEnd="10dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="22dp">
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="start|top"
+                android:layout_gravity="start|center"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_folder_white_24dp"/>
 
@@ -38,15 +38,77 @@
                 android:layout_gravity="center"
                 android:textColor="@color/textColor"/>
 
-            <TextView
-                android:textSize="15sp"
-                android:id="@+id/note_count"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/notebook_count_text"
-                android:textColor="@android:color/holo_green_dark"
-                android:textAppearance="?android:attr/textAppearanceSmall"/>
+                android:orientation="horizontal"
+                android:layout_gravity="center|start">
+
+                <LinearLayout
+                    android:id="@+id/folder_count_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:orientation="horizontal"
+                    android:padding="1dp"
+                    android:alpha="0.8"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/tag_border">
+
+                    <ImageView
+                        android:layout_width="14sp"
+                        android:layout_height="14sp"
+                        android:layout_gravity="start|center"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:src="@drawable/ic_folder_white_24dp"/>
+
+                    <TextView
+                        android:id="@+id/folder_count"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="@string/notebook_count_text"
+                        android:textColor="@color/textColor"
+                        android:layout_marginEnd="5dp"
+                        android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/note_count_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:orientation="horizontal"
+                    android:padding="1dp"
+                    android:alpha="0.8"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/tag_border">
+
+                    <ImageView
+                        android:layout_width="14sp"
+                        android:layout_height="14sp"
+                        android:layout_gravity="start|center"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:src="@drawable/ic_file_white_24dp"/>
+
+                    <TextView
+                        android:id="@+id/note_count"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="@string/notebook_count_text"
+                        android:textColor="@color/textColor"
+                        android:layout_marginEnd="5dp"
+                        android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
 
         </LinearLayout>
 

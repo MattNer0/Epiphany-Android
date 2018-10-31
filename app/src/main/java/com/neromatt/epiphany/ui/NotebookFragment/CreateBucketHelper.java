@@ -14,7 +14,7 @@ public class CreateBucketHelper implements CreateNotebookDialog.CreateNotebookDi
         this.mCallbackFragment = new WeakReference<>(fm);
     }
 
-    public void addBucket() {
+    void addBucket() {
         if (mCallbackActivity == null || mCallbackActivity.get() == null) return;
         CreateNotebookDialog dialog = new CreateNotebookDialog();
         dialog.setDialogListener(this);

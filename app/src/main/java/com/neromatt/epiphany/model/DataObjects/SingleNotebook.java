@@ -2,6 +2,7 @@ package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.google.gson.JsonObject;
 import com.neromatt.epiphany.Constants;
@@ -25,7 +26,7 @@ public class SingleNotebook extends MainModel {
     private boolean isQuickNotes = false;
 
     public SingleNotebook(String name, String path, JSONObject data) {
-        super(headerFolders);
+        super();
 
         this.path = path;
         this.name = name;
@@ -39,26 +40,26 @@ public class SingleNotebook extends MainModel {
             Log.e("err", "json "+data.toString());
             this.order = 0;
         }
-        this.modelType = MainModel.TYPE_FOLDER;
+        this._model_type = MainModel.TYPE_FOLDER;
     }
 
     public SingleNotebook(Bundle args) {
-        super(args, headerFolders);
+        super(args);
 
         this.path = args.getString("path", "");
         this.name = args.getString("name", "");
         this.order = args.getInt("order", 0);
-        this.modelType = MainModel.TYPE_FOLDER;
+        this._model_type = MainModel.TYPE_FOLDER;
         this.isQuickNotes = args.getBoolean("quickNotes", false);
     }
 
     public SingleNotebook(JsonObject args) {
-        super(args, headerFolders);
+        super(args);
 
         this.path = args.get("path").getAsString();
         this.name = args.get("name").getAsString();
         this.order = args.get("order").getAsInt();
-        this.modelType = MainModel.TYPE_FOLDER;
+        this._model_type = MainModel.TYPE_FOLDER;
         this.isQuickNotes = args.has("quickNotes");
     }
 
@@ -99,10 +100,19 @@ public class SingleNotebook extends MainModel {
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         holder.mNotebookTitle.setText(getName());
         int noteCount = getNotesCount();
+        int contentsCount = getContentCount();
         if (noteCount > 0) {
             holder.mNoteCount.setText(String.valueOf(noteCount));
+            holder.mNoteCountContainer.setVisibility(View.VISIBLE);
         } else {
-            holder.mNoteCount.setText("");
+            holder.mNoteCountContainer.setVisibility(View.GONE);
+        }
+
+        if (contentsCount-noteCount > 0) {
+            holder.mFolderCount.setText(String.valueOf(contentsCount-noteCount));
+            holder.mFolderCountContainer.setVisibility(View.VISIBLE);
+        } else {
+            holder.mFolderCountContainer.setVisibility(View.GONE);
         }
 
         if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
@@ -114,6 +124,23 @@ public class SingleNotebook extends MainModel {
     @Override
     public boolean isQuickNotes() {
         return isQuickNotes;
+    }
+
+    @Override
+    public boolean delete() {
+        File dir = new File(path);
+        if (dir.exists() && dir.isDirectory()) {
+            for (File f : dir.listFiles()) {
+                if (f.isDirectory()) return false;
+                String filename = f.getName();
+                String extension = filename.substring(filename.lastIndexOf('.') + 1);
+                if (extension.equals(".md") || extension.equals(".txt")) return false;
+                if (!f.delete()) return false;
+            }
+            return dir.delete();
+        }
+
+        return false;
     }
 
     public void setQuickNotesFolder() {

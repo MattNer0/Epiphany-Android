@@ -20,7 +20,7 @@ public class CreateNoteHelper {
     private WeakReference<FragmentActivity> currentActivity;
     private Path path;
 
-    public CreateNoteHelper(Fragment fragment, Path path) {
+    CreateNoteHelper(Fragment fragment, Path path) {
         this.currentActivity = new WeakReference<>(fragment.getActivity());
         this.path = path;
     }
@@ -34,7 +34,7 @@ public class CreateNoteHelper {
         return this.currentActivity.get();
     }
 
-    public boolean addQuickNote(String initial_text, OnQuickPathListener mOnQuickPathListener) {
+    boolean addQuickNote(String initial_text, OnQuickPathListener mOnQuickPathListener) {
         if (getActivity() == null) return false;
         Bundle quick_bundle = path.getQuickNotesPath();
 
@@ -100,9 +100,8 @@ public class CreateNoteHelper {
         return false;
     }
 
-    public void addNote(MainModel current_folder) {
+    void addNote(String folder_path) {
         if (getActivity() == null) return;
-        String folder_path = current_folder.getPath();
         Intent intent = new Intent(getActivity(), EditorActivity.class);
         intent.putExtra("folder", folder_path);
         intent.putExtra("root", path.getRootPath());

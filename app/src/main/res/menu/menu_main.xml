@@ -4,12 +4,20 @@
     tools:context="com.neromatt.epiphany.ui.MainActivity">
 
     <item
+        android:id="@+id/action_search"
+        android:title="@string/action_search"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        android:icon="@drawable/ic_search_white_24dp"
+        app:showAsAction="always|collapseActionView"
+        android:orderInCategory="1"/>
+
+    <item
         android:id="@+id/action_list_layout"
         android:title="@string/action_list"
         android:visible="false"
         android:icon="@drawable/ic_view_stream_white_24dp"
         app:showAsAction="always"
-        android:orderInCategory="1"/>
+        android:orderInCategory="2"/>
 
     <item
         android:id="@+id/action_staggered_layout"
@@ -17,7 +25,7 @@
         android:visible="false"
         android:icon="@drawable/ic_dashboard_white_24dp"
         app:showAsAction="always"
-        android:orderInCategory="2"/>
+        android:orderInCategory="3"/>
 
     <item
         android:id="@+id/action_quick_notes"

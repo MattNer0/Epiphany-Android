@@ -17,7 +17,7 @@ public class CreateNotebookDialog extends DialogFragment {
     private boolean dialog_open = false;
     private int positive_button_label = R.string.create_notebook;
 
-    CreateNotebookDialogListener mListener;
+    private CreateNotebookDialogListener mListener;
 
     void setDialogListener(CreateNotebookDialogListener mListener){
         this.mListener = mListener;

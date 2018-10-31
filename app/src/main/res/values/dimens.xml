@@ -7,4 +7,9 @@
          https://developer.android.com/design/patterns/navigation-drawer.html -->
 
     <dimen name="quick_note_input_height">45dp</dimen>
+
+    <dimen name="app_bar_height">56dp</dimen>
+    <dimen name="app_bar_padding">16dp</dimen>
+    <dimen name="app_bar_elevation">6dp</dimen>
+    <dimen name="app_bar_fontsize">20sp</dimen>
 </resources>

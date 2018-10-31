@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.Path;
 import com.yydcdut.markdown.callback.OnLinkClickCallback;
@@ -29,6 +30,8 @@ import androidx.appcompat.widget.Toolbar;
 
 public class EditorActivity extends AppCompatActivity {
 
+    private Database db;
+
     private RxMDEditText editTextField;
     private SingleNote note = null;
     private TextUndoRedo mTextUndoRedo;
@@ -43,6 +46,8 @@ public class EditorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_note);
         setupToolBar();
+
+        db = new Database(getApplicationContext());
 
         editTextField = findViewById(R.id.edit_text);
         editTextField.setText("");
@@ -80,6 +85,8 @@ public class EditorActivity extends AppCompatActivity {
             if (note_body != null && !note_body.isEmpty()) {
                 note.updateBody(note_body);
                 editTextField.setText(note_body);
+            } else {
+                editTextField.setText("# \n\n");
             }
         }
 
@@ -87,7 +94,7 @@ public class EditorActivity extends AppCompatActivity {
         if (notebundle != null) {
             this.setTitle(R.string.title_edit_note);
             if (note.doesExist()) {
-                note.refreshContent(new SingleNote.OnNoteLoadedListener() {
+                note.refreshContent(db, new SingleNote.OnNoteLoadedListener() {
                     @Override
                     public void NoteLoaded(SingleNote note) {
                         String noteText = note.getMarkdown();
@@ -274,9 +281,10 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void finishEditor(boolean modified) {
+        onBackPressed = true;
         Intent returnIntent = new Intent();
         returnIntent.putExtra("modified", modified);
-        returnIntent.putExtra("note", note.toBundle());
+        returnIntent.putExtra("note", note.toLightBundle());
         setResult(Activity.RESULT_OK, returnIntent);
         finish();
     }
@@ -313,13 +321,11 @@ public class EditorActivity extends AppCompatActivity {
                     .setNegativeButton(R.string.dialog_no, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            onBackPressed = true;
                             finishEditor(noteModified);
                         }
                     })
                     .show();
         } else {
-            onBackPressed = true;
             //super.onBackPressed();
             finishEditor(noteModified);
         }

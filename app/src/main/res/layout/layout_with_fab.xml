@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.github.kobakei.materialfabspeeddial.FabSpeedDial
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/notebookFab"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="bottom|end"
+    app:fab_fabBackgroundColor="@color/colorPrimaryDark"
+    app:fab_miniFabBackgroundColor="@color/textColor"
+    app:fab_fabDrawableTint="@color/textColor"
+    app:fab_miniFabDrawableTint="@color/colorPrimaryDark"
+    app:fab_miniFabTextColor="@color/colorPrimaryDark"
+    app:fab_miniFabTextBackground="@color/textColor" />

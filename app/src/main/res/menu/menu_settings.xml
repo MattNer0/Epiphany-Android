@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.neromatt.epiphany.ui.MainActivity">
+
+
+    <item
+        android:id="@+id/action_clean_db"
+        android:title="@string/action_clean_database"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <!--item
+        android:id="@+id/action_reload"
+        android:title="@string/action_reload"
+        android:orderInCategory="101"
+        app:showAsAction="never" /-->
+</menu>

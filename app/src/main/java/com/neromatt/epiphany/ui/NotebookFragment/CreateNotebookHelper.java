@@ -15,7 +15,7 @@ public class CreateNotebookHelper {
         this.mCallbackFragment = new WeakReference<>(fm);
     }
 
-    public void addNotebook(final MainModel current_folder) {
+    void addNotebook(final MainModel current_folder) {
         if (mCallbackActivity == null || mCallbackActivity.get() == null) return;
         CreateNotebookDialog dialog = new CreateNotebookDialog();
         dialog.setDialogListener(new CreateNotebookDialog.CreateNotebookDialogListener() {

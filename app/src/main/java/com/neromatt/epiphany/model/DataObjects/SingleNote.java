@@ -1,6 +1,8 @@
 package com.neromatt.epiphany.model.DataObjects;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -8,8 +10,11 @@ import android.view.View;
 
 import com.google.gson.JsonObject;
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.Path;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,79 +60,117 @@ public class SingleNote extends MainModel {
 
     private OnNoteLoadedListener mOnNoteLoadedListener;
 
-    private WeakReference<MyViewHolder> viewHolder;
+    //private WeakReference<MyViewHolder> viewHolder;
 
     public SingleNote(String path, String filename) {
-        super(headerNotes);
+        super();
+
+        this._model_type = MainModel.TYPE_MARKDOWN_NOTE;
 
         this.path = path;
         this.filename = filename;
-        this.modelType = MainModel.TYPE_MARKDOWN_NOTE;
         this.metadata = new Bundle();
         this.noteLoaded = false;
         this.noteModified = false;
         this.newFilename = false;
         this.oldFilename = null;
+
+        /*if (doesExist()) {
+            Bundle timestamp = readTimestampFile(getFullPath());
+            try {
+                this.updatedAt = parseDate(timestamp.getString(Constants.METATAG_UPDATED, ""));
+                this.createdAt = parseDate(timestamp.getString(Constants.METATAG_CREATED, ""));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }*/
     }
 
     public SingleNote(Bundle args) {
-        super(args, headerNotes);
+        super(args);
         this.noteLoaded = args.getBoolean("noteLoaded");
         this.noteModified = false;
         this.newFilename = false;
         this.oldFilename = null;
 
-        this.modelType = MainModel.TYPE_MARKDOWN_NOTE;
-        this.path = args.getString("path", "");
-        this.filename = args.getString("filename", "");
+        this._model_type = MainModel.TYPE_MARKDOWN_NOTE;
+        this.path = args.getString(Constants.KEY_NOTE_PATH, "");
+        this.filename = args.getString(Constants.KEY_NOTE_FILENAME, "");
+
+        if (args.containsKey(Constants.METATAG_UPDATED)) {
+            this.updatedAt = new Date(args.getLong(Constants.METATAG_UPDATED, 0));
+        }
+
+        if (args.containsKey(Constants.METATAG_CREATED)) {
+            this.createdAt = new Date(args.getLong(Constants.METATAG_CREATED, 0));
+        }
 
         if (this.noteLoaded) {
-            this.summary = args.getString("summary", "");
-            this.title = args.getString("title", "");
-            this.body = args.getString("body", "");
-            this.metadata = args.getBundle("metadata");
+            this.summary = args.getString(Constants.KEY_NOTE_SUMMARY, "");
+            this.title = args.getString(Constants.KEY_NOTE_TITLE, "");
+            this.body = args.getString(Constants.KEY_NOTE_BODY, "");
+            this.metadata = args.getBundle(Constants.KEY_NOTE_METADATA);
             if (this.metadata == null) this.metadata = new Bundle();
-
-            this.updatedAt = new Date(args.getLong("modifiedDate", 0));
-            this.createdAt = new Date(args.getLong("createdDate", 0));
         } else {
             this.metadata = new Bundle();
         }
     }
 
     public SingleNote(JsonObject args) {
-        super(args, headerNotes);
+        super(args);
 
         this.noteLoaded = false;
         this.noteModified = false;
         this.newFilename = false;
         this.oldFilename = null;
 
-        this.modelType = MainModel.TYPE_MARKDOWN_NOTE;
-        this.path = args.get("path").getAsString();
-        this.filename = args.get("filename").getAsString();
+        this._model_type = MainModel.TYPE_MARKDOWN_NOTE;
+        this.path = args.get(Constants.KEY_NOTE_PATH).getAsString();
+        this.filename = args.get(Constants.KEY_NOTE_FILENAME).getAsString();
         this.metadata = new Bundle();
+
+        if (args.has(Constants.KEY_NOTE_SUMMARY)) {
+            this.summary = args.get(Constants.KEY_NOTE_SUMMARY).getAsString();
+        }
+
+        if (args.has(Constants.METATAG_UPDATED) && args.has(Constants.METATAG_CREATED)) {
+            try {
+                this.updatedAt = parseDate(args.get(Constants.METATAG_UPDATED).getAsString());
+                this.createdAt = parseDate(args.get(Constants.METATAG_CREATED).getAsString());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public boolean shouldNotifyChange(IFlexible newItem) {
+        SingleNote singleNote = (SingleNote) newItem;
+        return noteLoaded != singleNote.wasLoaded() || !equals(singleNote);
+    }
+
+    @Override
+    public boolean equals(Object inObject) {
+        if (inObject instanceof SingleNote) {
+            SingleNote inItem = (SingleNote) inObject;
+
+            return this.hashCode() == inItem.hashCode() && this.getLastModifiedDate().equals(inItem.getLastModifiedDate());
+        }
+        return false;
     }
 
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
-        viewHolder = new WeakReference<>(holder);
+        //viewHolder = new WeakReference<>(holder);
         holder.mNotebookTitle.setText(getName());
-        if (summary != null) {
-            if (summary.isEmpty()) {
-                holder.mNoteSummary.setVisibility(View.GONE);
-            } else {
-                holder.mNoteSummary.setVisibility(View.VISIBLE);
-                holder.mNoteSummary.setText(summary);
-            }
+        if (summary == null || summary.isEmpty()) {
+            holder.mNoteSummary.setVisibility(View.GONE);
+        } else {
+            holder.mNoteSummary.setVisibility(View.VISIBLE);
+            holder.mNoteSummary.setText(summary);
         }
 
         holder.itemView.setAlpha(1.0f);
-        /*if (wasLoaded()) {
-            holder.itemView.setVisibility(View.VISIBLE);
-        } else {
-            holder.itemView.setVisibility(View.GONE);
-        }*/
 
         if (adapter instanceof MainAdapter) {
             MainAdapter ma = (MainAdapter) adapter;
@@ -141,21 +186,47 @@ public class SingleNote extends MainModel {
         }
     }
 
-    public void refreshContent() {
-        refreshContent(null);
-    }
-
-    public void refreshContent(OnNoteLoadedListener mOnNoteLoadedListener) {
+    public void refreshContent(Database db, OnNoteLoadedListener noteLoadedCallback) {
         this.title="";
         this.summary="";
         this.updatedAt = new Date();
         this.createdAt = new Date();
         this.metadata = new Bundle();
 
-        this.mOnNoteLoadedListener = mOnNoteLoadedListener;
-
-        LoadNoteTask task = new LoadNoteTask(this);
+        LoadNoteTask task = new LoadNoteTask(this, db, true, noteLoadedCallback);
         task.execute(getFullPath());
+    }
+
+    public void refreshFromDB(Database db, OnNoteLoadedListener noteLoadedCallback) {
+        this.title="";
+        this.summary="";
+        this.updatedAt = new Date();
+        this.createdAt = new Date();
+        this.metadata = new Bundle();
+
+        LoadNoteTask task = new LoadNoteTask(this, db, false, noteLoadedCallback);
+        task.execute(getFullPath());
+    }
+
+    public void searchNote(final String query, final OnNoteSearchedListener noteSearchedCallback) {
+        if (wasLoaded()) {
+            SearchNoteBody(query, noteSearchedCallback);
+        } else {
+            refreshContent(null, new OnNoteLoadedListener() {
+                @Override
+                public void NoteLoaded(SingleNote note) {
+                    note.SearchNoteBody(query, noteSearchedCallback);
+                }
+            });
+        }
+    }
+
+    private void SearchNoteBody(String query, OnNoteSearchedListener noteSearchedCallback) {
+        if (body.contains(query)) {
+            noteSearchedCallback.NoteSearched(this, true);
+        } else {
+            noteSearchedCallback.NoteSearched(this, false);
+        }
     }
 
     public void unloadNote() {
@@ -194,7 +265,100 @@ public class SingleNote extends MainModel {
     @Override
     public ArrayList<MainModel> getContent() { return null; }
 
-    private static Bundle parseMetadata(String file_body) {
+    /*private static Bundle readTimestampFile(String full_path) {
+        File file = new File(full_path);
+        Bundle data = new Bundle();
+        String modified;
+        String created;
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                modified = formatDate(new Date(attr.lastModifiedTime().toMillis()));
+                created = formatDate(new Date(attr.creationTime().toMillis()));
+                data.putString(Constants.METATAG_UPDATED, modified);
+                data.putString(Constants.METATAG_CREATED, created);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            modified = formatDate(new Date(file.lastModified()));
+            data.putString(Constants.METATAG_UPDATED, modified);
+            data.putString(Constants.METATAG_CREATED, modified);
+        }
+
+        return data;
+    }*/
+
+    private static Bundle readNoteFile(String full_path) {
+        File file = new File(full_path);
+        StringBuilder text = new StringBuilder();
+        StringBuilder summary = new StringBuilder();
+        Bundle data = new Bundle();
+        Bundle metadata = new Bundle();
+
+        boolean metadata_start = false;
+        boolean metadata_end = false;
+        boolean title_found = false;
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                if (!metadata_end && line.matches("^[+-]{3,}$")) {
+                    if (metadata_start) metadata_end = true;
+                    metadata_start = true;
+                } else if (metadata_start && !metadata_end) {
+                    if (line.isEmpty()) continue;
+                    String regex = "^([a-z]+)\\s?[:=]\\s+['\"]?([\\w\\W\\s]+?)['\"]?\\s*$";
+                    Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+                    Matcher matcher = pattern.matcher(line);
+
+                    if (matcher.find()) {
+                        String metaKey = matcher.group(1);
+                        String metaValue = matcher.group(2).trim();
+                        metadata.putString(metaKey, metaValue);
+                    }
+
+                } else {
+                    if (line.startsWith("#") && !title_found) {
+                        String title = line.replaceFirst("^#+\\s*", "");
+                        if (!title.isEmpty()) {
+                            data.putString(Constants.KEY_NOTE_TITLE, title);
+                            title_found = true;
+                        }
+                    } else if (title_found && summary.length() < 220 && !line.isEmpty()) {
+                        String summary_line = line.replaceAll("[*_#]+", "").replaceAll("\n\\s+", "\n").trim();
+                        if (!summary_line.isEmpty()) {
+                            summary.append(summary_line);
+                            summary.append("\n");
+                        }
+                    }
+                    text.append(line);
+                    text.append("\n");
+                }
+            }
+            br.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        data.putBundle(Constants.KEY_NOTE_METADATA, metadata);
+        data.putString(Constants.KEY_NOTE_BODY, text.toString().trim());
+        data.putString(Constants.KEY_NOTE_SUMMARY, summary.toString().trim());
+
+        if (!title_found) {
+            if (text.length() > 220) {
+                data.putString(Constants.KEY_NOTE_SUMMARY, text.substring(0, 220));
+            } else {
+                data.putString(Constants.KEY_NOTE_SUMMARY, text.toString());
+            }
+        }
+        return data;
+    }
+
+    /*private static Bundle parseMetadata(String file_body) {
         Bundle result = new Bundle();
         Bundle metadata = new Bundle();
 
@@ -217,10 +381,10 @@ public class SingleNote extends MainModel {
         }
 
         result.putString("body", matcher.replaceAll(""));
-        result.putBundle("metadata", metadata);
+        //result.putBundle( metadata);
 
         return result;
-    }
+    }*/
 
     private static Bundle parseTitle(String note_body) {
         String[] lines = note_body.split("\n");
@@ -228,10 +392,10 @@ public class SingleNote extends MainModel {
             String line = lines[i].trim();
             if (!line.isEmpty() && line.startsWith("#")) {
                 Bundle ret = new Bundle();
-                ret.putString("title", line.replaceAll("^#+\\s*", ""));
+                ret.putString(Constants.KEY_NOTE_TITLE, line.replaceAll("^#+\\s*", ""));
                 List<String> one = Arrays.asList(lines).subList(0, i);
                 List<String> two = Arrays.asList(lines).subList(i+1, lines.length);
-                ret.putString("body", TextUtils.join("\n", one)+"\n"+TextUtils.join("\n", two));
+                ret.putString(Constants.KEY_NOTE_BODY, TextUtils.join("\n", one)+"\n"+TextUtils.join("\n", two));
                 return ret;
             }
         }
@@ -239,30 +403,25 @@ public class SingleNote extends MainModel {
         return new Bundle();
     }
 
-    private static String readNoteFile(String full_path) {
-        File file = new File(full_path);
-        StringBuilder text = new StringBuilder();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                text.append(line);
-                text.append("\n");
+    private static String parseSummary(String body) {
+        String clean_body = body.replaceAll("[*_#]+", "").replaceAll("\n\\s+", "\n").trim();
+        String[] lines = clean_body.split("\\n");
+        StringBuilder summary = new StringBuilder();
+        for(String line: lines) {
+            summary.append(line);
+            if (summary.length() > 220) {
+                break;
             }
-            br.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (!line.isEmpty()) summary.append("\n");
         }
-        return text.toString();
+
+        return summary.toString().trim();
     }
 
     @Override
     public String getName() {
         if (this.title == null || this.title.isEmpty()) {
-            return this.filename;
+            return getFileNameNoExtension();
         }
         return this.title;
     }
@@ -283,9 +442,9 @@ public class SingleNote extends MainModel {
         }
 
         Bundle title_parse = parseTitle(new_body);
-        String str_title = title_parse.getString("title", "");
+        String str_title = title_parse.getString(Constants.KEY_NOTE_TITLE, "");
 
-        summary = parseSummary(title_parse.getString("body", ""));
+        summary = parseSummary(title_parse.getString(Constants.KEY_NOTE_BODY, ""));
 
         if (title == null || !title.equals(str_title)) {
             title = str_title;
@@ -321,6 +480,7 @@ public class SingleNote extends MainModel {
         return this.newFilename;
     }
 
+    @Override
     public boolean delete() {
         if (oldFilename != null && !oldFilename.isEmpty()) {
             File old_file = new File(getPath()+"/"+oldFilename);
@@ -366,12 +526,8 @@ public class SingleNote extends MainModel {
             this.path = outputPath;
             return true;
 
-        } catch (FileNotFoundException fnfe1) {
-            Log.e("tag", fnfe1.getMessage());
-            return false;
-
         } catch (Exception e) {
-            Log.e("tag", e.getMessage());
+            Log.e(Constants.LOG, e.getMessage());
             return false;
         }
     }
@@ -380,7 +536,7 @@ public class SingleNote extends MainModel {
         if (newFilename) {
             if (doesExist()) {
                 filename = Path.newNoteNameFromCurrent(getPath(), getFileNameNoExtension(), getExtension());
-                Log.i("log", "new filename: "+filename);
+                Log.i(Constants.LOG, "new filename: "+filename);
             }
             newFilename = false;
         }
@@ -393,6 +549,17 @@ public class SingleNote extends MainModel {
         }
 
         StringBuilder text = new StringBuilder();
+
+        if (this.createdAt == null) this.createdAt = new Date();
+        if (this.updatedAt == null) this.updatedAt = new Date();
+
+        if (!this.metadata.containsKey(Constants.METATAG_UPDATED)) {
+            this.metadata.putString(Constants.METATAG_UPDATED, getLastModifiedString(Locale.US));
+        }
+
+        if (!this.metadata.containsKey(Constants.METATAG_CREATED)) {
+            this.metadata.putString(Constants.METATAG_CREATED, getCreatedString(Locale.US));
+        }
 
         text.append("+++\n");
         for (String key: this.metadata.keySet()) {
@@ -442,10 +609,10 @@ public class SingleNote extends MainModel {
     }
 
     public String getLastModifiedString(Locale loc) {
-        return new SimpleDateFormat("dd/MM/yyyy", loc).format(updatedAt);
+        return new SimpleDateFormat("dd/MM/yyyy HH:mm", loc).format(updatedAt);
     }
     public String getCreatedString(Locale loc) {
-        return new SimpleDateFormat("dd/MM/yyyy", loc).format(createdAt);
+        return new SimpleDateFormat("dd/MM/yyyy HH:mm", loc).format(createdAt);
     }
 
     public Date getLastModifiedDate() {
@@ -461,7 +628,7 @@ public class SingleNote extends MainModel {
         return lines.length;
     }
 
-    private static Date parseDate(String date_string) throws ParseException {
+    public static Date parseDate(String date_string) throws ParseException {
         if (date_string == null || date_string.isEmpty()) {
             return new Date();
         }
@@ -501,44 +668,29 @@ public class SingleNote extends MainModel {
         return this.body;
     }
 
-    public static String parseSummary(String body) {
-        String clean_body = body.replaceAll("[*_#]+", "").replaceAll("\n\\s+", "\n").trim();
-        String[] lines = clean_body.split("\\n");
-        StringBuilder summary = new StringBuilder();
-        for(String line: lines) {
-            summary.append(line);
-            if (summary.length() > 250) {
-                break;
-            }
-            if (!line.isEmpty()) summary.append("\n");
-        }
-
-        return summary.toString().trim();
-    }
-
     @Override
     public Bundle toBundle() {
         Bundle args = super.toBundle();
-        args.putString("path", path);
-        args.putString("filename", filename);
-        args.putString("summary", summary);
-        args.putString("title", title);
-        args.putString("body", body);
+        args.putString(Constants.KEY_NOTE_PATH, path);
+        args.putString(Constants.KEY_NOTE_FILENAME, filename);
+        args.putString(Constants.KEY_NOTE_SUMMARY, summary);
+        args.putString(Constants.KEY_NOTE_TITLE, title);
+        args.putString(Constants.KEY_NOTE_BODY, body);
 
         if (updatedAt == null) updatedAt = new Date();
         if (createdAt == null) createdAt = new Date();
 
-        args.putLong("modifiedDate", updatedAt.getTime());
-        args.putLong("createdDate", createdAt.getTime());
-        args.putBundle("metadata", metadata);
+        args.putLong(Constants.METATAG_UPDATED, updatedAt.getTime());
+        args.putLong(Constants.METATAG_CREATED, createdAt.getTime());
+        args.putBundle(Constants.KEY_NOTE_METADATA, metadata);
         args.putBoolean("noteLoaded", noteLoaded);
         return args;
     }
 
     public Bundle toLightBundle() {
         Bundle args = super.toBundle();
-        args.putString("path", path);
-        args.putString("filename", filename);
+        args.putString(Constants.KEY_NOTE_PATH, path);
+        args.putString(Constants.KEY_NOTE_FILENAME, filename);
         args.putBoolean("noteLoaded", false);
         return args;
     }
@@ -546,80 +698,95 @@ public class SingleNote extends MainModel {
     @Override
     public JsonObject toJson() {
         JsonObject obj = super.toJson();
-        obj.addProperty("path", path);
-        obj.addProperty("filename", filename);
+        obj.addProperty(Constants.KEY_NOTE_PATH, path);
+        obj.addProperty(Constants.KEY_NOTE_FILENAME, filename);
         obj.addProperty("noteLoaded", false);
 
-        return obj;
+        if (updatedAt == null) updatedAt = new Date();
+        if (createdAt == null) createdAt = new Date();
+
+        obj.addProperty(Constants.METATAG_UPDATED, formatDate(this.updatedAt));
+        obj.addProperty(Constants.METATAG_CREATED, formatDate(this.createdAt));
+        obj.addProperty(Constants.KEY_NOTE_SUMMARY, summary);
+
+        JsonObject wrapper = new JsonObject();
+
+        wrapper.add(getFullPath(), obj);
+
+        return wrapper;
     }
 
     private static class LoadNoteTask extends AsyncTask<String, Void, Bundle> {
 
         SingleNote note;
+        OnNoteLoadedListener noteLoadedCallback;
+        Database db;
+        boolean load_from_file;
 
-        LoadNoteTask(SingleNote thisNote) {
+        LoadNoteTask(SingleNote thisNote, Database db, boolean load_from_file, OnNoteLoadedListener noteLoadedCallback) {
             this.note = thisNote;
+            this.db = db;
+            this.load_from_file = load_from_file;
+            this.noteLoadedCallback = noteLoadedCallback;
         }
 
         @Override
         protected Bundle doInBackground(String... paths) {
-            String file_body = readNoteFile(paths[0]);
+            Bundle res;
+            if (db == null || load_from_file) {
+                res = readNoteFile(paths[0]);
 
-            Bundle args = parseMetadata(file_body);
-            Bundle title_parse = parseTitle(args.getString("body", ""));
+                if (db != null) db.saveNote(note.getFullPath(), res);
 
-            String title = title_parse.getString("title", "");
-            String summary = parseSummary(title_parse.getString("body", ""));
-
-            args.putString("title", title);
-            args.putString("summary", summary);
-
-            return args;
+            } else {
+                res = db.getNoteByPath(note.getFullPath());
+            }
+            return res;
         }
 
         @Override
         protected void onPostExecute(Bundle result) {
-            if (note == null) return;
+            if (note == null || result == null) return;
 
-            note.body = result.getString("body", "");
-            note.title = result.getString("title", "");
-            note.summary = result.getString("summary", "");
-            note.metadata = result.getBundle("metadata");
+            note.body = result.getString(Constants.KEY_NOTE_BODY, "");
+            note.title = result.getString(Constants.KEY_NOTE_TITLE, "");
+            note.summary = result.getString(Constants.KEY_NOTE_SUMMARY, "");
 
-            try {
-                note.updatedAt = parseDate(result.getString("updatedAt", ""));
-                note.createdAt = parseDate(result.getString("createdAt", ""));
-            } catch (ParseException e) {
-                e.printStackTrace();
+            if (result.containsKey(Constants.KEY_NOTE_METADATA)) {
+                note.metadata = result.getBundle(Constants.KEY_NOTE_METADATA);
+
+                try {
+                    if (note.metadata.containsKey(Constants.METATAG_UPDATED)) {
+                        note.updatedAt = parseDate(note.metadata.getString(Constants.METATAG_UPDATED, ""));
+                    }
+                    if (note.metadata.containsKey(Constants.METATAG_CREATED)) {
+                        note.createdAt = parseDate(note.metadata.getString(Constants.METATAG_CREATED, ""));
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                note.updatedAt = new Date(result.getLong(Constants.METATAG_UPDATED));
+                note.createdAt = new Date(result.getLong(Constants.METATAG_CREATED));
             }
 
-            note.noteLoaded = true;
+            if (load_from_file) note.noteLoaded = true;
 
-            if (note.viewHolder != null && note.viewHolder.get() != null) {
+            /*if (note.viewHolder != null && note.viewHolder.get() != null) {
                 MyViewHolder viewHolder = note.viewHolder.get();
                 viewHolder.mNotebookTitle.setText(note.title);
                 viewHolder.mNoteSummary.setText(note.summary);
-            }
+            }*/
 
-            if (note.mOnNoteLoadedListener != null) {
-                note.mOnNoteLoadedListener.NoteLoaded(note);
+            if (noteLoadedCallback != null) {
+                noteLoadedCallback.NoteLoaded(note);
             }
-
-            //note.logNote();
         }
     }
 
-    public ArrayList<String> getPathArray(String root_path) {
-        ArrayList<String> path = new ArrayList<>();
-        File f = new File(root_path);
-        File n = new File(getPath());
-
-        while(!n.getPath().equals(f.getPath())) {
-            if (n.isDirectory()) path.add(n.getName());
-            n = n.getParentFile();
-        }
-
-        return path;
+    @Override
+    public String toString() {
+        return "Note[" + getPath()+"/"+getFilename() + "][ "+getLastModifiedString(Locale.US)+" ]";
     }
 
     public interface OnNoteLoadedListener {
@@ -628,5 +795,9 @@ public class SingleNote extends MainModel {
 
     public interface OnNoteSavedListener {
         void NoteSaved(boolean saved);
+    }
+
+    public interface OnNoteSearchedListener {
+        void NoteSearched(SingleNote note, boolean match);
     }
 }

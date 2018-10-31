@@ -7,6 +7,8 @@
     <string name="action_settings">Settings</string>
     <string name="action_reload">Reload Library</string>
     <string name="action_quick_notes">Quick Notes</string>
+    <string name="action_search">Search</string>
+    <string name="action_clean_database">Clean Database</string>
 
     <string name="move_note_here">Move here</string>
     <string name="cant_move_here">Can\'t move here</string>
@@ -17,6 +19,7 @@
     <string name="fab_new_note">New Note</string>
     <string name="fab_rename_bucket">Rename Bucket</string>
     <string name="fab_rename_folder">Rename Folder</string>
+    <string name="fab_remove_folder">Delete Folder</string>
     <string name="fab_new_quick_note">New Quick Note</string>
 
     <string name="fab_edit_note">Edit</string>
@@ -29,10 +32,14 @@
     <string name="dialog_no">No</string>
     <string name="dialog_delete_note_title">Delete Note</string>
     <string name="dialog_delete_note_message">Are you sure you want to delete this note?</string>
+    <string name="dialog_delete_folder_title">Delete Folder</string>
+    <string name="dialog_delete_folder_message">Are you sure you want to delete this folder?</string>
     <string name="dialog_save_note_title">Note Modified</string>
     <string name="dialog_save_note_message">Do you want to save before exiting?</string>
     <string name="dialog_close_title">Closing Epiphany</string>
     <string name="dialog_close_message">Are you sure you want to quit?</string>
+    <string name="dialog_clean_db_title">Database Cleanup</string>
+    <string name="dialog_clean_db_message">Are you sure you want to clean the database? Don\'t worry, no notes will be deleted.</string>
 
     <!--Strings for Toasts-->
     <string name="toast_note_saved">Note saved</string>
@@ -64,6 +71,11 @@
     <string name="create_notebook">Create</string>
     <string name="rename_notebook">Rename</string>
     <string name="cancel">Cancel</string>
+
+    <string name="no_more_load_retry">No more items to load. Refresh to retry.</string>
+    <string name="endless_disabled">No more items to load (max reached).</string>
+    <string name="endless_cancel">Cancelled by the user.</string>
+    <string name="endless_error">An error occurred while loading more items.</string>
 
     <string-array name="pref_note_order_entries">
         <item>Modified Date</item>

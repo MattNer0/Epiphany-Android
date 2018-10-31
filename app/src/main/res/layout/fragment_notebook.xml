@@ -1,147 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/fragment_notebook"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/quickNoteInput">
 
-        <LinearLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/pullToRefresh"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:orientation="vertical"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/quickNoteInput">
+            android:layout_height="match_parent">
 
-            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                android:id="@+id/pullToRefresh"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <FrameLayout
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/notebookview"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="match_parent"
+                    android:layout_gravity="start"
+                    android:scrollbars="vertical"/>
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/notebookview"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="start"
-                        android:scrollbars="vertical"/>
+            </FrameLayout>
 
-                </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </LinearLayout>
 
-            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-        </LinearLayout>
+    <LinearLayout
+        android:id="@+id/notebook_emptyview"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:background="@color/background"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/quickNoteInput"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textColor"
+            android:textSize="18sp"
+            android:text="There's nothing here!"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/quickNoteInput"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/quick_note_input_height"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/quickNoteEdit"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:gravity="start|center"
+            android:background="@drawable/input_quick_note"
+            android:textColor="@color/colorPrimary"
+            android:textColorHint="@color/listSubColor"
+            android:inputType="textNoSuggestions"
+            android:imeOptions="actionGo"
+            android:hint="New Quick Note..."
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"/>
 
         <LinearLayout
-            android:id="@+id/notebook_emptyview"
-            android:visibility="gone"
+            android:id="@+id/noteMoveContainer"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="center"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/quickNoteInput"
+            android:layout_height="match_parent"
+            android:background="@color/colorPrimaryDark"
+            android:orientation="horizontal"
             android:gravity="center">
 
-            <TextView
+            <ImageView
+                android:id="@+id/undo_move"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/textColor"
-                android:textSize="18sp"
-                android:text="There's nothing here!"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/quickNoteInput"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/quick_note_input_height"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_gravity="bottom"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/quickNoteEdit"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:visibility="gone"
-                android:gravity="start|center"
-                android:background="@drawable/input_quick_note"
-                android:textColor="@color/colorPrimary"
-                android:textColorHint="@color/listSubColor"
-                android:inputType="textNoSuggestions"
-                android:imeOptions="actionGo"
-                android:hint="New Quick Note..."
+                android:layout_height="@dimen/quick_note_input_height"
+                android:src="@drawable/ic_undo_white_24dp"
+                android:clickable="true"
+                android:focusable="true"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"/>
 
-            <LinearLayout
-                android:id="@+id/noteMoveContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/colorPrimaryDark"
-                android:orientation="horizontal"
-                android:gravity="center">
+            <TextView
+                android:id="@+id/current_note_move"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/textColor"
+                android:maxLines="1"
+                android:paddingStart="0dp"
+                android:paddingEnd="10dp"
+                android:text=""/>
 
-                <ImageView
-                    android:id="@+id/undo_move"
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/quick_note_input_height"
-                    android:src="@drawable/ic_undo_white_24dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"/>
-
-                <TextView
-                    android:id="@+id/current_note_move"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textColor="@color/textColor"
-                    android:maxLines="1"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="10dp"
-                    android:text=""/>
-
-                <TextView
-                    android:id="@+id/move_note_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textColor"
-                    android:background="@color/colorPrimary"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:paddingTop="5dp"
-                    android:paddingBottom="5dp"
-                    android:layout_marginEnd="10dp"
-                    android:text="@string/move_note_here"/>
-
-            </LinearLayout>
+            <TextView
+                android:id="@+id/move_note_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/textColor"
+                android:background="@color/colorPrimary"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:layout_marginEnd="10dp"
+                android:text="@string/move_note_here"/>
 
         </LinearLayout>
 
+    </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <io.github.kobakei.materialfabspeeddial.FabSpeedDial
-        android:id="@+id/notebookFab"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="bottom|end"
-        app:fab_fabBackgroundColor="@color/colorPrimaryDark"
-        app:fab_miniFabBackgroundColor="@color/textColor"
-        app:fab_fabDrawableTint="@color/textColor"
-        app:fab_miniFabDrawableTint="@color/colorPrimaryDark"
-        app:fab_miniFabTextColor="@color/colorPrimaryDark"
-        app:fab_miniFabTextBackground="@color/textColor" />
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

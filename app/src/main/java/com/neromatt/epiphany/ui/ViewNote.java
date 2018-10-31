@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.helper.IttyBitty;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
@@ -24,6 +25,8 @@ import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 
 public class ViewNote extends AppCompatActivity {
 
+    private Database db;
+
     private SingleNote note;
     private boolean from_editor;
 
@@ -33,6 +36,8 @@ public class ViewNote extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.view_note);
+
+        db = new Database(getApplicationContext());
 
         Intent intent = getIntent();
         Bundle note_bundle = intent.getBundleExtra("note");
@@ -46,34 +51,50 @@ public class ViewNote extends AppCompatActivity {
 
         from_editor = intent.getBooleanExtra("from_editor", false);
 
+        if (!note.wasLoaded()) {
+            note.refreshContent(db, new SingleNote.OnNoteLoadedListener() {
+                @Override
+                public void NoteLoaded(SingleNote note) {
+                    initializeUI();
+                }
+            });
+            return;
+        }
+
+        initializeUI();
+    }
+
+    private void initializeUI() {
         MarkedView markdownView = findViewById(R.id.markdownView);
 
         markdownView
-            .setCheckboxCallback(new MarkedView.OnCheckboxChangedListener() {
-                @Override
-                public void CheckboxChange(String note_body, int num, boolean checked) {
-                    note.updateBody(note_body);
-                }
-            })
-            .setHtmlBodyCallback(new MarkedView.OnHTMLBodyListener() {
-                @Override
-                public void HTMLBody(String note_body) {
-                    html_body = note_body;
-                }
-            })
-            .setImageClickCallback(new MarkedView.OnImageClickListener() {
-                @Override
-                public void ImageClick(String image_url) {
-                    if (image_url == null) return;
-                    Intent intent = new Intent(ViewNote.this, ViewPhoto.class);
-                    intent.putExtra("image", image_url);
-                    startActivity(intent);
-                }
-            })
-            .setNoteImagePath(note.getImageFolderPath())
-            .setMDText(note.getMarkdown());
+                .setCheckboxCallback(new MarkedView.OnCheckboxChangedListener() {
+                    @Override
+                    public void CheckboxChange(String note_body, int num, boolean checked) {
+                        note.updateBody(note_body);
+                    }
+                })
+                .setHtmlBodyCallback(new MarkedView.OnHTMLBodyListener() {
+                    @Override
+                    public void HTMLBody(String note_body) {
+                        html_body = note_body;
+                    }
+                })
+                .setImageClickCallback(new MarkedView.OnImageClickListener() {
+                    @Override
+                    public void ImageClick(String image_url) {
+                        if (image_url == null) return;
+                        Intent intent = new Intent(ViewNote.this, ViewPhoto.class);
+                        intent.putExtra("image", image_url);
+                        startActivity(intent);
+                    }
+                })
+                .setNoteImagePath(note.getImageFolderPath())
+                .setMDText(note.getMarkdown());
 
         FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
+
+        noteFab.removeAllOnMenuItemClickListeners();
         noteFab.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
             @Override
             public void onMenuItemClick(FloatingActionButton miniFab, @Nullable TextView label, int itemId) {

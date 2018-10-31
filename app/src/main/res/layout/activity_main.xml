@@ -1,85 +1,14 @@
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent" >
 
-
-    <LinearLayout
+    <FrameLayout
+        android:id="@+id/content_frame"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent" />
 
-        <LinearLayout
-            android:id="@+id/container_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <include
-                android:id="@+id/toolbar"
-                layout="@layout/tool_bar" />
-        </LinearLayout>
-
-        <FrameLayout
-            android:id="@+id/content_frame"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <RelativeLayout
-            android:id="@+id/container_loading"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <com.github.rahatarmanahmed.cpv.CircularProgressView
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_gravity="center"
-                app:cpv_color="@color/textColor"
-                android:layout_centerInParent="true"
-                app:cpv_animAutostart="true"
-                app:cpv_indeterminate="true" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textColor="@color/textColor"
-                android:text="Loading..."
-                android:layout_centerInParent="true"
-                android:gravity="center"
-                android:layout_gravity="center" />
-
-        </RelativeLayout>
-
-    </LinearLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/left_drawer"
-        android:layout_width="240dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:orientation="vertical">
-
-        <include
-            android:id="@+id/left_drawer_header"
-            layout="@layout/header"
-            app:layout_constraintTop_toTopOf="parent"
-            />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/left_drawer_list"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/left_drawer_header"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:background="@color/colorPrimary"/>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <include layout="@layout/left_drawer" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

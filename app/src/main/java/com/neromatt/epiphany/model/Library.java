@@ -29,22 +29,44 @@ public class Library {
         service_launched = false;
     }
 
-    public static void launchService(MainActivity context, Path path) {
+    public static void launchServiceForBuckets(MainActivity context, Path path) {
+        launchService(context, path, serviceRequestEnum.BUCKETS, null);
+    }
+
+    public static void launchServiceForFolder(MainActivity context, MainModel model) {
+        launchService(context, null, serviceRequestEnum.FOLDER, model);
+    }
+
+    public static void launchServiceForNotes(MainActivity context, Path path, MainModel model) {
+        launchService(context, path, serviceRequestEnum.NOTES, model);
+        service_launched = false;
+    }
+
+    private static void launchService(MainActivity context, Path path, serviceRequestEnum request, MainModel model) {
         if (!service_launched) {
             service_launched = true;
             Intent intent = new Intent(context, LibraryService.class);
-            String root_path;
-            if (path == null) {
-                root_path = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_root_directory", "");
-            } else {
-                root_path = path.getRootPath();
+            if (path != null) {
+                intent.putExtra("root", path.getRootPath());
             }
-            intent.putExtra("root", root_path);
+
+            intent.putExtra("request", request);
+
+            if (request == serviceRequestEnum.FOLDER || request == serviceRequestEnum.NOTES) {
+                intent.putExtra("model", model);
+            }
+
             context.startService(intent);
         }
     }
 
-    public static void saveToFile(MainActivity context, ArrayList<MainModel> library_list) {
+    public static void launchServiceForCleaningDB(Context context) {
+        Intent intent = new Intent(context, LibraryService.class);
+        intent.putExtra("request", serviceRequestEnum.CLEAN);
+        context.startService(intent);
+    }
+
+    public static void saveToFile(MainActivity context, ArrayList<MainModel> library_list, String bucket) {
         FileOutputStream outputStream;
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(MainModel.class, new ModelTypeAdapter());
@@ -54,7 +76,7 @@ public class Library {
         String s = gson.toJson(library_list, modelListType);
 
         try {
-            outputStream = context.openFileOutput("library.json", Context.MODE_PRIVATE);
+            outputStream = context.openFileOutput(bucket+".json", Context.MODE_PRIVATE);
             outputStream.write(s.getBytes());
             outputStream.close();
         } catch (Exception e) {
@@ -62,10 +84,10 @@ public class Library {
         }
     }
 
-    public static ArrayList<MainModel> readFromFile(MainActivity context) {
+    public static ArrayList<MainModel> readFromFile(MainActivity context, String bucket) {
         try {
             FileInputStream fis;
-            fis = context.openFileInput("library.json");
+            fis = context.openFileInput(bucket+".json");
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader bufferedReader = new BufferedReader(isr);
             StringBuilder sb = new StringBuilder();
@@ -95,5 +117,12 @@ public class Library {
             }
         }
         return null;
+    }
+
+    public enum serviceRequestEnum {
+        BUCKETS,
+        FOLDER,
+        NOTES,
+        CLEAN
     }
 }

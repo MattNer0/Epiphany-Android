@@ -26,7 +26,7 @@ public class SingleRack extends MainModel {
     private boolean isQuickNotes = false;
 
     public SingleRack(String name, String path, JSONObject data) {
-        super(headerBuckets);
+        super();
 
         this.path = path;
         this.name = name;
@@ -40,39 +40,30 @@ public class SingleRack extends MainModel {
             Log.e("err", "json "+data.toString());
             this.order = 0;
         }
-        this.modelType = MainModel.TYPE_RACK;
+        this._model_type = MainModel.TYPE_RACK;
 
         if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
 
     public SingleRack(Bundle args) {
-        super(args, headerBuckets);
+        super(args);
 
         this.path = args.getString("path", "");
         this.name = args.getString("name", "");
         this.order = args.getInt("order", 0);
-        this.modelType = MainModel.TYPE_RACK;
+        this._model_type = MainModel.TYPE_RACK;
         if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
 
     public SingleRack(JsonObject args) {
-        super(args, headerBuckets);
+        super(args);
 
         this.path = args.get("path").getAsString();
         this.name = args.get("name").getAsString();
         this.order = args.get("order").getAsInt();
-        this.modelType = MainModel.TYPE_RACK;
+        this._model_type = MainModel.TYPE_RACK;
         if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
-
-    /*@Override
-    public JsonObject toJson() {
-        JsonObject obj = super.toJson();
-        obj.addProperty("path", path);
-        obj.addProperty("name", name);
-        obj.addProperty("order", order);
-        return obj;
-    }*/
 
     public boolean renameDirectory(String new_name) {
         new_name = new_name.replaceAll("[^\\w. _-]", "");

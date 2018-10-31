@@ -13,11 +13,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.DBInterface;
+import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
@@ -39,7 +39,7 @@ import java.util.LinkedList;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.widget.SearchView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -50,11 +50,10 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class MainActivity extends AppCompatActivity implements BitteBitte, PathSupplier, CreateNoteHelper.OnQuickPathListener {
-    private Toolbar toolbar;
-    private ActionBarDrawerToggle mDrawerToggle;
-    private DrawerLayout mDrawerLayout;
-    private ConstraintLayout mDrawerNavigation;
+public class MainActivity extends AppCompatActivity implements BitteBitte, PathSupplier, CreateNoteHelper.OnQuickPathListener, DBInterface {
+
+    private Database db;
+
     private RecyclerView mDrawerList;
     private RackAdapter mRackAdapter;
     private Path path;
@@ -62,6 +61,10 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
 
     private MenuItem action_list_layout;
     private MenuItem action_staggered_layout;
+    private MenuItem action_searchView;
+
+    private String search_query;
+    private boolean search_opened;
 
     private MainModel moving_note_folder;
     private SingleNote moving_note;
@@ -71,15 +74,31 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            library_list = intent.getParcelableArrayListExtra("buckets");
-            if (library_list != null && library_list.size() > 0) Library.saveToFile(MainActivity.this, library_list);
-
-            //Log.i(Constants.LOG, "onReceive");
-
             Library.serviceFinished();
-            createInitialFragment();
-            refreshRackDrawer();
-            hideLoading();
+            if (intent.hasExtra("buckets")) {
+                library_list = intent.getParcelableArrayListExtra("buckets");
+                createInitialFragment();
+                refreshRackDrawer();
+            } else if (intent.hasExtra("folders")) {
+                ArrayList<MainModel> list = intent.getParcelableArrayListExtra("folders");
+                for (MainModel content: list) {
+                    content.dbLoadNotes(db, MainActivity.this, new MainModel.OnModelLoadedListener() {
+                        @Override
+                        public void ModelLoaded() {
+
+                        }
+                    });
+                }
+
+                updateBucketByUUID(intent.getStringExtra("uuid"), list);
+            } else if (intent.hasExtra("request")) {
+                Bundle extras = intent.getExtras();
+                Library.serviceRequestEnum request = (Library.serviceRequestEnum) extras.getSerializable("request");
+                if (request == Library.serviceRequestEnum.NOTES) {
+                    //Toast.makeText(MainActivity.this, "DB cache saved", Toast.LENGTH_LONG).show();
+                    reloadCurrentFromDB(intent.getStringExtra("uuid"));
+                }
+            }
         }
     };
 
@@ -88,16 +107,12 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        db = new Database(getApplicationContext());
+
         library_list = new ArrayList<>();
         bucket_queue = new LinkedList<>();
 
-        mDrawerLayout = findViewById(R.id.drawer_layout);
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
-        mDrawerNavigation = findViewById(R.id.left_drawer);
         mDrawerList = findViewById(R.id.left_drawer_list);
-
-        setupToolBar();
-        setupDrawerToggle();
 
         if (PermissionBitte.shouldAsk(this, this)) {
             PermissionBitte.ask(MainActivity.this, MainActivity.this);
@@ -116,6 +131,16 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(MainActivity.this).unregisterReceiver(broadcastReceiver);
+    }
+
+    @Override
+    public Database getDatabase() {
+        return db;
+    }
+
+    @Override
+    public Context getContext() {
+        return MainActivity.this;
     }
 
     public void refreshRackDrawer() {
@@ -141,24 +166,9 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        mDrawerToggle.syncState();
     }
 
-    private void setupToolBar() {
-        toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-        }
-    }
-
-    void setupDrawerToggle() {
-        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, toolbar, R.string.app_name, R.string.app_name);
-        mDrawerToggle.syncState();
-        mDrawerToggle.setDrawerIndicatorEnabled(true);
-    }
-
-    void hideLoading() {
+    /*void hideLoading() {
         RelativeLayout loading = findViewById(R.id.container_loading);
         FrameLayout content = findViewById(R.id.content_frame);
         content.setVisibility(View.VISIBLE);
@@ -170,21 +180,29 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         FrameLayout content = findViewById(R.id.content_frame);
         content.setVisibility(View.GONE);
         loading.setVisibility(View.VISIBLE);
-    }
+    }*/
 
     private NotebookFragment getNotebookFragment() {
         FragmentManager fm = getSupportFragmentManager();
+        if (fm.getBackStackEntryCount() == 0) {
+            return null;
+        }
         String fragmentTag = fm.getBackStackEntryAt(getSupportFragmentManager().getBackStackEntryCount() - 1).getName();
         return (NotebookFragment) fm.findFragmentByTag(fragmentTag);
     }
 
     private void selectItem(int position) {
+        NotebookFragment nf = getNotebookFragment();
         try {
-            pushFragment(mRackAdapter.getItem(position));
+            if (nf != null) nf.getNavigationLayout().closeDrawerIfOpen();
+            MainModel selected_model = mRackAdapter.getItem(position);
+            if (nf != null && nf.isCurrentModel(selected_model)) {
+                return;
+            }
+            pushFragment(selected_model);
         } catch (NullPointerException e) {
             Log.e("err", "null item");
         }
-        mDrawerLayout.closeDrawer(mDrawerNavigation);
     }
 
     public void loadNewBucket(String name) {
@@ -205,6 +223,7 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         }
 
         current_folder.addContent(new_folder);
+        current_folder.sortContents(this);
     }
 
     private boolean createInitialFragment() {
@@ -229,7 +248,9 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             String full = rootDir + "/epiphany";
             File fullpath = new File(full);
             if (!(fullpath.exists() && fullpath.isDirectory())) {
-                fullpath.mkdirs();
+                if (!fullpath.mkdirs()) {
+                    Toast.makeText(this, "Couldn't create initial directories!", Toast.LENGTH_SHORT).show();
+                }
             }
 
             SharedPreferences.Editor prefs_edit = prefs.edit();
@@ -250,11 +271,11 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     @Override
     public void yesYouCan() {
         if (checkIfFirstRun()) {
-            showLoading();
-            Library.launchService(this, path);
+            //showLoading();
+            Library.launchServiceForBuckets(this, path);
         } else {
-            showLoading();
-            Library.launchService(this, path);
+            //showLoading();
+            Library.launchServiceForBuckets(this, path);
         }
     }
 
@@ -291,6 +312,49 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         action_list_layout = menu.findItem(R.id.action_list_layout);
         action_staggered_layout = menu.findItem(R.id.action_staggered_layout);
 
+        toggleLayoutList();
+
+        action_searchView = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) action_searchView.getActionView();
+
+        action_searchView.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                searchBarClosed();
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                searchBarOpened();
+                return true; // Return true to expand action view
+            }
+        });
+
+        if (search_opened) {
+            if (!action_searchView.isActionViewExpanded()) action_searchView.expandActionView();
+            searchView.setQuery(search_query, false);
+        }
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                search_query = ""+query;
+                NotebookFragment nf = getNotebookFragment();
+                if (nf != null) nf.runSearch(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String query) {
+                return false;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private void toggleLayoutList() {
         if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pref_staggered_layout", false)) {
             action_list_layout.setVisible(true);
             action_staggered_layout.setVisible(false);
@@ -298,8 +362,27 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             action_staggered_layout.setVisible(true);
             action_list_layout.setVisible(false);
         }
+    }
 
-        return super.onCreateOptionsMenu(menu);
+    private void searchBarOpened() {
+        action_staggered_layout.setVisible(false);
+        action_list_layout.setVisible(false);
+        //mDrawerToggle.setDrawerIndicatorEnabled(false);
+        if (!search_opened) {
+            search_opened = true;
+        }
+
+        SearchView searchView = (SearchView) action_searchView.getActionView();
+        searchView.setQuery(search_query, false);
+    }
+
+    private void searchBarClosed() {
+        //mDrawerToggle.setDrawerIndicatorEnabled(true);
+        toggleLayoutList();
+        search_opened = false;
+
+        NotebookFragment nf = getNotebookFragment();
+        if (nf != null) nf.clearSearch();
     }
 
     @Override
@@ -343,6 +426,12 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         if (notebookFragment != null && notebookFragment.isVisible()) {
             notebookFragment.updateLayoutList(staggered);
         }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor prefs_edit = prefs.edit();
+
+        prefs_edit.putBoolean("pref_staggered_layout", staggered);
+        prefs_edit.apply();
     }
 
     public boolean pushFragment(Fragment fragment, String tag) {
@@ -352,35 +441,54 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
             ft.replace(R.id.content_frame, fragment, tag);
             ft.addToBackStack(tag);
             ft.commitAllowingStateLoss();
+
             return true;
         }
         return false;
     }
 
-    public boolean pushFragment(MainModel model) {
+    public boolean pushFragment(final MainModel model) {
+
         if (model instanceof SingleRack) {
 
             newBucketInQueue(model);
-            for (MainModel m: model.getContent()) {
-                m.loadNotes(this, new MainModel.OnModelLoadedListener() {
-                    @Override
-                    public void ModelLoaded() {
-                        Log.i(Constants.LOG, "loaded notes");
-                    }
-                });
+            if (!model.isLoadedContent()) {
+                Library.launchServiceForFolder(this, model);
             }
 
-            if (model.isQuickNotes()) {
-                MainModel quick_note_folder = model.getFirstFolder();
-                return pushFragment(NotebookFragment.newInstance(quick_note_folder), Constants.NOTEBOOK_FOLDER_FRAGMENT_TAG);
+            if (search_opened && !search_query.isEmpty()) {
+                return pushFragment(NotebookFragment.newInstance(model, search_query), Constants.NOTEBOOK_BUCKET_FRAGMENT_TAG);
             }
 
             return pushFragment(NotebookFragment.newInstance(model), Constants.NOTEBOOK_BUCKET_FRAGMENT_TAG);
         } else if (model instanceof SingleNotebook) {
+
+            if (db.shouldUpdateFolder(model.getPath())) {
+                Library.launchServiceForNotes(this, path, model);
+            }
+
+            if (search_opened && !search_query.isEmpty()) {
+                return pushFragment(NotebookFragment.newInstance(model, search_query), Constants.NOTEBOOK_FOLDER_FRAGMENT_TAG);
+            }
+
             return pushFragment(NotebookFragment.newInstance(model), Constants.NOTEBOOK_FOLDER_FRAGMENT_TAG);
         }
         return false;
     }
+
+    public boolean isSearchOpen() {
+        return this.search_opened;
+    }
+
+    /*private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }*/
 
     private void newBucketInQueue(MainModel model) {
         if (bucket_queue == null) bucket_queue = new LinkedList<>();
@@ -403,18 +511,27 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
     public void onBackPressed() {
         FragmentManager fm = getSupportFragmentManager();
 
-        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-            this.mDrawerLayout.closeDrawer(GravityCompat.START, true);
+        NotebookFragment nf = getNotebookFragment();
+
+        if (nf != null && nf.getNavigationLayout() != null && nf.getNavigationLayout().closeDrawerIfOpen()) {
+            return;
+
+        } else if (search_opened) {
+            SearchView searchView = (SearchView) action_searchView.getActionView();
+            searchView.setQuery("", false);
+            searchView.setIconified(true);
         } else if (fm.getBackStackEntryCount() > 1) {
             fm.popBackStack();
-        } else {
-            String fragmentTag = fm.getBackStackEntryAt(getSupportFragmentManager().getBackStackEntryCount() - 1).getName();
+        } else if (fm.getBackStackEntryCount() > 0) {
+            String fragmentTag = fm.getBackStackEntryAt(fm.getBackStackEntryCount() - 1).getName();
             if (!fragmentTag.equals(Constants.NOTEBOOK_FRAGMENT_TAG)) {
                 fm.popBackStack();
                 pushFragment(NotebookFragment.newInstance(library_list), Constants.NOTEBOOK_FRAGMENT_TAG);
                 return;
             }
             askAndClose();
+        } else {
+            super.onBackPressed();
         }
     }
 
@@ -435,9 +552,9 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
 
     public void reloadAndOpenFolder(final MainModel bucket, final boolean pop_fragment) {
         if (bucket == null) {
-            showLoading();
+            //showLoading();
             getSupportFragmentManager().popBackStack();
-            Library.launchService(this, path);
+            Library.launchServiceForBuckets(this, path);
             return;
         }
         bucket.clearContent();
@@ -448,6 +565,34 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
                 pushFragment(bucket);
             }
         });
+    }
+
+    public void updateBucketByUUID(String uuid, ArrayList<MainModel> contents) {
+        for (MainModel m: library_list) {
+            if (m.equalsUUID(uuid)) {
+                m.addContents(contents);
+                m.initParents();
+                getNotebookFragment().reloadAdapterIfModel(m, true);
+                return;
+            }
+        }
+    }
+
+    private void reloadCurrentFromDB(String uuid) {
+        final NotebookFragment nf = getNotebookFragment();
+        if (nf == null) return;
+
+        MainModel current = getNotebookFragment().getCurrentModel();
+        if (current == null) return;
+
+        if (current.equalsUUID(uuid)) {
+            current.dbLoadNotes(db, this, new MainModel.OnModelLoadedListener() {
+                @Override
+                public void ModelLoaded() {
+                    nf.reloadAdapter(true);
+                }
+            });
+        }
     }
 
     public void openQuickNotesBucket() {
@@ -495,7 +640,7 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
                 if (resultIntent.getBooleanExtra("modified", false)) {
                     Bundle bundle_note = resultIntent.getBundleExtra("note");
                     if (bundle_note != null) {
-                        NotebookFragment notebookFragment = (NotebookFragment) getSupportFragmentManager().findFragmentByTag("Notebook_Fragment");
+                        NotebookFragment notebookFragment = getNotebookFragment();
                         if (notebookFragment != null && notebookFragment.isVisible()) {
                             SingleNote new_note = new SingleNote(bundle_note);
                             notebookFragment.addNewNoteToCurrent(new_note);
@@ -528,7 +673,7 @@ public class MainActivity extends AppCompatActivity implements BitteBitte, PathS
         this.path.setCurrentPath(savedInstanceState.getString("currentPath"));
 
         if (this.library_list.size() == 0) {
-            Library.launchService(this, path);
+            Library.launchServiceForBuckets(this, path);
         }
     }
 
