@@ -59,7 +59,13 @@ public class LibraryService extends IntentService implements DBInterface {
             }
 
             Path path = new Path(rootPath);
-            answerList("buckets", path.getBuckets(), null);
+
+            ArrayList<MainModel> buckets = path.getBuckets();
+            for (MainModel bucket: buckets) {
+                db.saveBucket(bucket.getPath(), bucket.getOrder());
+            }
+
+            answerList("buckets", buckets, null);
             stopSelf();
 
         } else if (request == Library.serviceRequestEnum.FOLDER) {
@@ -83,7 +89,7 @@ public class LibraryService extends IntentService implements DBInterface {
             });
 
         } else if (request == Library.serviceRequestEnum.CLEAN) {
-            if (db.deleteFolders() && db.deleteNotes()) {
+            if (db.deleteFolders() && db.deleteNotes() && db.deleteBuckets()) {
                 Log.i(Constants.LOG, "finished!");
                 answerTaskFinished(request, null);
             }

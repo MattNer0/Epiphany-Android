@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,6 +31,7 @@ import com.neromatt.epiphany.ui.EditorActivity;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.LayoutFactory;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
+import com.neromatt.epiphany.ui.Navigation.OnSearchViewListener;
 import com.neromatt.epiphany.ui.R;
 import com.neromatt.epiphany.ui.ViewNote;
 
@@ -86,6 +88,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         NotebookFragment f = new NotebookFragment();
         Bundle args = new Bundle();
         args.putParcelable("current", current);
+        if (search == null) search = "";
         args.putString("search", search);
         f.setArguments(args);
         return f;
@@ -136,12 +139,11 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         mNavigationLayout.viewCreated(getMainActivity(), view);
 
-        path = getMainActivity().getPath();
+        /*path = getMainActivity().getPath();
         if (!path.isRoot()) {
             path.resetPath();
-        }
-
-        initializeRecyclerView(savedInstanceState);
+        }*/
+        initializeRecyclerView();
     }
 
     @Override
@@ -151,36 +153,48 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         if (getActivity() == null) return;
 
-        path = getMainActivity().getPath();
+        /*path = getMainActivity().getPath();
         if (!path.isRoot()) {
             path.resetPath();
-        }
+        }*/
 
         initializeTitle();
         initializeUI();
 
-        if (search_query != null && !search_query.isEmpty()) {
+        mNavigationLayout.showDrawer();
+        /*if (search_query != null && !search_query.isEmpty()) {
             if (!getMainActivity().isSearchOpen()) {
                 search_query = null;
+                mNavigationLayout.hideSearch();
                 reloadAdapter(true);
+            } else {
+                getMainActivity().searchBarOpened(false);
             }
         }
 
-        mNavigationLayout.showDrawer();
+        mNavigationLayout.setOnQueryTextListener(new OnSearchViewListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                MainActivity ma = getMainActivity();
+                if (ma == null) return false;
+                ma.setSearch(query);
+                runSearch(query);
+                return true;
+            }
 
-        /*if (current_model != null && current_model.getNotesCount() > 0) {
-            current_model.loadNotes(getMainActivity(), new MainModel.OnModelLoadedListener() {
-                @Override
-                public void ModelLoaded() {
-                    reloadAdapter(true);
-                }
-            });
-        }*/
+            @Override
+            public void onSearchClosed() {
+                MainActivity ma = getMainActivity();
+                if (ma == null) return;
+                ma.searchBarClosed();
+            }
+        });*/
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        mNavigationLayout.clearSearchFocus();
     }
 
     public MainModel getCurrentModel() {
@@ -209,7 +223,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         }
     }
 
-    private void initializeRecyclerView(Bundle savedInstanceState) {
+    private void initializeRecyclerView() {
         FlexibleAdapter.useTag("adpt");
 
         adapter = new MainAdapter<>(getMainActivity(), getCurrentList());
@@ -273,10 +287,10 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                     });
                     return;
                 }
-                MainActivity ma = getMainActivity();
+                /*MainActivity ma = getMainActivity();
                 if (ma != null) {
                     ma.reloadAndOpenFolder(current_model, true);
-                }
+                }*/
             }
         });
     }
@@ -347,9 +361,9 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             quickNoteEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
+                    /*EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
                     MainActivity ma = getMainActivity();
-                    mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
+                    mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);*/
                 }
             });
             quickNoteEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -357,10 +371,10 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 public void onFocusChange(View v, boolean hasFocus) {
                     EditText quickNoteEdit = v.findViewById(R.id.quickNoteEdit);
 
-                    if (hasFocus) {
+                    /*if (hasFocus) {
                         MainActivity ma = getMainActivity();
                         mCreateNoteHelper.addQuickNote(quickNoteEdit.getText().toString(), ma);
-                    }
+                    }*/
                 }
             });
         }
@@ -375,7 +389,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         final MainActivity ma = getMainActivity();
 
-        if ((current_model == null || current_model.isQuickNotes()) && !ma.isMovingNote()) {
+        if ((current_model == null || current_model.isQuickNotes()) /*&& !ma.isMovingNote()*/) {
 
             inputNote.setVisibility(View.VISIBLE);
             inputNoteText.setVisibility(View.VISIBLE);
@@ -391,8 +405,8 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 mNavigationLayout.setFabMenu(menu);
             }
 
-        } else if (ma.isMovingNote()) {
-            initializeMovingNoteUI();
+        /*} else if (ma.isMovingNote()) {
+            initializeMovingNoteUI();*/
 
         } else if (current_model != null) {
 
@@ -446,7 +460,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         undo_move.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ma.clearMovingNote();
+                //ma.clearMovingNote();
                 initializeBottomBar();
                 reloadAdapter(false);
             }
@@ -454,7 +468,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
         mNavigationLayout.hideFab();
 
-        if (current_model != null && current_model.isFolder() && !ma.sameFolderAsMovingNote(current_model)) {
+        /*if (current_model != null && current_model.isFolder() && !ma.sameFolderAsMovingNote(current_model)) {
             move_note_button.setAlpha(1.0f);
             move_note_button.setText(R.string.move_note_here);
             move_note_button.setOnClickListener(new View.OnClickListener() {
@@ -477,7 +491,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             move_note_button.setText(R.string.cant_move_here);
         }
 
-        current_note_move.setText(ma.getMovingNote().getName());
+        current_note_move.setText(ma.getMovingNote().getName());*/
     }
 
     private void refreshFolder(Bundle modified_note) {
@@ -523,11 +537,22 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
 
     public void runSearch(String search_query) {
         this.search_query = search_query;
+        if (current_model == null || current_model.getNotesCount() == 0) return;
         reloadAdapter(true);
+    }
+
+    public void startSearch(String query, boolean focus) {
+        if (query == null) query = "";
+        mNavigationLayout.showSearch(query, focus);
+        if (!query.isEmpty()) {
+            this.search_query = query;
+            reloadAdapter(true);
+        }
     }
 
     public void clearSearch() {
         search_query = "";
+        mNavigationLayout.hideSearch();
         reloadAdapter(true);
     }
 
@@ -544,21 +569,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (adapter != null) adapter.setSpanCount(1);
         return new SmoothScrollStaggeredLayoutManager(getContext(), 1);
     }
-
-    /*private void refreshNotebooks(ArrayList<MainModel> items) {
-        View v = getView();
-        if (v == null) return;
-        if (getActivity() == null || getContext() == null) return;
-
-        for (MainModel m: items) {
-            m.loadNotes(getContext(), new MainModel.OnModelLoadedListener() {
-                @Override
-                public void ModelLoaded() {
-
-                }
-            });
-        }
-    }*/
 
     private void renameModel() {
         CreateNotebookDialog dialog = new CreateNotebookDialog();
@@ -646,7 +656,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                 if (ma == null || notebook == null) return false;
 
                 if (notebook instanceof SingleRack || notebook instanceof SingleNotebook) {
-                    ma.pushFragment(notebook);
+                    //ma.pushFragment(notebook);
 
                 } else if (notebook.getType() == MainModel.TYPE_MARKDOWN_NOTE) {
                     Intent intent = new Intent(ma, ViewNote.class);
@@ -687,7 +697,7 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
                                     startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
                                     break;
                                 case R.id.note_move:
-                                    getMainActivity().setMovingNote((SingleNote) notebook, current_model);
+                                    //getMainActivity().setMovingNote((SingleNote) notebook, current_model);
                                     initializeMovingNoteUI();
                                     reloadAdapter(false);
                                     break;
@@ -711,6 +721,13 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
         if (current_model == null) return;
 
         if (current_model.equals(m)) {
+            reloadAdapter(refresh_list);
+        }
+    }
+
+    public void reloadAdapterWithLibrary(ArrayList<MainModel> library, boolean refresh_list) {
+        if (current_model == null) {
+            this.library_list = library;
             reloadAdapter(refresh_list);
         }
     }
@@ -739,20 +756,6 @@ public class NotebookFragment extends Fragment implements FlexibleAdapter.OnItem
             if (pullToRefresh != null) pullToRefresh.setRefreshing(false);
         }
     }
-
-    /*@SuppressLint("Range")
-    private void loadNotesIntoAdapter() {
-        if (notes_list == null || notes_list.size() == 0) return;
-        Collections.sort(notes_list, new NotebooksComparator(getContext()));
-        notebookList.post(new Runnable() {
-            @Override
-            public void run() {
-                adapter.addItems(-1, notes_list);
-                notes_list = null;
-                pullToRefresh.setRefreshing(false);
-            }
-        });
-    }*/
 
     private void deleteNote(final SingleNote note) {
         if (getContext() == null || note == null || current_model == null) return;

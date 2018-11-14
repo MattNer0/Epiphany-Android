@@ -22,8 +22,8 @@ public class CreateNotebookHelper {
             @Override
             public void onDialogPositiveClick(CreateNotebookDialog dialog, String notebookname) {
                 notebookname = notebookname.replaceAll("[^\\w. _-]", "");
-                mCallbackActivity.get().loadNewFolder(current_folder, notebookname);
-                mCallbackFragment.get().reloadAdapter(true);
+                /*mCallbackActivity.get().loadNewFolder(current_folder, notebookname);
+                mCallbackFragment.get().reloadAdapter(true);*/
                 dialog.dismiss();
             }
 

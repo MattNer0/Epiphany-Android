@@ -10,7 +10,9 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
+import com.neromatt.epiphany.model.DataObjects.SingleRack;
 
 import java.io.File;
 import java.text.ParseException;
@@ -19,12 +21,13 @@ import java.util.Date;
 
 public class Database extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "epiphany";
 
     // Table Names
     private static final String TABLE_NOTES   = "notes";
     private static final String TABLE_FOLDERS = "folders";
+    private static final String TABLE_BUCKETS = "buckets";
 
     private static final String TABLE_SEQUENCE = "SQLITE_SEQUENCE";
 
@@ -42,6 +45,8 @@ public class Database extends SQLiteOpenHelper {
 
     private static final String KEY_FOLDER_UPDATED_AT = "updated_at";
 
+    private static final String KEY_BUCKET_ORDER = "bucket_order";
+
     private static final String CREATE_TABLE_NOTES = "CREATE TABLE " + TABLE_NOTES + "("
             + KEY_ID + " INTEGER PRIMARY KEY,"
             + KEY_PATH + " TEXT,"
@@ -55,7 +60,14 @@ public class Database extends SQLiteOpenHelper {
     private static final String CREATE_TABLE_FOLDERS = "CREATE TABLE " + TABLE_FOLDERS + "("
             + KEY_ID + " INTEGER PRIMARY KEY,"
             + KEY_PATH + " TEXT,"
-            + KEY_NAME + " TEXT,"
+            + KEY_FOLDER_UPDATED_AT + " INTEGER,"
+            + "CONSTRAINT " + CONSTRAINT_PATH + " UNIQUE (" + KEY_PATH + ")"
+            + ")";
+
+    private static final String CREATE_TABLE_BUCKETS = "CREATE TABLE " + TABLE_BUCKETS + "("
+            + KEY_ID + " INTEGER PRIMARY KEY,"
+            + KEY_PATH + " TEXT,"
+            + KEY_BUCKET_ORDER + " INTEGER,"
             + KEY_FOLDER_UPDATED_AT + " INTEGER,"
             + "CONSTRAINT " + CONSTRAINT_PATH + " UNIQUE (" + KEY_PATH + ")"
             + ")";
@@ -68,6 +80,7 @@ public class Database extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_TABLE_NOTES);
         db.execSQL(CREATE_TABLE_FOLDERS);
+        db.execSQL(CREATE_TABLE_BUCKETS);
     }
 
     @Override
@@ -75,6 +88,7 @@ public class Database extends SQLiteOpenHelper {
         // on upgrade drop older tables
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTES);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_FOLDERS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BUCKETS);
 
         onCreate(db);
     }
@@ -132,6 +146,45 @@ public class Database extends SQLiteOpenHelper {
         }
 
         return count > 0;
+    }
+
+    private long insertBucket(String path, int order) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_PATH, path);
+        values.put(KEY_BUCKET_ORDER, order);
+        values.put(KEY_FOLDER_UPDATED_AT, new Date().getTime());
+
+        return db.insert(TABLE_BUCKETS, null, values);
+    }
+
+    private int updateBucket(String path, int order) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_BUCKET_ORDER, order);
+        values.put(KEY_FOLDER_UPDATED_AT, new Date().getTime());
+
+        return db.update(TABLE_BUCKETS, values, KEY_PATH + " = ?", new String[] { path });
+    }
+
+    public void saveBucket(String path, int order) {
+        String selectQuery = "SELECT  * FROM " + TABLE_BUCKETS + " tn"
+                + " WHERE tn."
+                + KEY_PATH + " = '" + path + "'";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+        try {
+            if (c.moveToFirst()) {
+                updateBucket(path, order);
+            } else {
+                insertBucket(path, order);
+            }
+        } finally {
+            c.close();
+        }
     }
 
     private long insertFolder(String path) {
@@ -245,6 +298,47 @@ public class Database extends SQLiteOpenHelper {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public boolean deleteBuckets() {
+        try {
+            SQLiteDatabase db = this.getWritableDatabase();
+
+            int removed = db.delete(TABLE_BUCKETS, null, null);
+            if (removed > 0) {
+                db.execSQL("UPDATE "+TABLE_SEQUENCE+" SET seq = 0 WHERE name='"+TABLE_BUCKETS+"'");
+            }
+
+            return true;
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public ArrayList<MainModel> getBuckets() {
+        ArrayList<MainModel> res = new ArrayList<>();
+        String selectQuery = "SELECT  * FROM " + TABLE_BUCKETS + " tn"
+                + " ORDER BY "+KEY_BUCKET_ORDER+" ASC";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+        try {
+            if (c.moveToFirst()) {
+                do {
+                    Bundle res_bucket = new Bundle();
+                    File f = new File(getString(c, KEY_PATH));
+                    res_bucket.putString("path", f.getPath());
+                    res_bucket.putString("name", f.getName());
+                    res_bucket.putInt("order", getInt(c, KEY_BUCKET_ORDER));
+                    res.add(new SingleRack(res_bucket));
+                } while (c.moveToNext());
+            }
+        } finally {
+            c.close();
+        }
+
+        return res;
     }
 
     public ArrayList<Bundle> getNotes() {

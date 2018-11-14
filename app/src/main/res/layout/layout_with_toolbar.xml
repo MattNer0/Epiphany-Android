@@ -10,6 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/app_bar_height"
         android:background="@color/colorPrimaryDark"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
         app:theme="@style/Theme.AppCompat.NoActionBar"
         app:popupTheme="@style/ThemeOverlay.Epiphany"
         app:elevation="@dimen/app_bar_elevation">
@@ -23,7 +26,20 @@
             android:gravity="start|center"
             android:maxLines="1"
             android:ellipsize="end"
+            android:layout_marginStart="@dimen/app_bar_inset"
             android:text="ciao ciao" />
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/toolbar_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textColor"
+            android:textSize="@dimen/app_bar_fontsize"
+            android:gravity="start|center"
+            android:inputType="text"
+            android:visibility="gone">
+
+        </androidx.appcompat.widget.SearchView>
 
     </androidx.appcompat.widget.Toolbar>
 </com.google.android.material.appbar.AppBarLayout>

@@ -28,10 +28,16 @@ public class Constants {
 
     public static final String BROADCAST_FILTER = "LIBRARY";
 
+
     public static final String NOTEBOOK_FRAGMENT_TAG = "Notebook_Fragment";
 
     public static final String NOTEBOOK_FOLDER_FRAGMENT_TAG = "Notebook_Folder_Fragment";
     public static final String NOTEBOOK_BUCKET_FRAGMENT_TAG = "Notebook_Bucket_Fragment";
+    public static final String BUCKETS_FRAGMENT_TAG = "Buckets_Fragment";
+    public static final String FOLDER_FRAGMENT_TAG = "Folder_Fragment";
+
+    public static final String KEY_DIR_PATH = "path";
+    public static final String KEY_DIR_PARENTS = "parents";
 
     public static final String KEY_NOTE_PATH = "path";
     public static final String KEY_NOTE_FILENAME = "filename";

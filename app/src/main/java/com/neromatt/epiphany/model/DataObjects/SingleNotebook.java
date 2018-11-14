@@ -143,7 +143,8 @@ public class SingleNotebook extends MainModel {
         return false;
     }
 
-    public void setQuickNotesFolder() {
+    @Override
+    public void setAsQuickNotes() {
         this.isQuickNotes = true;
     }
 

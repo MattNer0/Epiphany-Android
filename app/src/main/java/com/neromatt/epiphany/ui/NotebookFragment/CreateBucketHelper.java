@@ -24,8 +24,8 @@ public class CreateBucketHelper implements CreateNotebookDialog.CreateNotebookDi
     @Override
     public void onDialogPositiveClick(CreateNotebookDialog dialog, String notebookname) {
         notebookname = notebookname.replaceAll("[^\\w. _-]", "");
-        mCallbackActivity.get().loadNewBucket(notebookname);
-        mCallbackFragment.get().reloadAdapter(true);
+        //mCallbackActivity.get().loadNewBucket(notebookname);
+        //mCallbackFragment.get().reloadAdapter(true);
         dialog.dismiss();
     }
 

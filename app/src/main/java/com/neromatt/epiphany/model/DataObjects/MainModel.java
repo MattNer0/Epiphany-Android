@@ -172,6 +172,8 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
 
     public boolean isQuickNotes() { return false; }
 
+    public void setAsQuickNotes() { }
+
     UUID getUuid() {
         return _uuid;
     }
@@ -372,6 +374,9 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
             m.setParent(this);
             if (isBucket()) {
                 m.setBucket(this);
+                if (isQuickNotes()) {
+                    m.setAsQuickNotes();
+                }
                 m.initParents(this);
             } else {
                 m.setBucket(_bucket);

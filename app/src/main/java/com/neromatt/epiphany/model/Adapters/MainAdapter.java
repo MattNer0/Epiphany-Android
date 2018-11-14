@@ -35,12 +35,13 @@ public class MainAdapter<T extends IFlexible> extends FlexibleAdapter<T> {
 
     public SingleNote getMovingNote() {
         if (ma.get() != null) {
-            return ma.get().getMovingNote();
+            //return ma.get().getMovingNote();
         }
         return null;
     }
 
     public boolean isMovingNote() {
-        return ma.get() != null && ma.get().isMovingNote();
+        //return ma.get() != null && ma.get().isMovingNote();
+        return false;
     }
 }
