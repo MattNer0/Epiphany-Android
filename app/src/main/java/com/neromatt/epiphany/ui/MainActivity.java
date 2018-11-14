@@ -1,9 +1,11 @@
 package com.neromatt.epiphany.ui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.widget.Toast;
 
 import com.neromatt.epiphany.Constants;
@@ -14,9 +16,13 @@ import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.ui.Fragments.BucketsFragment;
 import com.neromatt.epiphany.ui.Fragments.FoldersFragment;
 import com.neromatt.epiphany.ui.Fragments.MyFragment;
+import com.sensorberg.permissionbitte.BitteBitte;
+import com.sensorberg.permissionbitte.PermissionBitte;
 
+import java.io.File;
 import java.util.ArrayList;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -26,7 +32,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class MainActivity extends AppCompatActivity implements DBInterface {
+public class MainActivity extends AppCompatActivity implements DBInterface, BitteBitte {
 
     private Database db;
     private String root_path;
@@ -41,7 +47,13 @@ public class MainActivity extends AppCompatActivity implements DBInterface {
         setContentView(R.layout.activity_main);
 
         db = new Database(getApplicationContext());
-        if (!isFirstRun()) {
+        if (isFirstRun()) {
+            if (PermissionBitte.shouldAsk(this, this)) {
+                PermissionBitte.ask(MainActivity.this, MainActivity.this);
+            } else {
+                yesYouCan();
+            }
+        } else {
             createBucketsFragment(root_path);
         }
     }
@@ -151,5 +163,55 @@ public class MainActivity extends AppCompatActivity implements DBInterface {
             return "";
         }
         return fm.getBackStackEntryAt(fm.getBackStackEntryCount() - 1).getName();
+    }
+
+    @Override
+    public void yesYouCan() {
+        Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+
+        File rootDir = Environment.getExternalStorageDirectory();
+        String full = rootDir + "/epiphany";
+        File fullpath = new File(full);
+        if (!(fullpath.exists() && fullpath.isDirectory())) {
+            if (!fullpath.mkdirs()) {
+                Toast.makeText(this, "Couldn't create initial directories!", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        root_path = full;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor prefs_edit = prefs.edit();
+        prefs_edit.putString("pref_root_directory", full);
+        prefs_edit.putBoolean("firstrun", false);
+        prefs_edit.putString("pref_note_order", "0");
+        if (prefs_edit.commit()) {
+            createBucketsFragment(root_path);
+        }
+    }
+
+    @Override
+    public void noYouCant() {
+        Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void askNicer() {
+        new AlertDialog.Builder(this)
+            .setTitle("Storage")
+            .setMessage("Epiphany needs to access your storage to read and save notes")
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    PermissionBitte.ask(MainActivity.this, MainActivity.this);
+                }
+            })
+            .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    MainActivity.this.finish();
+                }
+            })
+            .setCancelable(false)
+            .show();
     }
 }
