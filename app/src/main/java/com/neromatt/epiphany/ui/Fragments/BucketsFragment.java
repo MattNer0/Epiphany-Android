@@ -2,33 +2,30 @@ package com.neromatt.epiphany.ui.Fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.CreateBucketHelper;
+import com.neromatt.epiphany.helper.CreateNoteHelper;
 import com.neromatt.epiphany.model.Adapters.FadeInItemAnimator;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.tasks.ReadBucketsTask;
 import com.neromatt.epiphany.ui.MainActivity;
-import com.neromatt.epiphany.ui.Navigation.LayoutFactory;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
-import com.neromatt.epiphany.ui.Navigation.OnOptionMenuListener;
+import com.neromatt.epiphany.ui.Navigation.OnQuickNoteEdit;
 import com.neromatt.epiphany.ui.R;
 
+import java.io.File;
 import java.util.ArrayList;
-
-import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.RecyclerView;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
-import eu.davidea.flexibleadapter.common.SmoothScrollStaggeredLayoutManager;
+import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
+import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 
 public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener, ReadBucketsTask.BucketsListener {
 
@@ -47,7 +44,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mNavigationLayout = new NavigationLayoutFactory(true, false, false, true, this);
+        mNavigationLayout = new NavigationLayoutFactory(true, false, true, true, true, this);
         return mNavigationLayout.produceLayout(inflater, container);
     }
 
@@ -58,23 +55,59 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         mNavigationLayout.viewCreated(getMainActivity(), view);
         recycler_view = view.findViewById(R.id.listview);
 
+        if (recycler_view_state == null && savedInstanceState != null) {
+            recycler_view_state = savedInstanceState.getParcelable(Constants.RECYCLE_STATE);
+        }
+
+        FabSpeedDialMenu menu = new FabSpeedDialMenu(getContext());
+        menu.add(1, Constants.FAB_MENU_NEW_BUCKET, 0, R.string.fab_new_bucket).setIcon(R.drawable.ic_action_add);
+        mNavigationLayout.setFabMenu(menu);
+        mNavigationLayout.addOnFabMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
+            @Override
+            public void onMenuItemClick(FloatingActionButton fab, TextView textView, int itemId) {
+                switch (itemId) {
+                    case Constants.FAB_MENU_NEW_BUCKET:
+                        CreateBucketHelper.addBucket(getMainActivity(), root_path, new CreateBucketHelper.BucketCreatedListener() {
+                            @Override
+                            public void onCreated(boolean success) {
+                                runBucketsTask();
+                            }
+                        });
+                        break;
+                }
+            }
+        });
+
         Bundle args = getArguments();
         if (args.containsKey(Constants.KEY_DIR_PATH)) {
             root_path = args.getString(Constants.KEY_DIR_PATH, "");
-
-            if (buckets_task != null && !buckets_task.isCancelled()) {
-                buckets_task.cancel(true);
-            }
-
-            buckets_task = new ReadBucketsTask(getContext(), this);
-            buckets_task.execute(root_path);
+            runBucketsTask();
         }
+
+        if (getMainActivity().getSearchOpened()) {
+            mNavigationLayout.showSearch("", false);
+        }
+
+        mNavigationLayout.setQuickNoteListener(new OnQuickNoteEdit() {
+            @Override
+            public void openQuickNote(String text) {
+                CreateNoteHelper.addQuickNote(getMainActivity(), root_path, "");
+            }
+        });
+    }
+
+    private void runBucketsTask() {
+        if (buckets_task != null && !buckets_task.isCancelled()) {
+            buckets_task.cancel(true);
+        }
+
+        buckets_task = new ReadBucketsTask(getContext(), this);
+        buckets_task.execute(root_path);
     }
 
     @Override
     public void onActivityCreated (Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
         mNavigationLayout.setTitle(R.string.title_library);
     }
 
@@ -83,6 +116,10 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         super.onResume();
         if (adapter != null && recycler_view != null) {
             recycler_view.setLayoutManager(getLayoutManager());
+
+            if (recycler_view_state != null) {
+                recycler_view.getLayoutManager().onRestoreInstanceState(recycler_view_state);
+            }
         }
     }
 
@@ -120,12 +157,9 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     public boolean onItemClick(View view, int position) {
         MainModel model = adapter.getItem(position);
 
-        ArrayList<String> parent = new ArrayList<>();
-        parent.add(root_path);
-
         MainActivity ma = getMainActivity();
         if (ma == null) return false;
-        ma.pushFragment(FoldersFragment.newInstance(parent, model.getPath()), Constants.FOLDER_FRAGMENT_TAG);
+        ma.pushFragment(FoldersFragment.newInstance(root_path, model.getPath()), Constants.FOLDER_FRAGMENT_TAG, Constants.FOLDER_FRAGMENT_TAG + model.getPath());
         return true;
     }
 

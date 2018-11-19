@@ -58,10 +58,6 @@ public class SingleNote extends MainModel {
     private String oldFilename;
     private boolean newFilename;
 
-    private OnNoteLoadedListener mOnNoteLoadedListener;
-
-    //private WeakReference<MyViewHolder> viewHolder;
-
     public SingleNote(String path, String filename) {
         super();
 
@@ -74,46 +70,11 @@ public class SingleNote extends MainModel {
         this.noteModified = false;
         this.newFilename = false;
         this.oldFilename = null;
-
-        /*if (doesExist()) {
-            Bundle timestamp = readTimestampFile(getFullPath());
-            try {
-                this.updatedAt = parseDate(timestamp.getString(Constants.METATAG_UPDATED, ""));
-                this.createdAt = parseDate(timestamp.getString(Constants.METATAG_CREATED, ""));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }*/
     }
 
     public SingleNote(Bundle args) {
         super(args);
-        this.noteLoaded = args.getBoolean("noteLoaded");
-        this.noteModified = false;
-        this.newFilename = false;
-        this.oldFilename = null;
-
-        this._model_type = MainModel.TYPE_MARKDOWN_NOTE;
-        this.path = args.getString(Constants.KEY_NOTE_PATH, "");
-        this.filename = args.getString(Constants.KEY_NOTE_FILENAME, "");
-
-        if (args.containsKey(Constants.METATAG_UPDATED)) {
-            this.updatedAt = new Date(args.getLong(Constants.METATAG_UPDATED, 0));
-        }
-
-        if (args.containsKey(Constants.METATAG_CREATED)) {
-            this.createdAt = new Date(args.getLong(Constants.METATAG_CREATED, 0));
-        }
-
-        if (this.noteLoaded) {
-            this.summary = args.getString(Constants.KEY_NOTE_SUMMARY, "");
-            this.title = args.getString(Constants.KEY_NOTE_TITLE, "");
-            this.body = args.getString(Constants.KEY_NOTE_BODY, "");
-            this.metadata = args.getBundle(Constants.KEY_NOTE_METADATA);
-            if (this.metadata == null) this.metadata = new Bundle();
-        } else {
-            this.metadata = new Bundle();
-        }
+        updateObj(args);
     }
 
     public SingleNote(JsonObject args) {
@@ -197,15 +158,27 @@ public class SingleNote extends MainModel {
         task.execute(getFullPath());
     }
 
-    public void refreshFromDB(Database db, OnNoteLoadedListener noteLoadedCallback) {
+    public void refreshFromDB(Database db) {
         this.title="";
         this.summary="";
         this.updatedAt = new Date();
         this.createdAt = new Date();
         this.metadata = new Bundle();
 
-        LoadNoteTask task = new LoadNoteTask(this, db, false, noteLoadedCallback);
-        task.execute(getFullPath());
+        Bundle res = db.getNoteByPath(getFullPath());
+        updateObjAfterReadingContent(this, res, false);
+    }
+
+    public void refreshFromFile(Database db) {
+        this.title="";
+        this.summary="";
+        this.updatedAt = new Date();
+        this.createdAt = new Date();
+        this.metadata = new Bundle();
+
+        Bundle res = readNoteFile(getFullPath());
+        if (db != null) db.saveNote(getFullPath(), res);
+        updateObjAfterReadingContent(this, res, true);
     }
 
     public void searchNote(final String query, final OnNoteSearchedListener noteSearchedCallback) {
@@ -226,16 +199,6 @@ public class SingleNote extends MainModel {
             noteSearchedCallback.NoteSearched(this, true);
         } else {
             noteSearchedCallback.NoteSearched(this, false);
-        }
-    }
-
-    public void unloadNote() {
-        if (wasLoaded()) {
-            this.noteModified = false;
-            this.noteLoaded = false;
-            this.summary = null;
-            this.body = null;
-            this.metadata = new Bundle();
         }
     }
 
@@ -695,6 +658,35 @@ public class SingleNote extends MainModel {
         return args;
     }
 
+    public void updateObj(Bundle args) {
+        this.noteLoaded = args.getBoolean("noteLoaded");
+        this.noteModified = false;
+        this.newFilename = false;
+        this.oldFilename = null;
+
+        this._model_type = MainModel.TYPE_MARKDOWN_NOTE;
+        this.path = args.getString(Constants.KEY_NOTE_PATH, "");
+        this.filename = args.getString(Constants.KEY_NOTE_FILENAME, "");
+
+        if (args.containsKey(Constants.METATAG_UPDATED)) {
+            this.updatedAt = new Date(args.getLong(Constants.METATAG_UPDATED, 0));
+        }
+
+        if (args.containsKey(Constants.METATAG_CREATED)) {
+            this.createdAt = new Date(args.getLong(Constants.METATAG_CREATED, 0));
+        }
+
+        if (this.noteLoaded) {
+            this.summary = args.getString(Constants.KEY_NOTE_SUMMARY, "");
+            this.title = args.getString(Constants.KEY_NOTE_TITLE, "");
+            this.body = args.getString(Constants.KEY_NOTE_BODY, "");
+            this.metadata = args.getBundle(Constants.KEY_NOTE_METADATA);
+            if (this.metadata == null) this.metadata = new Bundle();
+        } else {
+            this.metadata = new Bundle();
+        }
+    }
+
     @Override
     public JsonObject toJson() {
         JsonObject obj = super.toJson();
@@ -746,42 +738,39 @@ public class SingleNote extends MainModel {
 
         @Override
         protected void onPostExecute(Bundle result) {
-            if (note == null || result == null) return;
-
-            note.body = result.getString(Constants.KEY_NOTE_BODY, "");
-            note.title = result.getString(Constants.KEY_NOTE_TITLE, "");
-            note.summary = result.getString(Constants.KEY_NOTE_SUMMARY, "");
-
-            if (result.containsKey(Constants.KEY_NOTE_METADATA)) {
-                note.metadata = result.getBundle(Constants.KEY_NOTE_METADATA);
-
-                try {
-                    if (note.metadata.containsKey(Constants.METATAG_UPDATED)) {
-                        note.updatedAt = parseDate(note.metadata.getString(Constants.METATAG_UPDATED, ""));
-                    }
-                    if (note.metadata.containsKey(Constants.METATAG_CREATED)) {
-                        note.createdAt = parseDate(note.metadata.getString(Constants.METATAG_CREATED, ""));
-                    }
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                note.updatedAt = new Date(result.getLong(Constants.METATAG_UPDATED));
-                note.createdAt = new Date(result.getLong(Constants.METATAG_CREATED));
-            }
-
-            if (load_from_file) note.noteLoaded = true;
-
-            /*if (note.viewHolder != null && note.viewHolder.get() != null) {
-                MyViewHolder viewHolder = note.viewHolder.get();
-                viewHolder.mNotebookTitle.setText(note.title);
-                viewHolder.mNoteSummary.setText(note.summary);
-            }*/
-
+            updateObjAfterReadingContent(note, result, load_from_file);
             if (noteLoadedCallback != null) {
                 noteLoadedCallback.NoteLoaded(note);
             }
         }
+    }
+
+    private static void updateObjAfterReadingContent(SingleNote note, Bundle result, boolean loaded_from_file) {
+        if (note == null || result == null) return;
+
+        note.body = result.getString(Constants.KEY_NOTE_BODY, "");
+        note.title = result.getString(Constants.KEY_NOTE_TITLE, "");
+        note.summary = result.getString(Constants.KEY_NOTE_SUMMARY, "");
+
+        if (result.containsKey(Constants.KEY_NOTE_METADATA)) {
+            note.metadata = result.getBundle(Constants.KEY_NOTE_METADATA);
+
+            try {
+                if (note.metadata.containsKey(Constants.METATAG_UPDATED)) {
+                    note.updatedAt = parseDate(note.metadata.getString(Constants.METATAG_UPDATED, ""));
+                }
+                if (note.metadata.containsKey(Constants.METATAG_CREATED)) {
+                    note.createdAt = parseDate(note.metadata.getString(Constants.METATAG_CREATED, ""));
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        } else {
+            note.updatedAt = new Date(result.getLong(Constants.METATAG_UPDATED));
+            note.createdAt = new Date(result.getLong(Constants.METATAG_CREATED));
+        }
+
+        if (loaded_from_file) note.noteLoaded = true;
     }
 
     @Override

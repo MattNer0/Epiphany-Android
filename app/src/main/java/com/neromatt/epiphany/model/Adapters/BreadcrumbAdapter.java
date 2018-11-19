@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.SortBy;
 import com.neromatt.epiphany.ui.Navigation.Breadcrumb;
@@ -71,6 +72,8 @@ public class BreadcrumbAdapter extends RecyclerView.Adapter<BreadcrumbAdapter.Vi
         private void bindView(final int position, final Breadcrumb obj, final OnBreadcrumbClickListener listener) {
             if (position == 0) {
                 this.rackName.setText(R.string.title_library);
+            } else if (obj.name.equalsIgnoreCase(Constants.QUICK_NOTES_BUCKET)) {
+                this.rackName.setText("Quick Notes");
             } else {
                 this.rackName.setText(obj.name);
             }

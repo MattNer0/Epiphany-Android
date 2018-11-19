@@ -191,6 +191,7 @@ public class EditorActivity extends AppCompatActivity {
             note.saveNote(new SingleNote.OnNoteSavedListener() {
                 @Override
                 public void NoteSaved(boolean saved) {
+                    if (db != null) db.saveNote(note.getFullPath(), note.toBundle());
                     if (saved) {
                         Toast.makeText(EditorActivity.this, R.string.toast_note_saved, Toast.LENGTH_LONG).show();
                         if (quit) {

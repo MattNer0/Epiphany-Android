@@ -2,6 +2,7 @@ package com.neromatt.epiphany.ui.Fragments;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -9,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.ui.MainActivity;
@@ -29,8 +31,9 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
 
     RecyclerView recycler_view;
     MainAdapter<MainModel> adapter;
+    Parcelable recycler_view_state;
 
-    MainActivity getMainActivity() {
+    public MainActivity getMainActivity() {
         return (MainActivity) getActivity();
     }
 
@@ -62,7 +65,7 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
-        mNavigationLayout.onCreateMenu(menu);
+        mNavigationLayout.onCreateMenu(getContext(), menu);
     }
 
     @Override
@@ -88,6 +91,20 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
 
         if (recycler_view != null) {
             recycler_view.setLayoutManager(getLayoutManager(staggered));
+        }
+    }
+
+    @Override
+    public void updateSearchStatus(boolean search_opened) {
+        getMainActivity().setSearchOpened(search_opened);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        if (recycler_view != null) {
+            recycler_view_state = recycler_view.getLayoutManager().onSaveInstanceState();
+            state.putParcelable(Constants.RECYCLE_STATE, recycler_view_state);
         }
     }
 }

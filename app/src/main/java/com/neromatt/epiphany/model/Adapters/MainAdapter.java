@@ -4,6 +4,7 @@ import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.ui.MainActivity;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.Nullable;

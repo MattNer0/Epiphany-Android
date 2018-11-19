@@ -1,4 +1,4 @@
-package com.neromatt.epiphany.ui.NotebookFragment;
+package com.neromatt.epiphany.helper;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -12,14 +12,14 @@ import com.neromatt.epiphany.ui.R;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
-public class CreateNotebookDialog extends DialogFragment {
+public class MyDialog extends DialogFragment {
 
     private boolean dialog_open = false;
     private int positive_button_label = R.string.create_notebook;
 
-    private CreateNotebookDialogListener mListener;
+    private MyDialogListener mListener;
 
-    void setDialogListener(CreateNotebookDialogListener mListener){
+    void setDialogListener(MyDialogListener mListener) {
         this.mListener = mListener;
     }
 
@@ -51,7 +51,7 @@ public class CreateNotebookDialog extends DialogFragment {
                     dialog_open = false;
                     if (mListener != null) {
                         EditText notebookName = view.findViewById(R.id.folder_name);
-                        mListener.onDialogPositiveClick(CreateNotebookDialog.this, notebookName.getText().toString());
+                        mListener.onDialogPositiveClick(MyDialog.this, notebookName.getText().toString());
                     }
                 }
             })
@@ -59,15 +59,15 @@ public class CreateNotebookDialog extends DialogFragment {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog_open = false;
                     if(mListener!=null)
-                        mListener.onDialogNegativeClick(CreateNotebookDialog.this);
+                        mListener.onDialogNegativeClick(MyDialog.this);
                 }
             });
 
         return builder.create();
     }
 
-    public interface CreateNotebookDialogListener {
-        void onDialogPositiveClick(CreateNotebookDialog dialog, String text);
-        void onDialogNegativeClick(CreateNotebookDialog dialog);
+    public interface MyDialogListener {
+        void onDialogPositiveClick(MyDialog dialog, String text);
+        void onDialogNegativeClick(MyDialog dialog);
     }
 }

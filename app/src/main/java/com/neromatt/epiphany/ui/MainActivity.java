@@ -38,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     private String root_path;
     private boolean next_back_will_close_app = false;
 
+    private boolean search_opened;
+
     private RecyclerView drawer_list;
     private RackAdapter rack_adapter;
 
@@ -99,12 +101,16 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
                     @Override
                     public void RackClicked(int position) {
                         closeDrawerIfOpen();
-
-                        MainModel m = rack_adapter.getItem(position);
-
-                        ArrayList<String> parent = new ArrayList<>();
-                        parent.add(root_path);
-                        pushFragment(FoldersFragment.newInstance(parent, m.getPath()), Constants.FOLDER_FRAGMENT_TAG);
+                        MainModel model = rack_adapter.getItem(position);
+                        if (model.isQuickNotes()) {
+                            String quick_path = model.getPath()+"/New Notes";
+                            File f = new File(quick_path);
+                            if (f.exists() || f.mkdirs()) {
+                                pushFragment(FoldersFragment.newInstance(root_path, quick_path, model.getTitle()), Constants.FOLDER_FRAGMENT_TAG, Constants.FOLDER_FRAGMENT_TAG + model.getPath());
+                                return;
+                            }
+                        }
+                        pushFragment(FoldersFragment.newInstance(root_path, model.getPath()), Constants.FOLDER_FRAGMENT_TAG, Constants.FOLDER_FRAGMENT_TAG + model.getPath());
                     }
                 });
                 drawer_list.setLayoutManager(new LinearLayoutManager(this));
@@ -129,13 +135,32 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         return false;
     }
 
-    public void pushFragment(MyFragment fragment, String tag) {
+    public void setSearchOpened(boolean search_opened) {
+        this.search_opened = search_opened;
+    }
+
+    public boolean getSearchOpened() {
+        return search_opened;
+    }
+
+    public void pushFragment(MyFragment fragment, String fragment_tag, String back_stack_tag) {
         next_back_will_close_app = false;
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.setCustomAnimations(R.animator.enter_from_right, R.animator.exit_to_left, R.animator.enter_from_left, R.animator.exit_to_right);
-        ft.replace(R.id.content_frame, fragment, tag);
-        ft.addToBackStack(tag);
+        ft.replace(R.id.content_frame, fragment, fragment_tag);
+        ft.addToBackStack(back_stack_tag);
         ft.commitAllowingStateLoss();
+    }
+
+    public void pushFragment(MyFragment fragment, String fragment_tag, String back_stack_tag, boolean go_back) {
+        if (go_back) {
+            FragmentManager fm = getSupportFragmentManager();
+            if (fm.popBackStackImmediate(back_stack_tag, 0)) {
+                return;
+            }
+        }
+
+        pushFragment(fragment, fragment_tag, back_stack_tag);
     }
 
     private void createBucketsFragment(String root_path) {

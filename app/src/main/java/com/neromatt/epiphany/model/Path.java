@@ -33,11 +33,6 @@ public class Path {
         depth = 0;
     }
 
-    public void resetPath() {
-        currentPath = new File(rootPath);
-        depth = 0;
-    }
-
     public boolean isRoot() {
         return depth == 0;
     }
@@ -52,19 +47,6 @@ public class Path {
 
     public String getCurrentPath(){
        return currentPath.toString();
-    }
-
-    public void setCurrentPath(String currentPath){
-        this.currentPath = new File(currentPath);
-        if (this.currentPath.toString().equals(this.rootPath)) {
-            depth = 0;
-        } else if (this.currentPath.getParentFile().toString().equals(this.rootPath)) {
-            depth = 1;
-        }
-    }
-
-    public void setRootPath(String rootPath) {
-        this.rootPath = rootPath;
     }
 
     private static JSONObject getMetaFile(String path, String file_name) {
@@ -92,51 +74,6 @@ public class Path {
         }
 
         return new JSONObject();
-    }
-
-    public ArrayList<MainModel> getRacks() {
-        File dir = new File(this.rootPath);
-        if (dir.exists()) {
-            ArrayList<MainModel> racks = new ArrayList<>();
-            File[] fileList = dir.listFiles();
-
-            for (File f : fileList) {
-                if (!f.getName().startsWith(".")) {
-                    if (f.isDirectory()) {
-                        racks.add(new SingleRack(f.getName(), f.toString(), getMetaFile(f.toString(), ".bucket.json")));
-                    }
-                }
-            }
-            return racks;
-        }
-        return null;
-    }
-
-    public Bundle getQuickNotesPath() {
-        Bundle ret = new Bundle();
-        boolean created_folder = false;
-        boolean created_bucket = false;
-        String bucket_quick_path = rootPath+"/"+Constants.QUICK_NOTES_BUCKET;
-        String quick_path = bucket_quick_path+"/New Notes";
-        File b = new File(bucket_quick_path);
-        File f = new File(quick_path);
-        if (!f.exists()) {
-            if (!b.exists()) {
-                created_bucket = true;
-            }
-            created_folder = true;
-
-            if (!f.mkdirs()) {
-                quick_path = "";
-                created_folder = false;
-                created_bucket = false;
-            }
-        }
-
-        ret.putString("path", quick_path);
-        ret.putBoolean("created_folder", created_folder);
-        ret.putBoolean("created_bucket", created_bucket);
-        return ret;
     }
 
     public String getName() {
@@ -190,20 +127,6 @@ public class Path {
         return filename.toString().substring(filename.toString().lastIndexOf('.') + 1);
     }
 
-    public MainModel createNotebook(String path, String notebook_name) {
-        if (createFolder(path+"/"+notebook_name)) {
-            return new SingleNotebook(notebook_name, path+"/"+notebook_name, null);
-        }
-        return null;
-    }
-
-    public MainModel createRack(String rackname) {
-        if (createFolder(rootPath+"/"+rackname)) {
-            return new SingleRack(rackname, rootPath+"/"+rackname, null);
-        }
-        return null;
-    }
-
     public static String newNoteName(String path, String extension) {
         int name_num = 0;
         String new_filename = "";
@@ -242,11 +165,6 @@ public class Path {
         }
 
         return new_filename;
-    }
-
-    public boolean createFolder(String path) {
-        File dir = new File(path);
-        return dir.mkdir();
     }
 
     public String getTitle() {

@@ -30,6 +30,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
@@ -43,6 +44,9 @@ public final class NavigationLayoutFactory implements LayoutFactory {
     private final boolean includeBreadCrumbs;
     private final boolean includeFab;
     private final boolean includeDrawer;
+    private final boolean includeInputQuickNote;
+
+    private boolean search_opened;
 
     private Toolbar toolbar;
     private TextView toolbar_title;
@@ -55,6 +59,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
     private OnSearchViewListener toolbar_search_listener;
     private DrawerLayout drawer_layout;
     private ImageView drawer_close_arrow;
+    private EditText quick_note_edit_text;
 
     private ActionBar mActionBar;
 
@@ -62,14 +67,17 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
     private MenuItem action_list_layout;
     private MenuItem action_staggered_layout;
-    private MenuItem action_searchView;
+    private MenuItem action_search_view;
 
-    public NavigationLayoutFactory(boolean includeToolbar, boolean includeBreadCrumbs, boolean includeFab, boolean includeDrawer, LayoutFactory origin) {
+    public NavigationLayoutFactory(boolean includeToolbar, boolean includeBreadCrumbs, boolean includeFab, boolean includeDrawer, boolean inputQuickNote, LayoutFactory origin) {
         this.includeToolbar = includeToolbar || includeDrawer;
         this.includeBreadCrumbs = includeBreadCrumbs;
         this.includeFab = includeFab;
         this.includeDrawer = includeDrawer;
+        this.includeInputQuickNote = inputQuickNote;
         this.origin = origin;
+
+        this.search_opened = false;
     }
 
     @Override
@@ -87,18 +95,20 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             inflater.inflate(R.layout.layout_with_toolbar, parent);
         }
 
-        if (includeBreadCrumbs) {
+        if (includeBreadCrumbs || includeInputQuickNote) {
             LinearLayout parentLinear = new LinearLayout(inflater.getContext());
             parentLinear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             parentLinear.setOrientation(LinearLayout.VERTICAL);
 
-            inflater.inflate(R.layout.layout_with_breadcrumbs, parentLinear);
+            if (includeBreadCrumbs) inflater.inflate(R.layout.layout_with_breadcrumbs, parentLinear);
 
             LinearLayout.LayoutParams childLinearParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             childLinearParams.weight = 1;
 
             parentLinear.addView(child, childLinearParams);
             parent.addView(parentLinear, childParams);
+
+            if (includeInputQuickNote) inflater.inflate(R.layout.layout_with_input_quick_note, parentLinear);
 
         } else {
             parent.addView(child, childParams);
@@ -166,7 +176,33 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_breadcrumbs_list.setVisibility(View.GONE);
         }
 
+        if (includeInputQuickNote) {
+            quick_note_edit_text = view.findViewById(R.id.quickNoteEdit);
+            quick_note_edit_text.clearFocus();
+        }
+
         return this;
+    }
+
+    public void setQuickNoteListener(final OnQuickNoteEdit listener) {
+        if (includeInputQuickNote) {
+            quick_note_edit_text.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String text = quick_note_edit_text.getText().toString();
+                    listener.openQuickNote(text);
+                }
+            });
+            quick_note_edit_text.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        String text = quick_note_edit_text.getText().toString();
+                        listener.openQuickNote(text);
+                    }
+                }
+            });
+        }
     }
 
     public void setBreadcrumbs(Context context, ArrayList<Breadcrumb> breadcrumbs, BreadcrumbAdapter.OnBreadcrumbClickListener listener) {
@@ -182,10 +218,22 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         }
     }
 
-    public void onCreateMenu(Menu menu) {
+    public void onCreateMenu(Context context, Menu menu) {
         action_list_layout = menu.findItem(R.id.action_list_layout);
         action_staggered_layout = menu.findItem(R.id.action_staggered_layout);
-        action_searchView = menu.findItem(R.id.action_search);
+        action_search_view = menu.findItem(R.id.action_search);
+
+        toggleLayoutItem(context);
+    }
+
+    private void toggleLayoutItem(Context context) {
+        if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean("pref_staggered_layout", false)) {
+            action_list_layout.setVisible(true);
+            action_staggered_layout.setVisible(false);
+        } else {
+            action_staggered_layout.setVisible(true);
+            action_list_layout.setVisible(false);
+        }
     }
 
     public boolean onOptionsItemSelected(MenuItem item, MainActivity ma, OnOptionMenuListener listener) {
@@ -211,11 +259,12 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             listener.updateLayoutList(true);
             return true;
         } else if (id == R.id.action_search) {
-            /*if (search_opened) {
-                searchBarClosed();
+            if (search_opened) {
+                hideSearch(ma);
             } else {
-                searchBarOpened(true);
-            }*/
+                showSearch("", true);
+            }
+            listener.updateSearchStatus(search_opened);
             return true;
         }
 
@@ -274,6 +323,10 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
     public void showSearch(String initial, boolean focus) {
         if (includeToolbar) {
+            action_list_layout.setVisible(false);
+            action_staggered_layout.setVisible(false);
+            action_search_view.setVisible(false);
+
             toolbar_title.setVisibility(View.GONE);
             toolbar_search.setVisibility(View.VISIBLE);
             toolbar_search.setIconified(false);
@@ -285,8 +338,11 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         }
     }
 
-    public void hideSearch() {
+    private void hideSearch(Context context) {
         if (includeToolbar) {
+            toggleLayoutItem(context);
+            action_search_view.setVisible(true);
+
             toolbar_title.setVisibility(View.VISIBLE);
             toolbar_search.setVisibility(View.GONE);
             toolbar_search.clearFocus();

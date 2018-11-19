@@ -2,7 +2,6 @@ package com.neromatt.epiphany.model;
 
 import android.content.Context;
 import android.content.Intent;
-import android.preference.PreferenceManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -10,7 +9,6 @@ import com.google.gson.reflect.TypeToken;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.Gson.ModelTypeAdapter;
-import com.neromatt.epiphany.service.LibraryService;
 import com.neromatt.epiphany.ui.MainActivity;
 
 import java.io.BufferedReader;
@@ -23,48 +21,11 @@ import java.util.ArrayList;
 
 public class Library {
 
-    private static boolean service_launched = false;
-
-    public static void serviceFinished() {
-        service_launched = false;
-    }
-
-    public static void launchServiceForBuckets(MainActivity context, Path path) {
-        launchService(context, path, serviceRequestEnum.BUCKETS, null);
-    }
-
-    public static void launchServiceForFolder(MainActivity context, MainModel model) {
-        launchService(context, null, serviceRequestEnum.FOLDER, model);
-    }
-
-    public static void launchServiceForNotes(MainActivity context, Path path, MainModel model) {
-        launchService(context, path, serviceRequestEnum.NOTES, model);
-        service_launched = false;
-    }
-
-    private static void launchService(MainActivity context, Path path, serviceRequestEnum request, MainModel model) {
-        if (!service_launched) {
-            service_launched = true;
-            Intent intent = new Intent(context, LibraryService.class);
-            if (path != null) {
-                intent.putExtra("root", path.getRootPath());
-            }
-
-            intent.putExtra("request", request);
-
-            if (request == serviceRequestEnum.FOLDER || request == serviceRequestEnum.NOTES) {
-                intent.putExtra("model", model);
-            }
-
-            context.startService(intent);
-        }
-    }
-
-    public static void launchServiceForCleaningDB(Context context) {
+    /*public static void launchServiceForCleaningDB(Context context) {
         Intent intent = new Intent(context, LibraryService.class);
         intent.putExtra("request", serviceRequestEnum.CLEAN);
         context.startService(intent);
-    }
+    }*/
 
     public static void saveToFile(MainActivity context, ArrayList<MainModel> library_list, String bucket) {
         FileOutputStream outputStream;

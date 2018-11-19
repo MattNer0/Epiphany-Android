@@ -143,11 +143,6 @@ public class SingleNotebook extends MainModel {
         return false;
     }
 
-    @Override
-    public void setAsQuickNotes() {
-        this.isQuickNotes = true;
-    }
-
     public int compareOrderTo(SingleNotebook n1) {
         return Integer.valueOf(order).compareTo(n1.getOrder());
     }

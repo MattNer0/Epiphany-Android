@@ -27,7 +27,7 @@
 //import com.neromatt.epiphany.model.Path;
 //import com.neromatt.epiphany.model.Adapters.RackAdapter;
 //import com.neromatt.epiphany.ui.Fragments.BucketsFragment;
-//import com.neromatt.epiphany.ui.NotebookFragment.CreateNoteHelper;
+//import com.neromatt.epiphany.helper.CreateNoteHelper;
 //import com.neromatt.epiphany.ui.NotebookFragment.NotebookFragment;
 //import com.sensorberg.permissionbitte.BitteBitte;
 //import com.sensorberg.permissionbitte.PermissionBitte;
@@ -46,7 +46,7 @@
 //import androidx.recyclerview.widget.LinearLayoutManager;
 //import androidx.recyclerview.widget.RecyclerView;
 //
-//public class MainActivityB extends AppCompatActivity implements BitteBitte, PathSupplier, CreateNoteHelper.OnQuickPathListener, DBInterface {
+//public class MainActivityB extends AppCompatActivity implements BitteBitte, CreateNoteHelper.OnQuickPathListener, DBInterface {
 //
 //    private Database db;
 //

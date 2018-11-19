@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme"
         tools:replace="android:theme">
 
-        <service android:name="com.neromatt.epiphany.service.LibraryService" />
+        <!--service android:name="com.neromatt.epiphany.service.LibraryService" /-->
 
         <activity
             android:name="com.neromatt.epiphany.ui.MainActivity"

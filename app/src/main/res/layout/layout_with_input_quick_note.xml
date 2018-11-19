@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/quick_note_input_height"
+    android:layout_gravity="bottom"
+    android:orientation="horizontal">
+
+    <EditText
+        android:id="@+id/quickNoteEdit"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="start|center"
+        android:background="@drawable/input_quick_note"
+        android:textColor="@color/colorPrimary"
+        android:textColorHint="@color/listSubColor"
+        android:inputType="textNoSuggestions"
+        android:imeOptions="actionGo"
+        android:hint="New Quick Note..."
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"/>
+
+</LinearLayout>

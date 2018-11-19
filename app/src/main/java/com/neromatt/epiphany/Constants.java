@@ -28,17 +28,18 @@ public class Constants {
 
     public static final String BROADCAST_FILTER = "LIBRARY";
 
+    public static final int NOTES_LOADED = 1;
+    public static final int NOTES_LOADED_INTO_DATABASE = -1;
 
-    public static final String NOTEBOOK_FRAGMENT_TAG = "Notebook_Fragment";
-
-    public static final String NOTEBOOK_FOLDER_FRAGMENT_TAG = "Notebook_Folder_Fragment";
-    public static final String NOTEBOOK_BUCKET_FRAGMENT_TAG = "Notebook_Bucket_Fragment";
-    public static final String BUCKETS_FRAGMENT_TAG = "Buckets_Fragment";
-    public static final String FOLDER_FRAGMENT_TAG = "Folder_Fragment";
+    public static final String BUCKETS_FRAGMENT_TAG = "Bf";
+    public static final String FOLDER_FRAGMENT_TAG = "Ff";
 
     public static final String KEY_DIR_PATH = "path";
+    public static final String KEY_DIR_ROOT_PATH = "root_path";
     public static final String KEY_DIR_PARENTS = "parents";
+    public static final String KEY_DIR_TITLE = "title";
 
+    public static final String KEY_UUID = "_uuid";
     public static final String KEY_NOTE_PATH = "path";
     public static final String KEY_NOTE_FILENAME = "filename";
     public static final String KEY_NOTE_TITLE = "title";
@@ -50,4 +51,8 @@ public class Constants {
     public static final String METATAG_UPDATED = "updatedAt";
     public static final String METATAG_CREATED = "createdAt";
     public static final String METATAG_WEB = "Web";
+
+    public static final String RECYCLE_STATE = "recycle_state";
+
+    public static final String DIALOG_CREATE_BUCKET = "dialog_new_bucket";
 }

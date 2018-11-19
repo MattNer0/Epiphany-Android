@@ -23,20 +23,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 public class SettingsActivity extends AppCompatActivity {
     private Toolbar toolbar;
 
-    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Library.serviceFinished();
-            if (intent.hasExtra("request")) {
-                Bundle extras = intent.getExtras();
-                Library.serviceRequestEnum request = (Library.serviceRequestEnum) extras.getSerializable("request");
-                if (request == Library.serviceRequestEnum.CLEAN) {
-                    Toast.makeText(getApplicationContext(), "Database Cleaned!", Toast.LENGTH_LONG).show();
-                }
-            }
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -52,18 +38,6 @@ public class SettingsActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.settings_frame, new SettingsFragment() , "settings_frag")
                 .commit();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        LocalBroadcastManager.getInstance(SettingsActivity.this).registerReceiver(broadcastReceiver, new IntentFilter(Constants.BROADCAST_FILTER));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        LocalBroadcastManager.getInstance(SettingsActivity.this).unregisterReceiver(broadcastReceiver);
     }
 
     @Override
@@ -97,7 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Library.launchServiceForCleaningDB(SettingsActivity.this);
+                        //Library.launchServiceForCleaningDB(SettingsActivity.this);
                     }
                 })
                 .setNegativeButton(R.string.dialog_no, null)

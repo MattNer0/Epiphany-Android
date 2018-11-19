@@ -9,7 +9,7 @@ import android.util.Log;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.Path;
-import com.neromatt.epiphany.ui.NotebookFragment.CreateNoteHelper;
+import com.neromatt.epiphany.helper.CreateNoteHelper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -49,8 +49,7 @@ public class ShareActivity extends AppCompatActivity implements CreateNoteHelper
     private void newNoteFromShared(String title, String text) {
         if (text == null) return;
 
-        CreateNoteHelper mCreateNoteHelper = new CreateNoteHelper(this, new Path(root_path));
-        mCreateNoteHelper.addQuickNoteAndSave(title, text, this, new CreateNoteHelper.OnQUickNoteSaved() {
+        CreateNoteHelper.addQuickNoteAndSave(root_path, title, text, this, new CreateNoteHelper.OnQUickNoteSaved() {
             @Override
             public void QuickNoteSaved(SingleNote note) {
                 Intent intent = new Intent(ShareActivity.this, EditorActivity.class);

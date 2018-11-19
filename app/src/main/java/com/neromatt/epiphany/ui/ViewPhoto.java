@@ -2,10 +2,19 @@ package com.neromatt.epiphany.ui;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.github.chrisbanes.photoview.PhotoView;
+import com.neromatt.epiphany.GlideApp;
+
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class ViewPhoto extends AppCompatActivity {
@@ -31,7 +40,7 @@ public class ViewPhoto extends AppCompatActivity {
         photoView.setMinimumScale(0.6f);
         photoView.setMaximumScale(6.0f);
 
-        /*GlideApp.with(this)
+        GlideApp.with(this)
             .asBitmap()
             .load(image_url)
             .listener(new RequestListener<Bitmap>() {
@@ -49,7 +58,6 @@ public class ViewPhoto extends AppCompatActivity {
             })
             .diskCacheStrategy(DiskCacheStrategy.ALL)
             .into(photoView);
-        */
     }
 
     public static Bitmap fastblur(Bitmap sentBitmap) {

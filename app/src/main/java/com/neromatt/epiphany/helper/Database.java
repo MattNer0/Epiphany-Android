@@ -131,7 +131,7 @@ public class Database extends SQLiteOpenHelper {
         return db.update(TABLE_NOTES, values, KEY_PATH + " = ?", new String[] { path });
     }
 
-    private boolean isNoteInDB(String path) {
+    public boolean isNoteInDB(String path) {
         String countQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
                 + " WHERE tn."
                 + KEY_PATH + " = '" + path + "'";
