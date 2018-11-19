@@ -6,15 +6,18 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.CreateFolderHelper;
+import com.neromatt.epiphany.helper.DeleteNoteHelper;
 import com.neromatt.epiphany.model.Adapters.BreadcrumbAdapter;
 import com.neromatt.epiphany.model.Adapters.FadeInItemAnimator;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
@@ -38,6 +41,7 @@ import java.util.Collections;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
+import ru.whalemare.sheetmenu.SheetMenu;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -322,6 +326,48 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     @Override
+    public void onItemLongClick(final int position) {
+        MainModel model = adapter.getItem(position);
+        if (model.isNote()) {
+                SheetMenu.with(getContext())
+                    .setTitle(model.getTitle())
+                    .setMenu(R.menu.popup_note_menu)
+                    .setAutoCancel(true)
+                    .setClick(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            SingleNote note = (SingleNote) adapter.getItem(position);
+                            switch (item.getItemId()) {
+                                case R.id.note_delete:
+                                    DeleteNoteHelper.deleteNote(getContext(), note, new DeleteNoteHelper.OnNoteDeleteListener() {
+                                        @Override
+                                        public void NoteDeleted(boolean deleted) {
+                                            if (deleted) {
+                                                Toast.makeText(getContext(), "Deleted Note!", Toast.LENGTH_SHORT).show();
+                                                runFoldersTask();
+                                            }
+                                        }
+                                    });
+                                    break;
+                                case R.id.note_edit:
+                                    Intent intent = new Intent(getActivity(), EditorActivity.class);
+                                    intent.putExtra("note", note.toBundle());
+                                    intent.putExtra("root", root_path);
+                                    startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
+                                    break;
+                                case R.id.note_move:
+                                    //getMainActivity().setMovingNote((SingleNote) notebook, current_model);
+                                    //initializeMovingNoteUI();
+                                    //reloadAdapter(false);
+                                    break;
+                            }
+                            return true;
+                        }
+                    }).show();
+            }
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultIntent) {
         super.onActivityResult(requestCode, resultCode, resultIntent);
 
@@ -360,11 +406,6 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                 runFoldersTask();
             }
         }
-    }
-
-    @Override
-    public void onItemLongClick(int position) {
-
     }
 
     @Override

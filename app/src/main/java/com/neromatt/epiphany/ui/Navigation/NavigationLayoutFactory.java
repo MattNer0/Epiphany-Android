@@ -242,7 +242,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             ma.showSettings();
             return true;
         } else if (id == R.id.action_quick_notes) {
-            //openQuickNotesBucket();
+            ma.openQuickNotes();
             return true;
         } else if (id == R.id.action_list_layout) {
             if (action_list_layout != null && action_staggered_layout != null) {

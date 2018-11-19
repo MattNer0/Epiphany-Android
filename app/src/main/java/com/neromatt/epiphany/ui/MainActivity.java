@@ -92,6 +92,12 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         startActivity(settingsIntent);
     }
 
+    public void openQuickNotes() {
+        String model_path = root_path+"/"+Constants.QUICK_NOTES_BUCKET;
+        String quick_path = model_path+"/New Notes";
+        pushFragment(FoldersFragment.newInstance(root_path, quick_path), Constants.FOLDER_FRAGMENT_TAG, Constants.FOLDER_FRAGMENT_TAG + model_path);
+    }
+
     public void refreshRackDrawer(ArrayList<MainModel> list) {
         try {
             if (drawer_list == null) drawer_list = findViewById(R.id.left_drawer_list);
