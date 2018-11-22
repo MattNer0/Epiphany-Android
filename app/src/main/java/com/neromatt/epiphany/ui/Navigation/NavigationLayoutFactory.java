@@ -228,6 +228,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
         if (new_list || moving_notes_adapter == null) {
             initMovingNotes(ma);
+            SlideAnimationHelper.slideInFromRight(ma, moving_notes_container);
         } else {
             moving_notes_adapter.addItem(note);
             setInfoMovingNotes();
@@ -288,7 +289,6 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         Point screenSize = getScreenSize(ma);
 
         moving_notes_container.setVisibility(View.VISIBLE);
-        SlideAnimationHelper.slideInFromRight(ma, moving_notes_container);
 
         CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) moving_notes_container.getLayoutParams(); //new(), LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.width = (int)(screenSize.x*0.43);
