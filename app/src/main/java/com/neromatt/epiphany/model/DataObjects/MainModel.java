@@ -193,7 +193,7 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
             case MainModel.TYPE_PROGRESS_LOADING:
                 return R.layout.progress_item;
             case MainModel.TYPE_MARKDOWN_NOTE:
-                return R.layout.markdown_note_row;
+                return R.layout.row_markdown_note;
             case MainModel.TYPE_RACK:
                 if (this.isQuickNotes()) {
                     return R.layout.row_quick_notes;
@@ -401,6 +401,7 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
 
         TextView mNotebookTitle;
         TextView mNoteSummary;
+        TextView mNoteTime;
         ImageView mNoteIcon;
 
         TextView mNoteCount;
@@ -423,16 +424,11 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
             this.mFolderCountContainer = view.findViewById(R.id.folder_count_container);
 
             this.mNoteSummary = view.findViewById(R.id.notebook_summary);
+            this.mNoteTime = view.findViewById(R.id.notebook_time);
             this.mNoteIcon = view.findViewById(R.id.notebook_icon);
 
             this.progressBar = view.findViewById(R.id.progress_bar);
             this.progressMessage = view.findViewById(R.id.progress_message);
-        }
-
-        @Override
-        public void onClick(View view) {
-            Log.i("click","clicked view");
-            super.onClick(view);
         }
 
         @Override

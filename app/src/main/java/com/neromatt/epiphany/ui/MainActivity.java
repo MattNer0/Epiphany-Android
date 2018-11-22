@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     private RecyclerView drawer_list;
     private RackAdapter rack_adapter;
 
+    private ArrayList<MainModel> moving_notes;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +87,14 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     @Override
     public Context getContext() {
         return getApplicationContext();
+    }
+
+    public void setMovingNotes(ArrayList<MainModel> list) {
+        moving_notes = list;
+    }
+
+    public ArrayList<MainModel> getMovingNotes() {
+        return moving_notes;
     }
 
     public void showSettings() {

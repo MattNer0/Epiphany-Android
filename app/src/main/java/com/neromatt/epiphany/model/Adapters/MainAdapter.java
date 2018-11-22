@@ -16,6 +16,10 @@ public class MainAdapter<T extends IFlexible> extends FlexibleAdapter<T> {
     private int spanCount = 1;
     private WeakReference<MainActivity> ma;
 
+    public MainAdapter(@Nullable List<T> items) {
+        super(items);
+    }
+
     public MainAdapter(MainActivity ma, @Nullable List<T> items) {
         super(items);
         this.ma = new WeakReference<>(ma);
@@ -35,7 +39,7 @@ public class MainAdapter<T extends IFlexible> extends FlexibleAdapter<T> {
     }
 
     public SingleNote getMovingNote() {
-        if (ma.get() != null) {
+        if (ma != null && ma.get() != null) {
             //return ma.get().getMovingNote();
         }
         return null;

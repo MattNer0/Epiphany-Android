@@ -31,6 +31,7 @@ import com.neromatt.epiphany.ui.EditorActivity;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.Breadcrumb;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
+import com.neromatt.epiphany.ui.Navigation.OnMovingNoteListener;
 import com.neromatt.epiphany.ui.R;
 import com.neromatt.epiphany.ui.ViewNote;
 
@@ -238,12 +239,34 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                 recycler_view.getLayoutManager().onRestoreInstanceState(recycler_view_state);
             }
         }
+
+        MainActivity ma = getMainActivity();
+        mNavigationLayout.setMovingNoteListener(new OnMovingNoteListener() {
+            @Override
+            public boolean onMovingNote(ArrayList<MainModel> list) {
+                for (MainModel model: list) {
+                    if (model.isNote()) {
+                        SingleNote n = (SingleNote) model;
+                        n.moveFile(folder_path);
+                    }
+                }
+                runFoldersTask();
+                return true;
+            }
+        });
+        if (ma != null) {
+            mNavigationLayout.setMovingNotes(ma, ma.getMovingNotes());
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
         cancelTasks();
+        MainActivity ma = getMainActivity();
+        if (ma != null && mNavigationLayout != null) {
+            ma.setMovingNotes(mNavigationLayout.getMovingNotes());
+        }
     }
 
     @Override
@@ -356,6 +379,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                                     startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
                                     break;
                                 case R.id.note_move:
+                                    mNavigationLayout.addMovingNote(getMainActivity(), note);
                                     //getMainActivity().setMovingNote((SingleNote) notebook, current_model);
                                     //initializeMovingNoteUI();
                                     //reloadAdapter(false);

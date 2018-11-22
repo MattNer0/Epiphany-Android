@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
@@ -18,6 +19,7 @@ import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.tasks.ReadBucketsTask;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
+import com.neromatt.epiphany.ui.Navigation.OnMovingNoteListener;
 import com.neromatt.epiphany.ui.Navigation.OnQuickNoteEdit;
 import com.neromatt.epiphany.ui.R;
 
@@ -120,6 +122,31 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
             if (recycler_view_state != null) {
                 recycler_view.getLayoutManager().onRestoreInstanceState(recycler_view_state);
             }
+        }
+
+        MainActivity ma = getMainActivity();
+        mNavigationLayout.setMovingNoteListener(new OnMovingNoteListener() {
+            @Override
+            public boolean onMovingNote(ArrayList<MainModel> list) {
+                Toast.makeText(getContext(), "Can't move notes here", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
+        if (ma != null) {
+            mNavigationLayout.setMovingNotes(ma, ma.getMovingNotes());
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (buckets_task != null && !buckets_task.isCancelled()) {
+            buckets_task.cancel(true);
+        }
+
+        MainActivity ma = getMainActivity();
+        if (ma != null && mNavigationLayout != null) {
+            ma.setMovingNotes(mNavigationLayout.getMovingNotes());
         }
     }
 

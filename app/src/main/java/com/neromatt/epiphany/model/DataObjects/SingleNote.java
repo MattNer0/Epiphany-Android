@@ -131,7 +131,14 @@ public class SingleNote extends MainModel {
             holder.mNoteSummary.setText(summary);
         }
 
-        holder.itemView.setAlpha(1.0f);
+        if (wasLoaded() || updatedAt != null) {
+            holder.mNoteTime.setVisibility(View.VISIBLE);
+            holder.mNoteTime.setText(getLastModifiedDateString(Locale.US));
+        } else {
+            holder.mNoteTime.setVisibility(View.GONE);
+        }
+
+        //holder.itemView.setAlpha(1.0f);
 
         if (adapter instanceof MainAdapter) {
             MainAdapter ma = (MainAdapter) adapter;
@@ -141,9 +148,13 @@ public class SingleNote extends MainModel {
                 holder.mNoteIcon.setVisibility(View.GONE);
             }
 
-            if (ma.isMovingNote() && ma.getMovingNote().getUuid().equals(getUuid())) {
-                holder.itemView.setAlpha(0.8f);
+            if (ma.getSpanCount() == 0) {
+                holder.mNoteTime.setVisibility(View.GONE);
             }
+
+            /*if (ma.isMovingNote() && ma.getMovingNote().getUuid().equals(getUuid())) {
+                holder.itemView.setAlpha(0.8f);
+            }*/
         }
     }
 
@@ -463,6 +474,9 @@ public class SingleNote extends MainModel {
     public boolean moveFile(String outputPath) {
         InputStream in;
         OutputStream out;
+
+        if (getFullPath().equals(outputPath + "/" + getFilename())) return false;
+
         try {
             File dir = new File (outputPath);
             if (!dir.exists()) {
@@ -573,6 +587,9 @@ public class SingleNote extends MainModel {
 
     public String getLastModifiedString(Locale loc) {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm", loc).format(updatedAt);
+    }
+    public String getLastModifiedDateString(Locale loc) {
+        return new SimpleDateFormat("dd/MM/yyyy", loc).format(updatedAt);
     }
     public String getCreatedString(Locale loc) {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm", loc).format(createdAt);

@@ -1,8 +1,11 @@
 package com.neromatt.epiphany.ui.Navigation;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Build;
 import android.util.Log;
+import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,14 +15,20 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.SlideAnimationHelper;
 import com.neromatt.epiphany.model.Adapters.BreadcrumbAdapter;
+import com.neromatt.epiphany.model.Adapters.MainAdapter;
+import com.neromatt.epiphany.model.Adapters.MovingNotesAdapter;
 import com.neromatt.epiphany.model.Adapters.RackAdapter;
+import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.R;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import androidx.annotation.Nullable;
@@ -65,6 +74,17 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
     private BreadcrumbAdapter breadcrumb_adapter;
 
+    private LinearLayout moving_notes_container;
+    private ImageView moving_notes_close;
+    private RecyclerView moving_notes_view;
+    private TextView moving_notes_info;
+    private LinearLayout moving_notes_submit;
+
+    private OnMovingNoteListener moving_notes_submit_listener;
+
+    private MainAdapter<MainModel> moving_notes_adapter;
+    private ArrayList<MainModel> moving_notes;
+
     private MenuItem action_list_layout;
     private MenuItem action_staggered_layout;
     private MenuItem action_search_view;
@@ -78,6 +98,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         this.origin = origin;
 
         this.search_opened = false;
+        this.moving_notes = new ArrayList<>();
     }
 
     @Override
@@ -116,6 +137,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
         if (includeFab) {
             inflater.inflate(R.layout.layout_with_fab, parent);
+            inflater.inflate(R.layout.layout_with_moving_notes, parent);
         }
 
         /*if (includeBottomBar) {
@@ -144,7 +166,15 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             }
         }
 
-        this.fab_menu = view.findViewById(R.id.notebookFab);
+        if (includeFab) {
+            this.fab_menu = view.findViewById(R.id.notebookFab);
+            this.moving_notes_container = view.findViewById(R.id.movingContainer);
+            this.moving_notes_close = view.findViewById(R.id.movingClose);
+            this.moving_notes_view = view.findViewById(R.id.movingList);
+            this.moving_notes_info = view.findViewById(R.id.movingInfo);
+            this.moving_notes_submit = view.findViewById(R.id.movingConfirm);
+            this.moving_notes_container.setVisibility(View.GONE);
+        }
 
         setSupportActionBar(activity);
 
@@ -182,6 +212,121 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         }
 
         return this;
+    }
+
+    public ArrayList<MainModel> getMovingNotes() {
+        return this.moving_notes;
+    }
+
+    public void addMovingNote(MainActivity ma, MainModel note) {
+        boolean new_list = false;
+        if (this.moving_notes == null || this.moving_notes.size() == 0) {
+            this.moving_notes = new ArrayList<>();
+            new_list = true;
+        }
+        this.moving_notes.add(note);
+
+        if (new_list || moving_notes_adapter == null) {
+            initMovingNotes(ma);
+        } else {
+            moving_notes_adapter.addItem(note);
+            setInfoMovingNotes();
+        }
+    }
+
+    private Point getScreenSize(MainActivity ma) {
+        Display display = ma.getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        try {
+            display.getRealSize(size);
+        } catch (NoSuchMethodError err) {
+            display.getSize(size);
+        }
+        return size;
+    }
+
+    public void setMovingNotes(MainActivity ma, ArrayList<MainModel> list) {
+        this.moving_notes = list;
+        if (list != null && list.size() > 0) {
+            initMovingNotes(ma);
+        }
+    }
+
+    public void setMovingNoteListener(OnMovingNoteListener listener) {
+        this.moving_notes_submit_listener = listener;
+    }
+
+    private void setInfoMovingNotes() {
+        if (moving_notes.size() == 1) {
+            String str = moving_notes.size() + " note selected";
+            moving_notes_info.setText(str);
+        } else if (moving_notes.size() > 1) {
+            String str = moving_notes.size() + " notes selected";
+            moving_notes_info.setText(str);
+        } else {
+            moving_notes_info.setText("");
+        }
+    }
+
+    private void initMovingNotes(MainActivity ma) {
+        final WeakReference<MainActivity> weakMa = new WeakReference<>(ma);
+        if (includeFab && fab_menu != null) {
+            fab_menu.setVisibility(View.GONE);
+        }
+
+        if (includeInputQuickNote) {
+            quick_note_edit_text.setVisibility(View.GONE);
+        }
+
+        moving_notes_adapter = new MainAdapter<>(moving_notes);
+        moving_notes_adapter.setSpanCount(0);
+        moving_notes_view.setLayoutManager(new LinearLayoutManager(ma));
+        moving_notes_view.setAdapter(moving_notes_adapter);
+
+        setInfoMovingNotes();
+
+        Point screenSize = getScreenSize(ma);
+
+        moving_notes_container.setVisibility(View.VISIBLE);
+        SlideAnimationHelper.slideInFromRight(ma, moving_notes_container);
+
+        CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) moving_notes_container.getLayoutParams(); //new(), LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.width = (int)(screenSize.x*0.43);
+        lp.height = (int)(screenSize.y*0.37);
+
+        moving_notes_container.setLayoutParams(lp);
+
+        if (!includeInputQuickNote) {
+            moving_notes_submit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (moving_notes_submit_listener.onMovingNote(moving_notes)) {
+                        closeMovingNotes(weakMa.get());
+                    }
+                }
+            });
+        }
+
+        moving_notes_close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closeMovingNotes(weakMa.get());
+            }
+        });
+    }
+
+    private void closeMovingNotes(MainActivity ma) {
+        if (ma == null) return;
+        moving_notes = null;
+        if (includeFab && fab_menu != null) {
+            fab_menu.setVisibility(View.VISIBLE);
+        }
+        moving_notes_container.setVisibility(View.GONE);
+        SlideAnimationHelper.slideOutToRight(ma, moving_notes_container);
+
+        if (includeInputQuickNote) {
+            quick_note_edit_text.setVisibility(View.VISIBLE);
+        }
     }
 
     public void setQuickNoteListener(final OnQuickNoteEdit listener) {

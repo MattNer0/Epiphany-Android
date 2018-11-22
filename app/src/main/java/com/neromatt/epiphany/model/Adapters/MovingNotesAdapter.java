@@ -1,0 +1,115 @@
+package com.neromatt.epiphany.model.Adapters;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import com.neromatt.epiphany.model.DataObjects.MainModel;
+import com.neromatt.epiphany.model.SortBy;
+import com.neromatt.epiphany.ui.R;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+public class MovingNotesAdapter extends RecyclerView.Adapter<MovingNotesAdapter.ViewHolder> {
+
+    private Context context;
+    private ArrayList<MainModel> data;
+    private OnRackClickListener mOnRackClickListener;
+
+    public MovingNotesAdapter(Context context, ArrayList<MainModel> content) {
+        this.context = context;
+        this.data = content;
+    }
+
+    public MainModel getItem(int i) {
+        return data.get(i);
+    }
+
+    public void updateData(ArrayList<MainModel> content) {
+        this.data = content;
+        notifyDataSetChanged();
+    }
+
+    @NonNull
+    @Override
+    public MovingNotesAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View v = inflater.inflate(R.layout.row_bucket_sidebar, parent, false);
+        return new MovingNotesAdapter.ViewHolder(v);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MovingNotesAdapter.ViewHolder holder, int position) {
+        holder.bindView(position, getItem(position), mOnRackClickListener);
+    }
+
+    @Override
+    public long getItemId(int i) {
+        return i;
+    }
+
+    @Override
+    public int getItemCount() {
+        return data.size();
+    }
+
+    public void sort(SortBy sortBy){
+
+        if (sortBy == SortBy.ORDER) {
+            Collections.sort(data, new Comparator<MainModel>() {
+
+                @Override
+                public int compare(MainModel singleRack, MainModel t1) {
+                    return singleRack.getOrder() - t1.getOrder();
+                }
+
+
+            });
+        } else if (sortBy == SortBy.NAME) {
+            Collections.sort(data, new Comparator<MainModel>() {
+
+                @Override
+                public int compare(MainModel singleRack, MainModel t1) {
+                    return singleRack.getName().compareTo(t1.getName());
+                }
+
+
+            });
+        }
+        this.notifyDataSetChanged();
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+
+        TextView rackName;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            rackName = itemView.findViewById(R.id.rowText);
+        }
+
+        private void bindView(final int position, MainModel obj, final OnRackClickListener mClickListener) {
+            this.rackName.setText(obj.getTitle());
+
+            if (mClickListener != null) {
+                this.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mClickListener.RackClicked(position);
+                    }
+                });
+            }
+        }
+    }
+
+    public interface OnRackClickListener {
+        void RackClicked(int position);
+    }
+}
