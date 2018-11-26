@@ -18,13 +18,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.SlideAnimationHelper;
 import com.neromatt.epiphany.model.Adapters.BreadcrumbAdapter;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
-import com.neromatt.epiphany.model.Adapters.MovingNotesAdapter;
-import com.neromatt.epiphany.model.Adapters.RackAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
+import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.R;
 
@@ -40,8 +38,10 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 
@@ -55,6 +55,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
     private final boolean includeDrawer;
     private final boolean includeInputQuickNote;
 
+    private String search_string;
     private boolean search_opened;
 
     private Toolbar toolbar;
@@ -98,6 +99,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         this.origin = origin;
 
         this.search_opened = false;
+        this.search_string = "";
         this.moving_notes = new ArrayList<>();
     }
 
@@ -155,8 +157,8 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         if (includeToolbar) {
             this.toolbar_title = view.findViewById(R.id.toolbar_title);
             this.toolbar_search = view.findViewById(R.id.toolbar_search);
-            this.toolbar_search_clear = toolbar_search.findViewById(R.id.search_close_btn);
-            this.toolbar_search_text = toolbar_search.findViewById(R.id.search_src_text);
+            this.toolbar_search_clear = toolbar_search.findViewById(androidx.appcompat.R.id.search_close_btn);
+            this.toolbar_search_text = toolbar_search.findViewById(androidx.appcompat.R.id.search_src_text);
             this.toolbar_search.setVisibility(View.GONE);
         }
 
@@ -214,6 +216,17 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         return this;
     }
 
+    private Point getScreenSize(MainActivity ma) {
+        Display display = ma.getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        try {
+            display.getRealSize(size);
+        } catch (NoSuchMethodError err) {
+            display.getSize(size);
+        }
+        return size;
+    }
+
     public ArrayList<MainModel> getMovingNotes() {
         return this.moving_notes;
     }
@@ -224,6 +237,21 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             this.moving_notes = new ArrayList<>();
             new_list = true;
         }
+        boolean already_moving = false;
+        for (MainModel m: moving_notes) {
+            if (m.isNote() && note.isNote()) {
+                SingleNote n1 = (SingleNote) m;
+                SingleNote n2 = (SingleNote) note;
+                if (n1.getFullPath().equals(n2.getFullPath())) {
+                    already_moving = true;
+                    break;
+                }
+            }
+        }
+        if (already_moving) {
+            Toast.makeText(ma, "Note already in the list.", Toast.LENGTH_LONG).show();
+            return;
+        }
         this.moving_notes.add(note);
 
         if (new_list || moving_notes_adapter == null) {
@@ -233,17 +261,6 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             moving_notes_adapter.addItem(note);
             setInfoMovingNotes();
         }
-    }
-
-    private Point getScreenSize(MainActivity ma) {
-        Display display = ma.getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        try {
-            display.getRealSize(size);
-        } catch (NoSuchMethodError err) {
-            display.getSize(size);
-        }
-        return size;
     }
 
     public void setMovingNotes(MainActivity ma, ArrayList<MainModel> list) {
@@ -281,8 +298,28 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
         moving_notes_adapter = new MainAdapter<>(moving_notes);
         moving_notes_adapter.setSpanCount(0);
+        moving_notes_adapter.addListener(new FlexibleAdapter.OnItemSwipeListener() {
+            @Override
+            public void onItemSwipe(int position, int direction) {
+                if (position < moving_notes.size() && position >= 0) {
+                    moving_notes.remove(position);
+                    moving_notes_adapter.removeItem(position);
+                }
+                setInfoMovingNotes();
+                if (moving_notes.size() == 0) {
+                    closeMovingNotes(weakMa.get());
+                }
+            }
+
+            @Override
+            public void onActionStateChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+            }
+        });
+
         moving_notes_view.setLayoutManager(new LinearLayoutManager(ma));
         moving_notes_view.setAdapter(moving_notes_adapter);
+        moving_notes_adapter.setSwipeEnabled(true)
+                .getItemTouchHelperCallback().setSwipeFlags(ItemTouchHelper.RIGHT);
 
         setInfoMovingNotes();
 
@@ -409,7 +446,6 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             } else {
                 showSearch("", true);
             }
-            listener.updateSearchStatus(search_opened);
             return true;
         }
 
@@ -422,6 +458,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
+                    search_string = query;
                     return toolbar_search_listener.onQueryTextSubmit(query);
                 }
 
@@ -436,6 +473,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
                     if (toolbar_search.getQuery().toString().isEmpty()) {
                         toolbar_search_listener.onSearchClosed();
                     } else {
+                        search_string = "";
                         toolbar_search_text.setText("");
                         toolbar_search.setQuery("", false);
                         toolbar_search_listener.onQueryTextSubmit("");
@@ -468,8 +506,10 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
     public void showSearch(String initial, boolean focus) {
         if (includeToolbar) {
-            action_list_layout.setVisible(false);
-            action_staggered_layout.setVisible(false);
+            if (action_list_layout != null && action_staggered_layout != null) {
+                action_list_layout.setVisible(false);
+                action_staggered_layout.setVisible(false);
+            }
             action_search_view.setVisible(false);
 
             toolbar_title.setVisibility(View.GONE);
@@ -479,11 +519,19 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search.setQuery(initial, false);
             toolbar_search_text.setText(initial);
             if (focus) toolbar_search.requestFocusFromTouch();
+            else toolbar_search.clearFocus();
             hideDrawer();
+        }
+        search_opened = true;
+    }
+
+    public void showSearchIfOpened() {
+        if (search_opened) {
+            showSearch(search_string, false);
         }
     }
 
-    private void hideSearch(Context context) {
+    public void hideSearch(Context context) {
         if (includeToolbar) {
             toggleLayoutItem(context);
             action_search_view.setVisible(true);
@@ -494,12 +542,26 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search.setFocusable(false);
             showDrawer();
         }
+        search_opened = false;
     }
 
     public void clearSearchFocus() {
         if (includeToolbar) {
             toolbar_search.clearFocus();
         }
+    }
+
+    public void setSearchState(SearchState current_state) {
+        if (current_state == null) return;
+        search_string = current_state.getSearchString();
+        search_opened = current_state.getSearchOpen();
+        if (search_opened && action_search_view != null) {
+            showSearch(search_string, false);
+        }
+    }
+
+    public SearchState getSearchState() {
+        return new SearchState(search_string, search_opened);
     }
 
     public boolean closeDrawerIfOpen() {

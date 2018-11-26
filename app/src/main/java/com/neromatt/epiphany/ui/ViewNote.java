@@ -1,12 +1,18 @@
 package com.neromatt.epiphany.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Patterns;
+import android.view.ContextMenu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
+import android.webkit.WebView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +28,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
+import ru.whalemare.sheetmenu.SheetMenu;
 
 public class ViewNote extends AppCompatActivity {
 
@@ -92,6 +99,8 @@ public class ViewNote extends AppCompatActivity {
                 .setNoteImagePath(note.getImageFolderPath())
                 .setMDText(note.getMarkdown());
 
+        registerForContextMenu(markdownView);
+
         FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
 
         noteFab.removeAllOnMenuItemClickListeners();
@@ -161,6 +170,57 @@ public class ViewNote extends AppCompatActivity {
             setResult(Activity.RESULT_OK, returnIntent);
             finish();
         }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        if (v instanceof MarkedView) {
+            MarkedView webView = (MarkedView) v;
+            WebView.HitTestResult result = webView.getHitTestResult();
+
+            if (result != null) {
+                if (result.getType() == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
+                    final String link = result.getExtra();
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            linkMenu(link);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    private void linkMenu(final String link) {
+        SheetMenu.with(ViewNote.this)
+                .setTitle(link)
+                .setMenu(R.menu.popup_link_menu)
+                .setAutoCancel(true)
+                .setClick(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.link_copy:
+                                setClipboard(ViewNote.this, note.getTitle(), link);
+                                Toast.makeText(ViewNote.this, "Link copied to clipboard", Toast.LENGTH_LONG).show();
+                                break;
+                            case R.id.link_open:
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                                startActivity(browserIntent);
+                                break;
+                        }
+                        return true;
+                    }
+                }).show();
+    }
+
+    private void setClipboard(Context context, String title, String text) {
+        android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        android.content.ClipData clip = android.content.ClipData.newPlainText(title, text);
+        clipboard.setPrimaryClip(clip);
     }
 
     public void updateInfo() {

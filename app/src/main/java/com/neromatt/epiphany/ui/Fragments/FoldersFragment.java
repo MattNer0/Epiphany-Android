@@ -24,6 +24,7 @@ import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.NotebooksComparator;
+import com.neromatt.epiphany.tasks.CleanNotesDBTask;
 import com.neromatt.epiphany.tasks.ReadFoldersTask;
 import com.neromatt.epiphany.tasks.ReadNotesDBTask;
 import com.neromatt.epiphany.tasks.ReadNotesTask;
@@ -32,6 +33,7 @@ import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.Breadcrumb;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
 import com.neromatt.epiphany.ui.Navigation.OnMovingNoteListener;
+import com.neromatt.epiphany.ui.Navigation.OnSearchViewListener;
 import com.neromatt.epiphany.ui.R;
 import com.neromatt.epiphany.ui.ViewNote;
 
@@ -56,6 +58,8 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
 
     private ReadFoldersTask folders_task;
     private ReadNotesDBTask notes_db_task;
+    private CleanNotesDBTask clean_notes_db_task;
+    boolean database_cleaned = false;
 
     private ArrayList<MainModel> contents;
 
@@ -117,10 +121,6 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
             parent_paths = args.getStringArrayList(Constants.KEY_DIR_PARENTS);
             if (parent_paths == null) parent_paths = new ArrayList<>();
             runFoldersTask();
-        }
-
-        if (getMainActivity().getSearchOpened()) {
-            mNavigationLayout.showSearch("", false);
         }
 
         if (parent_paths != null && parent_paths.size() > 0) {
@@ -196,6 +196,18 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                 }
             });
 
+            mNavigationLayout.setOnQueryTextListener(new OnSearchViewListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public void onSearchClosed() {
+                    mNavigationLayout.hideSearch(getContext());
+                }
+            });
+
         } else {
             mNavigationLayout.hideFab();
         }
@@ -250,12 +262,18 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                         n.moveFile(folder_path);
                     }
                 }
+                if (list.size() == 1) {
+                    Toast.makeText(getContext(), "One note moved!", Toast.LENGTH_SHORT).show();
+                } else if (list.size() > 1) {
+                    Toast.makeText(getContext(), "All notes moved!", Toast.LENGTH_SHORT).show();
+                }
                 runFoldersTask();
                 return true;
             }
         });
         if (ma != null) {
             mNavigationLayout.setMovingNotes(ma, ma.getMovingNotes());
+            mNavigationLayout.setSearchState(ma.getSearchState());
         }
     }
 
@@ -266,6 +284,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         MainActivity ma = getMainActivity();
         if (ma != null && mNavigationLayout != null) {
             ma.setMovingNotes(mNavigationLayout.getMovingNotes());
+            ma.setSearchState(mNavigationLayout.getSearchState());
         }
     }
 
@@ -280,6 +299,9 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         }
         if (notes_db_task != null && !notes_db_task.isCancelled()) {
             notes_db_task.cancel(true);
+        }
+        if (clean_notes_db_task != null && !clean_notes_db_task.isCancelled()) {
+            clean_notes_db_task.cancel(true);
         }
     }
 
@@ -418,6 +440,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                     for (MainModel m: contents) {
                         if (m.isNote() && m.equalsUUID(note.getString(Constants.KEY_UUID))) {
                             SingleNote n = (SingleNote) m;
+                            n.updatePath(note.getString(Constants.KEY_NOTE_PATH), note.getString(Constants.KEY_NOTE_FILENAME));
                             n.refreshFromDB(getMainActivity().getDatabase());
                             refreshNotes();
                             break;
@@ -452,6 +475,17 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     public void NotesLoaded(ArrayList<MainModel> notes, int flag) {
         if (notes.size() > 0) {
             refreshNotes();
+        }
+
+        if (parent_paths != null && parent_paths.size() == 1 && !database_cleaned) {
+            if (clean_notes_db_task != null && !clean_notes_db_task.isCancelled()) {
+                clean_notes_db_task.cancel(true);
+            }
+
+            clean_notes_db_task = new CleanNotesDBTask(getMainActivity());
+            clean_notes_db_task.execute(folder_path);
+
+            database_cleaned = true;
         }
     }
 }

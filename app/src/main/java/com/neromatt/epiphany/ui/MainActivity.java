@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.neromatt.epiphany.Constants;
@@ -16,6 +17,7 @@ import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.ui.Fragments.BucketsFragment;
 import com.neromatt.epiphany.ui.Fragments.FoldersFragment;
 import com.neromatt.epiphany.ui.Fragments.MyFragment;
+import com.neromatt.epiphany.ui.Navigation.SearchState;
 import com.sensorberg.permissionbitte.BitteBitte;
 import com.sensorberg.permissionbitte.PermissionBitte;
 
@@ -38,11 +40,10 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     private String root_path;
     private boolean next_back_will_close_app = false;
 
-    private boolean search_opened;
-
     private RecyclerView drawer_list;
     private RackAdapter rack_adapter;
 
+    private SearchState search_state;
     private ArrayList<MainModel> moving_notes;
 
     @Override
@@ -90,11 +91,19 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     }
 
     public void setMovingNotes(ArrayList<MainModel> list) {
-        moving_notes = list;
+        this.moving_notes = list;
     }
 
     public ArrayList<MainModel> getMovingNotes() {
-        return moving_notes;
+        return this.moving_notes;
+    }
+
+    public void setSearchState(SearchState search_state) {
+        this.search_state = search_state;
+    }
+
+    public SearchState getSearchState() {
+        return this.search_state;
     }
 
     public void showSettings() {
@@ -149,14 +158,6 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         }
 
         return false;
-    }
-
-    public void setSearchOpened(boolean search_opened) {
-        this.search_opened = search_opened;
-    }
-
-    public boolean getSearchOpened() {
-        return search_opened;
     }
 
     public void pushFragment(MyFragment fragment, String fragment_tag, String back_stack_tag) {

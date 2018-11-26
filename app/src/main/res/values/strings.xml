@@ -57,8 +57,14 @@
     <string name="title_edit_note">Edit Note</string>
     <string name="title_view_note">View Note</string>
     <string name="title_view_photo">View Photo</string>
+    <string name="title_import_note">Import Note</string>
 
     <string name="title_activity_editor">Edit Note</string>
+
+    <string name="info_note_title">Note information</string>
+    <string name="info_note_created_at">Created at</string>
+    <string name="info_note_updated_at">Updated at</string>
+    <string name="info_note_lines">Lines number</string>
 
     <!--Strings for Header-->
     <string name="rack_title">Buckets</string>

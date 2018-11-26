@@ -704,6 +704,13 @@ public class SingleNote extends MainModel {
         }
     }
 
+    public void updatePath(String new_path, String file_name) {
+        if (new_path != null && !new_path.isEmpty() && file_name != null && !file_name.isEmpty()) {
+            this.path = new_path;
+            this.filename = file_name;
+        }
+    }
+
     @Override
     public JsonObject toJson() {
         JsonObject obj = super.toJson();

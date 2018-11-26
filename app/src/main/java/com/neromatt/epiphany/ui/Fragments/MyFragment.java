@@ -66,6 +66,7 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
         mNavigationLayout.onCreateMenu(getContext(), menu);
+        mNavigationLayout.showSearchIfOpened();
     }
 
     @Override
@@ -92,11 +93,6 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
         if (recycler_view != null) {
             recycler_view.setLayoutManager(getLayoutManager(staggered));
         }
-    }
-
-    @Override
-    public void updateSearchStatus(boolean search_opened) {
-        getMainActivity().setSearchOpened(search_opened);
     }
 
     @Override

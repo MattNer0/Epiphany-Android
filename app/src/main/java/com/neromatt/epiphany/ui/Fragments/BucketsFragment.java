@@ -21,6 +21,7 @@ import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
 import com.neromatt.epiphany.ui.Navigation.OnMovingNoteListener;
 import com.neromatt.epiphany.ui.Navigation.OnQuickNoteEdit;
+import com.neromatt.epiphany.ui.Navigation.OnSearchViewListener;
 import com.neromatt.epiphany.ui.R;
 
 import java.io.File;
@@ -86,14 +87,22 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
             runBucketsTask();
         }
 
-        if (getMainActivity().getSearchOpened()) {
-            mNavigationLayout.showSearch("", false);
-        }
-
         mNavigationLayout.setQuickNoteListener(new OnQuickNoteEdit() {
             @Override
             public void openQuickNote(String text) {
                 CreateNoteHelper.addQuickNote(getMainActivity(), root_path, "");
+            }
+        });
+
+        mNavigationLayout.setOnQueryTextListener(new OnSearchViewListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public void onSearchClosed() {
+                mNavigationLayout.hideSearch(getContext());
             }
         });
     }
@@ -134,6 +143,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         });
         if (ma != null) {
             mNavigationLayout.setMovingNotes(ma, ma.getMovingNotes());
+            mNavigationLayout.setSearchState(ma.getSearchState());
         }
     }
 
@@ -147,6 +157,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         MainActivity ma = getMainActivity();
         if (ma != null && mNavigationLayout != null) {
             ma.setMovingNotes(mNavigationLayout.getMovingNotes());
+            ma.setSearchState(mNavigationLayout.getSearchState());
         }
     }
 

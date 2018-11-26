@@ -49,6 +49,15 @@ public class ShareActivity extends AppCompatActivity implements CreateNoteHelper
     private void newNoteFromShared(String title, String text) {
         if (text == null) return;
 
+        if (text.matches("https?://.+")) {
+            Intent intent = new Intent(ShareActivity.this, NoteFromWebsite.class);
+            intent.putExtra("root", root_path);
+            intent.putExtra("title", title);
+            intent.putExtra("url", text);
+            startActivityForResult(intent, Constants.NOTE_IMPORT_REQUEST_CODE);
+            return;
+        }
+
         CreateNoteHelper.addQuickNoteAndSave(root_path, title, text, this, new CreateNoteHelper.OnQUickNoteSaved() {
             @Override
             public void QuickNoteSaved(SingleNote note) {
@@ -69,6 +78,10 @@ public class ShareActivity extends AppCompatActivity implements CreateNoteHelper
     public void onActivityResult(int requestCode, int resultCode, Intent resultIntent) {
         super.onActivityResult(requestCode, resultCode, resultIntent);
         if (requestCode == Constants.NOTE_EDITOR_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                finish();
+            }
+        } else if (requestCode == Constants.NOTE_IMPORT_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 finish();
             }

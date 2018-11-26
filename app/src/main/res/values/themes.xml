@@ -26,10 +26,13 @@
         <item name="alertDialogTheme">@style/MyAlertDialogTheme</item>
     </style>
 
-    <style name="AppFullScreenTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppFullScreenTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
+
+        <item name="android:alertDialogTheme">@style/MyAlertDialogTheme</item>
+        <item name="alertDialogTheme">@style/MyAlertDialogTheme</item>
     </style>
 
     <style name="RobotoTextViewStyle" parent="android:Widget.TextView">

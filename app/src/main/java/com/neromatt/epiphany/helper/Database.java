@@ -284,6 +284,16 @@ public class Database extends SQLiteOpenHelper {
         }
     }
 
+    public boolean deleteNoteByID(int id) {
+        try {
+            SQLiteDatabase db = this.getWritableDatabase();
+            return db.delete(TABLE_NOTES, KEY_ID + "=" + id, null) > 0;
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean deleteFolders() {
         try {
             SQLiteDatabase db = this.getWritableDatabase();
@@ -341,12 +351,11 @@ public class Database extends SQLiteOpenHelper {
         return res;
     }
 
-    public ArrayList<Bundle> getNotes() {
+    public ArrayList<Bundle> getNotesByFolderPath(String path) {
         ArrayList<Bundle> res = new ArrayList<>();
         String selectQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
+                + " WHERE " + KEY_PATH + " LIKE '" + path + "%'"
                 + " ORDER BY id ASC";
-
-        //Log.i(Constants.LOG, selectQuery);
 
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(selectQuery, null);
@@ -354,7 +363,38 @@ public class Database extends SQLiteOpenHelper {
             if (c.moveToFirst()) {
                 do {
                     Bundle res_note = new Bundle();
-                    res_note.putInt(KEY_ID, getInt(c, KEY_ID));
+                    res_note.putInt(Constants.KEY_ID, getInt(c, KEY_ID));
+                    File f = new File(getString(c, KEY_PATH));
+                    res_note.putString(Constants.KEY_NOTE_PATH, f.getPath());
+                    res_note.putString(Constants.KEY_NOTE_FILENAME, f.getName());
+                    res_note.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
+                    res_note.putString(Constants.KEY_NOTE_BODY, "");
+                    res_note.putString(Constants.KEY_NOTE_SUMMARY, getString(c, KEY_NOTE_SUMMARY));
+                    res_note.putLong(Constants.METATAG_UPDATED, getLong(c, KEY_NOTE_UPDATED_AT));
+                    res_note.putLong(Constants.METATAG_CREATED, getLong(c, KEY_NOTE_CREATED_AT));
+
+                    res.add(res_note);
+                } while (c.moveToNext());
+            }
+        } finally {
+            c.close();
+        }
+
+        return res;
+    }
+
+    public ArrayList<Bundle> getNotes() {
+        ArrayList<Bundle> res = new ArrayList<>();
+        String selectQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
+                + " ORDER BY id ASC";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(selectQuery, null);
+        try {
+            if (c.moveToFirst()) {
+                do {
+                    Bundle res_note = new Bundle();
+                    res_note.putInt(Constants.KEY_ID, getInt(c, KEY_ID));
                     File f = new File(getString(c, KEY_PATH));
                     res_note.putString(Constants.KEY_NOTE_PATH, f.getPath());
                     res_note.putString(Constants.KEY_NOTE_FILENAME, f.getName());

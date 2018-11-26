@@ -5,6 +5,7 @@ public class Constants {
     //public static final int LOADING_REQUEST_CODE = 1650;
     public static final int NOTE_PREVIEW_REQUEST_CODE = 1651;
     public static final int NOTE_EDITOR_REQUEST_CODE = 1652;
+    public static final int NOTE_IMPORT_REQUEST_CODE = 1655;
     public static final int NEW_NOTE_REQUEST_CODE = 1653;
     public static final int NEW_QUICK_NOTE_REQUEST_CODE = 1654;
 
@@ -39,6 +40,7 @@ public class Constants {
     public static final String KEY_DIR_PARENTS = "parents";
     public static final String KEY_DIR_TITLE = "title";
 
+    public static final String KEY_ID = "id";
     public static final String KEY_UUID = "_uuid";
     public static final String KEY_NOTE_PATH = "path";
     public static final String KEY_NOTE_FILENAME = "filename";
