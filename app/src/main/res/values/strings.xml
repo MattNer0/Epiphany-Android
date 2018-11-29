@@ -30,16 +30,20 @@
     <!--Strings for Dialogs-->
     <string name="dialog_yes">Yes</string>
     <string name="dialog_no">No</string>
-    <string name="dialog_delete_note_title">Delete Note</string>
+    <string name="dialog_delete_note_title">Delete note</string>
     <string name="dialog_delete_note_message">Are you sure you want to delete this note?</string>
-    <string name="dialog_delete_folder_title">Delete Folder</string>
+    <string name="dialog_delete_folder_title">Delete folder</string>
     <string name="dialog_delete_folder_message">Are you sure you want to delete this folder?</string>
-    <string name="dialog_save_note_title">Note Modified</string>
+    <string name="dialog_save_note_title">Note modified</string>
     <string name="dialog_save_note_message">Do you want to save before exiting?</string>
-    <string name="dialog_close_title">Closing Epiphany</string>
+    <string name="dialog_close_title">Closing epiphany</string>
     <string name="dialog_close_message">Are you sure you want to quit?</string>
-    <string name="dialog_clean_db_title">Database Cleanup</string>
+    <string name="dialog_clean_db_title">Database cleanup</string>
     <string name="dialog_clean_db_message">Are you sure you want to clean the database? Don\'t worry, no notes will be deleted.</string>
+    <string name="dialog_html_to_markdown_title">Web page conversion</string>
+    <string name="dialog_html_to_markdown_message">Do you want to save this page as a markdown note?</string>
+    <string name="dialog_html_to_markdown_yes">Yes, convert</string>
+    <string name="dialog_html_to_markdown_no">No, save URL</string>
 
     <!--Strings for Toasts-->
     <string name="toast_note_saved">Note saved</string>

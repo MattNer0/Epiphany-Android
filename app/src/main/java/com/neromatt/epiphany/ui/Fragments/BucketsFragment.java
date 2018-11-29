@@ -167,7 +167,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     private void initList(ArrayList<MainModel> list) {
-        adapter = new MainAdapter<>(getMainActivity(), list);
+        adapter = new MainAdapter<>(list);
         adapter.addListener(this);
 
         adapter

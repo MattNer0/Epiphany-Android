@@ -27,10 +27,9 @@ public class Constants {
 
     public static final String QUICK_NOTES_BUCKET = "_quick_notes";
 
-    public static final String BROADCAST_FILTER = "LIBRARY";
-
     public static final int NOTES_LOADED = 1;
     public static final int NOTES_LOADED_INTO_DATABASE = -1;
+    public static final int NOTES_LOADED_AND_SEARCHED = -2;
 
     public static final String BUCKETS_FRAGMENT_TAG = "Bf";
     public static final String FOLDER_FRAGMENT_TAG = "Ff";
@@ -46,8 +45,10 @@ public class Constants {
     public static final String KEY_NOTE_FILENAME = "filename";
     public static final String KEY_NOTE_TITLE = "title";
     public static final String KEY_NOTE_BODY = "body";
+    public static final String KEY_NOTE_PHOTO = "photo";
     public static final String KEY_NOTE_SUMMARY = "summary";
     public static final String KEY_NOTE_METADATA = "metadata";
+    public static final String KEY_NOTE_SEARCH_RESULT = "search_match";
     public static final String KEY_FILE_TIMESTAMP_LOADED = "timestampLoaded";
 
     public static final String METATAG_UPDATED = "updatedAt";

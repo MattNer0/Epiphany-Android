@@ -4,9 +4,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.google.gson.JsonObject;
-import com.neromatt.epiphany.Constants;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -53,16 +50,6 @@ public class SingleNotebook extends MainModel {
         this.isQuickNotes = args.getBoolean("quickNotes", false);
     }
 
-    public SingleNotebook(JsonObject args) {
-        super(args);
-
-        this.path = args.get("path").getAsString();
-        this.name = args.get("name").getAsString();
-        this.order = args.get("order").getAsInt();
-        this._model_type = MainModel.TYPE_FOLDER;
-        this.isQuickNotes = args.has("quickNotes");
-    }
-
     @Override
     public Bundle toBundle() {
         Bundle args = super.toBundle();
@@ -71,16 +58,6 @@ public class SingleNotebook extends MainModel {
         args.putInt("order", order);
         args.putBoolean("quickNotes", isQuickNotes);
         return args;
-    }
-
-    @Override
-    public JsonObject toJson() {
-        JsonObject obj = super.toJson();
-        obj.addProperty("path", path);
-        obj.addProperty("name", name);
-        obj.addProperty("order", order);
-        if (isQuickNotes) obj.addProperty("quickNotes", true);
-        return obj;
     }
 
     public boolean renameDirectory(String new_name) {
@@ -99,21 +76,6 @@ public class SingleNotebook extends MainModel {
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         holder.mNotebookTitle.setText(getName());
-        int noteCount = getNotesCount();
-        int contentsCount = getContentCount();
-        if (noteCount > 0) {
-            holder.mNoteCount.setText(String.valueOf(noteCount));
-            holder.mNoteCountContainer.setVisibility(View.VISIBLE);
-        } else {
-            holder.mNoteCountContainer.setVisibility(View.GONE);
-        }
-
-        if (contentsCount-noteCount > 0) {
-            holder.mFolderCount.setText(String.valueOf(contentsCount-noteCount));
-            holder.mFolderCountContainer.setVisibility(View.VISIBLE);
-        } else {
-            holder.mFolderCountContainer.setVisibility(View.GONE);
-        }
 
         if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
             StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();

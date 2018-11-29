@@ -458,6 +458,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
+                    clearSearchFocus();
                     search_string = query;
                     return toolbar_search_listener.onQueryTextSubmit(query);
                 }
@@ -470,14 +471,10 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search_clear.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (toolbar_search.getQuery().toString().isEmpty()) {
-                        toolbar_search_listener.onSearchClosed();
-                    } else {
-                        search_string = "";
-                        toolbar_search_text.setText("");
-                        toolbar_search.setQuery("", false);
-                        toolbar_search_listener.onQueryTextSubmit("");
-                    }
+                    search_string = "";
+                    toolbar_search_text.setText("");
+                    toolbar_search.setQuery("", false);
+                    toolbar_search_listener.onSearchClosed();
                 }
             });
         }
@@ -520,7 +517,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search_text.setText(initial);
             if (focus) toolbar_search.requestFocusFromTouch();
             else toolbar_search.clearFocus();
-            hideDrawer();
+            //hideDrawer();
         }
         search_opened = true;
     }
@@ -540,7 +537,7 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             toolbar_search.setVisibility(View.GONE);
             toolbar_search.clearFocus();
             toolbar_search.setFocusable(false);
-            showDrawer();
+            //showDrawer();
         }
         search_opened = false;
     }

@@ -59,7 +59,9 @@ public class NotebooksComparator implements Comparator<MainModel> {
 
         } else if (v1 instanceof SingleNote && v2 instanceof SingleNote) {
 
-            if (sortByNotes == SortBy.MODIFIED) {
+            if (((SingleNote) v1).isMatched() != ((SingleNote) v2).isMatched()) {
+                result = ((SingleNote) v1).compareMatchedTo((SingleNote) v2);
+            } else if (sortByNotes == SortBy.MODIFIED) {
                 result = ((SingleNote) v1).compareModifiedDateTo((SingleNote) v2);
             } else if (sortByNotes == SortBy.CREATED) {
                 result = ((SingleNote) v1).compareCreatedDateTo((SingleNote) v2);

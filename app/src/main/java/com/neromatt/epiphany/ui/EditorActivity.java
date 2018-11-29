@@ -8,11 +8,14 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 import com.neromatt.epiphany.model.Path;
+import com.neromatt.epiphany.tasks.ImageDownloaderTask;
 import com.yydcdut.markdown.callback.OnLinkClickCallback;
 import com.yydcdut.markdown.callback.OnTodoClickCallback;
 import com.yydcdut.markdown.loader.DefaultLoader;
@@ -23,12 +26,14 @@ import com.yydcdut.rxmarkdown.RxMDEditText;
 import com.yydcdut.rxmarkdown.RxMarkdown;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class EditorActivity extends AppCompatActivity {
+public class EditorActivity extends AppCompatActivity implements ImageDownloaderTask.ImageDownloadListener {
 
     private Database db;
 
@@ -40,6 +45,8 @@ public class EditorActivity extends AppCompatActivity {
     private Menu optionsMenu = null;
 
     private String root_path;
+
+    private ImageDownloaderTask image_downloader_task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +90,7 @@ public class EditorActivity extends AppCompatActivity {
 
             String note_body = intent.getStringExtra("body");
             if (note_body != null && !note_body.isEmpty()) {
-                note.updateBody(note_body);
+                note.updateBody(note_body, false);
                 editTextField.setText(note_body);
             } else {
                 editTextField.setText("# \n\n");
@@ -244,6 +251,17 @@ public class EditorActivity extends AppCompatActivity {
             .build();
     }
 
+    public void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = new View(this);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_note_edit, menu);
@@ -266,10 +284,27 @@ public class EditorActivity extends AppCompatActivity {
                 }
                 break;
             case R.id.save_note:
+                hideKeyboard();
                 saveNote(false);
+                break;
+            case R.id.save_images:
+                hideKeyboard();
+                if (image_downloader_task != null && !image_downloader_task.isCancelled()) {
+                    image_downloader_task.cancel(true);
+                }
+
+                String note_text = editTextField.getText().toString();
+                if (note_text != null && note.wasModified()) {
+                    note.updateBody(note_text);
+                }
+
+                editTextField.setEnabled(false);
+                image_downloader_task = new ImageDownloaderTask(note.getImageFolderPath(), this);
+                image_downloader_task.execute(note.getRemoteImages().toArray(new String[0]));
                 break;
 
             case R.id.preview_note:
+                hideKeyboard();
                 Intent intent = new Intent(EditorActivity.this, ViewNote.class);
                 intent.putExtra("note", note.toBundle());
                 intent.putExtra("from_editor", true);
@@ -329,6 +364,30 @@ public class EditorActivity extends AppCompatActivity {
         } else {
             //super.onBackPressed();
             finishEditor(noteModified);
+        }
+    }
+
+    @Override
+    public void ImagesDone(ArrayList<ImageDownloaderTask.ImageReplace> list) {
+        if (list.size() > 0) {
+            String body = note.getBody();
+            for (ImageDownloaderTask.ImageReplace img : list) {
+                String escaped_url = Pattern.quote(img.old_path);
+                body = body.replaceAll("!\\[([^]]*?)]\\(("+escaped_url+")\\)", "![$1]("+img.new_path+")");
+            }
+
+            note.updateBody(body);
+            note.saveNote(new SingleNote.OnNoteSavedListener() {
+                @Override
+                public void NoteSaved(boolean saved) {
+                    Toast.makeText(EditorActivity.this, R.string.toast_note_saved, Toast.LENGTH_LONG).show();
+                    editTextField.setText(note.getBody());
+                    editTextField.setEnabled(true);
+                }
+            });
+        } else {
+            Toast.makeText(EditorActivity.this, "No remote images to save.", Toast.LENGTH_SHORT).show();
+            editTextField.setEnabled(true);
         }
     }
 }

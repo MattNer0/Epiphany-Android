@@ -13,9 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.ui.R;
 
@@ -43,89 +40,28 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
     private LoadingStatusEnum _loading_status = LoadingStatusEnum.MORE_TO_LOAD;
 
     private UUID _uuid;
-    private boolean _loaded_content;
     int _model_type;
-
-    private ArrayList<MainModel> _model_contents;
-    private ArrayList<MainModel> _model_notes;
-    private int _load_count;
 
     public MainModel() {
         super();
         this._model_type = TYPE_NULL;
-        this._model_notes = new ArrayList<>();
-        this._model_contents = new ArrayList<>();
-        this._loaded_content = false;
         this._uuid = UUID.randomUUID();
     }
 
     public MainModel(Bundle args) {
         super();
         _model_type = TYPE_NULL;
-        _model_notes = new ArrayList<>();
-        _model_contents = args.getParcelableArrayList("_contents");
         String uuid = args.getString(Constants.KEY_UUID, "");
         if (uuid.isEmpty()) {
             this._uuid = UUID.randomUUID();
         } else {
             this._uuid = UUID.fromString(uuid);
         }
-        if (_model_contents == null) {
-            _model_contents = new ArrayList<>();
-            _loaded_content = false;
-        } else {
-            _loaded_content = true;
-            for (MainModel model : _model_contents) {
-                if (model.isNote()) {
-                    _model_notes.add(model);
-                }
-            }
-        }
-    }
-
-    public MainModel(JsonObject args) {
-        super();
-        _model_type = TYPE_NULL;
-        _model_notes = new ArrayList<>();
-        _model_contents = new ArrayList<>();
-        _loaded_content = false;
-
-        String uuid = args.get(Constants.KEY_UUID).getAsString();
-        if (uuid.isEmpty()) {
-            _uuid = UUID.randomUUID();
-        } else {
-            _uuid = UUID.fromString(uuid);
-        }
-
-        if (args.has("_contents")) {
-            JsonArray json_contents = args.getAsJsonArray("_contents");
-            _loaded_content = true;
-            for (JsonElement element : json_contents) {
-                int type = element.getAsJsonObject().get("modelType").getAsInt();
-                switch (type) {
-                    case TYPE_RACK:
-                        _model_contents.add(new SingleRack(element.getAsJsonObject()));
-                        break;
-                    case TYPE_FOLDER:
-                        _model_contents.add(new SingleNotebook(element.getAsJsonObject()));
-                        break;
-                    case TYPE_MARKDOWN_NOTE:
-                        SingleNote n = new SingleNote(element.getAsJsonObject());
-                        _model_contents.add(n);
-                        _model_notes.add(n);
-                        break;
-                }
-            }
-        }
     }
 
     public MainModel(int modelType) {
         super();
-
         _model_type = modelType;
-        _model_notes = new ArrayList<>();
-        _model_contents = new ArrayList<>();
-        _loaded_content = false;
     }
 
     public String getName() {
@@ -257,19 +193,10 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
         Bundle args = new Bundle();
         args.putInt("modelType", this._model_type);
         args.putString(Constants.KEY_UUID, this._uuid.toString());
-
-        if (this._loaded_content) {
-            args.putParcelableArrayList("_contents", _model_contents);
-        }
-
         return args;
     }
 
-    public LoadingStatusEnum getStatus() {
-        return _loading_status;
-    }
-
-    public void setStatus(LoadingStatusEnum status) {
+    private void setStatus(LoadingStatusEnum status) {
         this._loading_status = status;
     }
 
@@ -277,88 +204,8 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
         return false;
     }
 
-    public JsonObject toJson() {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("modelType", this._model_type);
-        obj.addProperty(Constants.KEY_UUID, this._uuid.toString());
-
-        if (this._loaded_content) {
-            JsonArray content_array = new JsonArray();
-            for (MainModel model : _model_contents) {
-                content_array.add(model.toJson());
-            }
-
-            obj.add("_contents", content_array);
-        }
-        return obj;
-    }
-
-    public ArrayList<MainModel> getContent() { return _model_contents; }
-    public ArrayList<MainModel> getNotes() { return _model_notes; }
-
     public boolean equalsUUID(String uuid) {
         return _uuid.equals(UUID.fromString(uuid));
-    }
-
-    public int getContentCount() {
-        return this.getContent().size();
-    }
-
-    public int getNotesCount() {
-        return this.getNotes().size();
-    }
-
-    public void searchNotes(String query, final OnSearchFolderListener folderCallback) {
-        final ArrayList<MainModel> mResults = new ArrayList<>();
-
-        if (getContentCount() == 0) {
-            folderCallback.SearchMatch(mResults);
-            return;
-        }
-
-        this._load_count = 0;
-        for (MainModel n: getContent()) {
-            if (n.isFolder()) {
-                mResults.add(n);
-                _load_count++;
-                if (_load_count >= getContentCount()) {
-                    folderCallback.SearchMatch(mResults);
-                }
-                /*n.searchNotes(query, new OnSearchFolderListener() {
-                    @Override
-                    public void SearchMatch(ArrayList<MainModel> results) {
-                        if (results.size() > 0) {
-
-                        }
-                        _load_count++;
-                        if (_load_count >= getContentCount()) {
-                            folderCallback.SearchMatch(mResults);
-                        }
-                    }
-                });*/
-            } else if (n.isNote()) {
-                SingleNote note = (SingleNote) n;
-                note.searchNote(query, new SingleNote.OnNoteSearchedListener() {
-                    @Override
-                    public void NoteSearched(SingleNote note, boolean match) {
-                        if (match) {
-                            mResults.add(note);
-                        }
-
-                        _load_count++;
-                        if (_load_count >= getContentCount()) {
-                            folderCallback.SearchMatch(mResults);
-                        }
-                    }
-                });
-            } else {
-                Log.e(Constants.LOG, "something else?");
-            }
-        }
-    }
-
-    public interface OnSearchFolderListener {
-        void SearchMatch(ArrayList<MainModel> results);
     }
 
     @Override
@@ -404,11 +251,7 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
         TextView mNoteTime;
         ImageView mNoteIcon;
 
-        TextView mNoteCount;
-        LinearLayout mNoteCountContainer;
-
-        TextView mFolderCount;
-        LinearLayout mFolderCountContainer;
+        ImageView mNotePhoto;
 
         ProgressBar progressBar;
         TextView progressMessage;
@@ -417,15 +260,16 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
             super(view, adapter);
             this.mNotebookTitle = view.findViewById(R.id.notebook_title);
 
-            this.mNoteCount = view.findViewById(R.id.note_count);
+            /*this.mNoteCount = view.findViewById(R.id.note_count);
             this.mNoteCountContainer = view.findViewById(R.id.note_count_container);
 
             this.mFolderCount = view.findViewById(R.id.folder_count);
-            this.mFolderCountContainer = view.findViewById(R.id.folder_count_container);
+            this.mFolderCountContainer = view.findViewById(R.id.folder_count_container);*/
 
             this.mNoteSummary = view.findViewById(R.id.notebook_summary);
             this.mNoteTime = view.findViewById(R.id.notebook_time);
             this.mNoteIcon = view.findViewById(R.id.notebook_icon);
+            this.mNotePhoto = view.findViewById(R.id.note_photo);
 
             this.progressBar = view.findViewById(R.id.progress_bar);
             this.progressMessage = view.findViewById(R.id.progress_message);

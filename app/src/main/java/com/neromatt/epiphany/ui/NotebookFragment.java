@@ -533,27 +533,6 @@
 //        }
 //    }
 //
-//    public void runSearch(String search_query) {
-//        this.search_query = search_query;
-//        if (current_model == null || current_model.getNotesCount() == 0) return;
-//        reloadAdapter(true);
-//    }
-//
-//    public void startSearch(String query, boolean focus) {
-//        if (query == null) query = "";
-//        mNavigationLayout.showSearch(query, focus);
-//        if (!query.isEmpty()) {
-//            this.search_query = query;
-//            reloadAdapter(true);
-//        }
-//    }
-//
-//    public void clearSearch() {
-//        search_query = "";
-//        mNavigationLayout.hideSearch();
-//        reloadAdapter(true);
-//    }
-//
 //    public void updateLayoutList(boolean staggered) {
 //        if (notebookList != null) notebookList.setLayoutManager(getLayoutManager(staggered));
 //        if (adapter != null) adapter.notifyDataSetChanged();

@@ -1,24 +1,15 @@
 package com.neromatt.epiphany.ui;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
-
-import com.neromatt.epiphany.Constants;
-import com.neromatt.epiphany.model.Library;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class SettingsActivity extends AppCompatActivity {
     private Toolbar toolbar;
@@ -71,7 +62,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        //Library.launchServiceForCleaningDB(SettingsActivity.this);
+
                     }
                 })
                 .setNegativeButton(R.string.dialog_no, null)

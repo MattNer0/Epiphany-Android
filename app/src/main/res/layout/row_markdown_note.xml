@@ -52,6 +52,14 @@
                 android:layout_gravity="center"
                 android:textColor="@color/textColor"/>
 
+            <ImageView
+                android:id="@+id/note_photo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:layout_marginTop="3dp"
+                android:scaleType="fitCenter" />
+
             <TextView
                 android:id="@+id/notebook_time"
                 android:layout_width="match_parent"

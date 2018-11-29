@@ -28,12 +28,14 @@ import com.neromatt.epiphany.tasks.CleanNotesDBTask;
 import com.neromatt.epiphany.tasks.ReadFoldersTask;
 import com.neromatt.epiphany.tasks.ReadNotesDBTask;
 import com.neromatt.epiphany.tasks.ReadNotesTask;
+import com.neromatt.epiphany.tasks.SearchNotesTask;
 import com.neromatt.epiphany.ui.EditorActivity;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.Breadcrumb;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
 import com.neromatt.epiphany.ui.Navigation.OnMovingNoteListener;
 import com.neromatt.epiphany.ui.Navigation.OnSearchViewListener;
+import com.neromatt.epiphany.ui.Navigation.SearchState;
 import com.neromatt.epiphany.ui.R;
 import com.neromatt.epiphany.ui.ViewNote;
 
@@ -58,8 +60,10 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
 
     private ReadFoldersTask folders_task;
     private ReadNotesDBTask notes_db_task;
+    private SearchNotesTask search_notes_task;
     private CleanNotesDBTask clean_notes_db_task;
-    boolean database_cleaned = false;
+    private boolean database_cleaned = false;
+    private boolean should_refresh_list = false;
 
     private ArrayList<MainModel> contents;
 
@@ -120,6 +124,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
             root_path = args.getString(Constants.KEY_DIR_ROOT_PATH, "");
             parent_paths = args.getStringArrayList(Constants.KEY_DIR_PARENTS);
             if (parent_paths == null) parent_paths = new ArrayList<>();
+            should_refresh_list = true;
             runFoldersTask();
         }
 
@@ -199,12 +204,14 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
             mNavigationLayout.setOnQueryTextListener(new OnSearchViewListener() {
                 @Override
                 public boolean onQueryTextSubmit(String query) {
-                    return false;
+                    runFoldersTask();
+                    return true;
                 }
 
                 @Override
                 public void onSearchClosed() {
                     mNavigationLayout.hideSearch(getContext());
+                    runFoldersTask();
                 }
             });
 
@@ -303,40 +310,58 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         if (clean_notes_db_task != null && !clean_notes_db_task.isCancelled()) {
             clean_notes_db_task.cancel(true);
         }
+        if (search_notes_task != null && !search_notes_task.isCancelled()) {
+            search_notes_task.cancel(true);
+        }
     }
 
     private void initList(ArrayList<MainModel> list) {
         contents = list;
 
-        adapter = new MainAdapter<>(getMainActivity(), contents);
-        adapter.addListener(this);
+        if (adapter == null || should_refresh_list) {
+            adapter = new MainAdapter<>(contents);
+            adapter.addListener(this);
 
-        adapter
-                .setNotifyMoveOfFilteredItems(true)
-                .setOnlyEntryAnimation(false)
-                .setAnimationOnForwardScrolling(false)
-                .setAnimationOnReverseScrolling(false)
-                .setAnimationEntryStep(true)
-                .setAnimationInterpolator(new DecelerateInterpolator())
-                .setAnimationDelay(50)
-                .setAnimationDuration(200);
+            adapter
+                    .setNotifyMoveOfFilteredItems(true)
+                    .setOnlyEntryAnimation(false)
+                    .setAnimationOnForwardScrolling(false)
+                    .setAnimationOnReverseScrolling(false)
+                    .setAnimationEntryStep(true)
+                    .setAnimationInterpolator(new DecelerateInterpolator())
+                    .setAnimationDelay(50)
+                    .setAnimationDuration(200);
 
-        recycler_view.setItemViewCacheSize(0);
-        recycler_view.setLayoutManager(getLayoutManager());
+            recycler_view.setItemViewCacheSize(0);
+            recycler_view.setLayoutManager(getLayoutManager());
 
-        recycler_view.setHasFixedSize(true);
-        recycler_view.setAdapter(adapter);
+            recycler_view.setHasFixedSize(true);
+            recycler_view.setAdapter(adapter);
 
-        recycler_view.setItemAnimator(new FadeInItemAnimator(new OvershootInterpolator(1f)));
-        recycler_view.getItemAnimator().setAddDuration(500);
-        recycler_view.getItemAnimator().setRemoveDuration(500);
+            recycler_view.setItemAnimator(new FadeInItemAnimator(new OvershootInterpolator(1f)));
+            recycler_view.getItemAnimator().setAddDuration(500);
+            recycler_view.getItemAnimator().setRemoveDuration(500);
+
+            should_refresh_list = false;
+        }
+
+        SearchState searchState = mNavigationLayout.getSearchState();
+        if (searchState.getSearchOpen() && !searchState.getSearchString().isEmpty()) {
+            if (search_notes_task != null && !search_notes_task.isCancelled()) {
+                search_notes_task.cancel(true);
+            }
+
+            search_notes_task = new SearchNotesTask(getMainActivity(), searchState.getSearchString(), this);
+            search_notes_task.execute(list.toArray(new MainModel[0]));
+            return;
+        }
 
         if (notes_db_task != null && !notes_db_task.isCancelled()) {
             notes_db_task.cancel(true);
         }
 
         notes_db_task = new ReadNotesDBTask(getMainActivity(), this);
-        notes_db_task.execute(list.toArray(new MainModel[list.size()]));
+        notes_db_task.execute(list.toArray(new MainModel[0]));
     }
 
     private void refreshNotes() {
@@ -450,6 +475,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
             }
         } else if (requestCode == Constants.NEW_NOTE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
+                should_refresh_list = true;
                 runFoldersTask();
             }
         }

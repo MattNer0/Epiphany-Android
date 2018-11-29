@@ -78,6 +78,10 @@
         <item name="android:background">@color/colorPrimary</item>
         <item name="android:textColor">@color/textColor</item>
         <item name="android:textSize">14sp</item>
+        <item name="android:paddingStart">6dp</item>
+        <item name="android:paddingEnd">6dp</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
         <item name="android:layout_marginStart">4dp</item>
         <item name="android:layout_marginEnd">4dp</item>
     </style>

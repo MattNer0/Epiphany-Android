@@ -21,7 +21,7 @@ import java.util.Date;
 
 public class Database extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
     private static final String DATABASE_NAME = "epiphany";
 
     // Table Names
@@ -35,6 +35,7 @@ public class Database extends SQLiteOpenHelper {
     private static final String KEY_ID = "id";
     private static final String KEY_PATH = "path";
     private static final String KEY_NAME = "name";
+    private static final String KEY_PHOTO = "photo";
 
     private static final String CONSTRAINT_PATH = "path_unique";
 
@@ -51,6 +52,7 @@ public class Database extends SQLiteOpenHelper {
             + KEY_ID + " INTEGER PRIMARY KEY,"
             + KEY_PATH + " TEXT,"
             + KEY_NAME + " TEXT,"
+            + KEY_PHOTO + " TEXT,"
             + KEY_NOTE_SUMMARY + " TEXT,"
             + KEY_NOTE_UPDATED_AT + " INTEGER,"
             + KEY_NOTE_CREATED_AT + " INTEGER,"
@@ -99,7 +101,14 @@ public class Database extends SQLiteOpenHelper {
         values.put(KEY_NAME, data.getString(Constants.KEY_NOTE_TITLE, ""));
         values.put(KEY_NOTE_SUMMARY, data.getString(Constants.KEY_NOTE_SUMMARY, ""));
 
-        if (data.containsKey(Constants.KEY_NOTE_METADATA)) {
+        if (data.containsKey(Constants.KEY_NOTE_PHOTO)) {
+            values.put(KEY_PHOTO, data.getString(Constants.KEY_NOTE_PHOTO, ""));
+        }
+
+        if (data.containsKey(Constants.METATAG_UPDATED) && data.containsKey(Constants.METATAG_CREATED)) {
+            values.put(KEY_NOTE_UPDATED_AT, data.getLong(Constants.METATAG_UPDATED));
+            values.put(KEY_NOTE_CREATED_AT, data.getLong(Constants.METATAG_CREATED));
+        } else if (data.containsKey(Constants.KEY_NOTE_METADATA)) {
             Bundle metadata = data.getBundle(Constants.KEY_NOTE_METADATA);
             String updated = metadata.getString(Constants.METATAG_UPDATED, "");
             String created = metadata.getString(Constants.METATAG_CREATED, "");
@@ -254,6 +263,8 @@ public class Database extends SQLiteOpenHelper {
                 res.putString(Constants.KEY_NOTE_PATH, f.getPath());
                 res.putString(Constants.KEY_NOTE_FILENAME, f.getName());
                 res.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
+                res.putString(Constants.KEY_NOTE_PHOTO, getString(c, KEY_PHOTO));
+
                 res.putString(Constants.KEY_NOTE_BODY, "");
                 res.putString(Constants.KEY_NOTE_SUMMARY, getString(c, KEY_NOTE_SUMMARY));
                 res.putLong(Constants.METATAG_UPDATED, getLong(c, KEY_NOTE_UPDATED_AT));
@@ -368,6 +379,7 @@ public class Database extends SQLiteOpenHelper {
                     res_note.putString(Constants.KEY_NOTE_PATH, f.getPath());
                     res_note.putString(Constants.KEY_NOTE_FILENAME, f.getName());
                     res_note.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
+                    res_note.putString(Constants.KEY_NOTE_PHOTO, getString(c, KEY_PHOTO));
                     res_note.putString(Constants.KEY_NOTE_BODY, "");
                     res_note.putString(Constants.KEY_NOTE_SUMMARY, getString(c, KEY_NOTE_SUMMARY));
                     res_note.putLong(Constants.METATAG_UPDATED, getLong(c, KEY_NOTE_UPDATED_AT));
@@ -399,6 +411,7 @@ public class Database extends SQLiteOpenHelper {
                     res_note.putString(Constants.KEY_NOTE_PATH, f.getPath());
                     res_note.putString(Constants.KEY_NOTE_FILENAME, f.getName());
                     res_note.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
+                    res_note.putString(Constants.KEY_NOTE_PHOTO, getString(c, KEY_PHOTO));
                     res_note.putString(Constants.KEY_NOTE_BODY, "");
                     res_note.putString(Constants.KEY_NOTE_SUMMARY, getString(c, KEY_NOTE_SUMMARY));
                     res_note.putLong(Constants.METATAG_UPDATED, getLong(c, KEY_NOTE_UPDATED_AT));

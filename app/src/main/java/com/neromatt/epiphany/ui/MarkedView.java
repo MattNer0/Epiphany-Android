@@ -3,6 +3,7 @@ package com.neromatt.epiphany.ui;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -95,6 +96,19 @@ public final class MarkedView extends WebView {
                     }
                 }
                 return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.contains("file:///")) {
+                    view.loadUrl(url);
+                    return false;
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    view.getContext().startActivity(intent);
+                    return true;
+                }
             }
         });
 
@@ -199,64 +213,8 @@ public final class MarkedView extends WebView {
             return request_url.replace("epiphany://", "file:///" + noteImagePath + "/");
         }
 
-        return null;
+        return request_url;
     }
-
-    /*private String imgToBase64(String mdText){
-        Pattern ptn = Pattern.compile(IMAGE_PATTERN);
-        Matcher matcher = ptn.matcher(mdText);
-        if(!matcher.find()){
-            return mdText;
-        }
-
-        String imgPath = matcher.group(2);
-        if(isUrlPrefix(imgPath) || !isPathExChack(imgPath)) {
-            return mdText;
-        }
-        String baseType = imgEx2BaseType(imgPath);
-        if(baseType.equals("")){
-            // image load error.
-            return mdText;
-        }
-
-        File file = new File(imgPath);
-        byte[] bytes = new byte[(int) file.length()];
-        try {
-            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
-            buf.read(bytes, 0, bytes.length);
-            buf.close();
-        } catch (FileNotFoundException e) {
-            Log.e(TAG, "FileNotFoundException:" + e);
-        } catch (IOException e) {
-            Log.e(TAG, "IOException:" + e);
-        }
-        String base64Img = baseType + Base64.encodeToString(bytes, Base64.NO_WRAP);
-
-        return mdText.replace(imgPath, base64Img);
-    }
-
-    private boolean isUrlPrefix(String text){
-        return text.startsWith("http://") || text.startsWith("https://");
-    }
-
-    private boolean isPathExChack(String text) {
-        return text.endsWith(".png")
-                || text.endsWith(".jpg")
-                || text.endsWith(".jpeg")
-                || text.endsWith(".gif");
-    }
-
-    private String imgEx2BaseType(String text) {
-        if (text.endsWith(".png")) {
-            return "data:image/png;base64,";
-        } else if(text.endsWith(".jpg") || text.endsWith(".jpeg")) {
-            return "data:image/jpg;base64,";
-        } else if(text.endsWith(".gif")) {
-            return "data:image/gif;base64,";
-        } else {
-            return "";
-        }
-    }*/
 
     /* options */
 

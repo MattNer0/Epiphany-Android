@@ -10,16 +10,25 @@ import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.AdBlocker;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import androidx.annotation.Nullable;
 
 public final class TurndownView extends WebView {
+
+    private Map<String, Boolean> loadedUrls = new HashMap<>();
 
     private JavaScriptInterface JSInterface;
     private OnMarkdownBodyListener mOnMarkdownBodyListener;
@@ -46,6 +55,25 @@ public final class TurndownView extends WebView {
                 sendScriptAction();
             }
 
+            @Nullable
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    String url_string = request.getUrl().toString();
+                    boolean ad;
+                    if (!loadedUrls.containsKey(url_string)) {
+                        ad = AdBlocker.isAd(request.getUrl());
+                        //if (ad) Log.i(Constants.LOG, "blocked ad "+url_string);
+                        loadedUrls.put(url_string, ad);
+                    } else {
+                        ad = loadedUrls.get(url_string);
+                    }
+                    return ad ? AdBlocker.createEmptyResource() : super.shouldInterceptRequest(view, request);
+                }
+
+                return super.shouldInterceptRequest(view, request);
+            }
+
         });
 
         setWebChromeClient(new WebChromeClient() {
@@ -62,7 +90,6 @@ public final class TurndownView extends WebView {
         addJavascriptInterface(JSInterface, "JSInterface");
 
         getSettings().setJavaScriptEnabled(true);
-        //loadUrl("file:///android_asset/html/md_preview.html");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
@@ -71,7 +98,7 @@ public final class TurndownView extends WebView {
 
     private void sendScriptAction() {
         try {
-            InputStream input = getContext().getAssets().open("js/turndown.js");
+            InputStream input = getContext().getAssets().open("html/js/turndown.js");
             byte[] buffer = new byte[input.available()];
             input.read(buffer);
             input.close();
@@ -124,7 +151,7 @@ public final class TurndownView extends WebView {
                 " return '\\n' + content + '\\n'; }" +
                 "});"+
                 "turndownService.addRule('script', { " +
-                "filter: ['script', 'noscript', 'form', 'nav', 'iframe', 'input', 'header', 'footer'], " +
+                "filter: ['script', 'style', 'noscript', 'form', 'nav', 'iframe', 'input', 'header', 'footer'], " +
                 "replacement: function(content) { " +
                 "return ''; }" +
                 "});"+

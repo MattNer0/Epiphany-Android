@@ -2,16 +2,12 @@ package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-
-import com.google.gson.JsonObject;
 import com.neromatt.epiphany.Constants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -55,16 +51,6 @@ public class SingleRack extends MainModel {
         if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
     }
 
-    public SingleRack(JsonObject args) {
-        super(args);
-
-        this.path = args.get("path").getAsString();
-        this.name = args.get("name").getAsString();
-        this.order = args.get("order").getAsInt();
-        this._model_type = MainModel.TYPE_RACK;
-        if (this.name.equals(Constants.QUICK_NOTES_BUCKET)) this.isQuickNotes = true;
-    }
-
     public boolean renameDirectory(String new_name) {
         new_name = new_name.replaceAll("[^\\w. _-]", "");
         File fileFrom = new File(path);
@@ -85,15 +71,6 @@ public class SingleRack extends MainModel {
         args.putString("name", name);
         args.putInt("order", order);
         return args;
-    }
-
-    @Override
-    public JsonObject toJson() {
-        JsonObject obj = super.toJson();
-        obj.addProperty("path", path);
-        obj.addProperty("name", name);
-        obj.addProperty("order", order);
-        return obj;
     }
 
     @Override

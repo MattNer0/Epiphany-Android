@@ -9,11 +9,11 @@ public class SearchState {
         this.search_open = search_open;
     }
 
-    Boolean getSearchOpen() {
+    public Boolean getSearchOpen() {
         return search_open;
     }
 
-    String getSearchString() {
+    public String getSearchString() {
         return search_string;
     }
 
