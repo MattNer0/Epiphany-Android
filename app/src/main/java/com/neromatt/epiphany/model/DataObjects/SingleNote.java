@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.LinearLayout;
 
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -64,6 +66,9 @@ public class SingleNote extends MainModel {
 
     private boolean matchQuery = true;
 
+    private int image_width = 0;
+    private int image_height = 0;
+
     public SingleNote(String path, String filename) {
         super();
 
@@ -100,7 +105,7 @@ public class SingleNote extends MainModel {
     }
 
     @Override
-    public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
+    public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, final MyViewHolder holder, int position, List<Object> payloads) {
         //viewHolder = new WeakReference<>(holder);
         holder.mNotebookTitle.setText(getName());
         if (summary == null || summary.isEmpty()) {
@@ -114,11 +119,44 @@ public class SingleNote extends MainModel {
             holder.mNotePhoto.setVisibility(View.VISIBLE);
             holder.mNoteSummary.setMaxLines(2);
 
+            if (image_width > 0 && image_height > 0) {
+                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) holder.mNotePhoto.getLayoutParams();
+                params.width = image_width;
+                params.height = image_height;
+                holder.mNotePhoto.setLayoutParams(params);
+            } else {
+                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) holder.mNotePhoto.getLayoutParams();
+                params.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
+                holder.mNotePhoto.setLayoutParams(params);
+            }
+
             GlideApp.with(holder.itemView.getContext())
                     .asBitmap()
                     .load(photo)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .listener(new RequestListener<Bitmap>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
+                            if (holder.mNotePhoto != null && image_width == 0 && image_height == 0) {
+                                holder.mNotePhoto.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        image_width = holder.mNotePhoto.getMeasuredWidth();
+                                        image_height = holder.mNotePhoto.getMeasuredHeight();
+                                    }
+                                });
+                            }
+                            return false;
+                        }
+                    })
                     .into(holder.mNotePhoto);
+
         } else {
             holder.mNotePhoto.setVisibility(View.GONE);
             holder.mNoteSummary.setMaxLines(5);
@@ -766,7 +804,7 @@ public class SingleNote extends MainModel {
         }
     }
 
-    private static void updateObjAfterReadingContent(SingleNote note, Bundle result, boolean loaded_from_file) {
+    public static void updateObjAfterReadingContent(SingleNote note, Bundle result, boolean loaded_from_file) {
         if (note == null || result == null) return;
 
         note.body = result.getString(Constants.KEY_NOTE_BODY, "");

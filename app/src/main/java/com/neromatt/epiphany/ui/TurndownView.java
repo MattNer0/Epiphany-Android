@@ -3,10 +3,12 @@ package com.neromatt.epiphany.ui;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -16,6 +18,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.AdBlocker;
 
@@ -32,6 +35,7 @@ public final class TurndownView extends WebView {
 
     private JavaScriptInterface JSInterface;
     private OnMarkdownBodyListener mOnMarkdownBodyListener;
+    private CircularProgressView progressBar;
 
     public TurndownView(Context context) {
         this(context, null);
@@ -51,6 +55,17 @@ public final class TurndownView extends WebView {
     private void init() {
         // default browser is not called.
         setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                //super.onPageStarted(view, url, favicon);
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressBar.setIndeterminate(false);
+                }
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 sendScriptAction();
             }
@@ -63,7 +78,6 @@ public final class TurndownView extends WebView {
                     boolean ad;
                     if (!loadedUrls.containsKey(url_string)) {
                         ad = AdBlocker.isAd(request.getUrl());
-                        //if (ad) Log.i(Constants.LOG, "blocked ad "+url_string);
                         loadedUrls.put(url_string, ad);
                     } else {
                         ad = loadedUrls.get(url_string);
@@ -83,6 +97,16 @@ public final class TurndownView extends WebView {
                         + consoleMessage.lineNumber() + " of "
                         + consoleMessage.sourceId());
                 return super.onConsoleMessage(consoleMessage);
+            }
+
+            @Override
+            public void onProgressChanged(WebView view, int progress) {
+                if (progressBar != null) {
+                    progressBar.setProgress(progress);
+                    if (progress == 100) {
+                        progressBar.setIndeterminate(true);
+                    }
+                }
             }
         });
 
@@ -136,6 +160,7 @@ public final class TurndownView extends WebView {
                 "\"document.querySelector('.content-body') ? document.querySelector('.content-body').innerHTML\",\n" +
                 "\"document.querySelector('div[itemtype=\\\"http://schema.org/Question\\\"]') ? document.querySelector('div[itemtype=\\\"http://schema.org/Question\\\"]').innerHTML\",\n" +
                 "\"document.querySelector('p + p + p + p') ? document.querySelector('p + p + p + p').parentNode.innerHTML\",\n" +
+                "\"document.querySelector('.repository-content .file > .data').innerHTML\"\n" +
                 "\"document.querySelector('body').innerHTML\"\n" +
                 "];" +
                 "var body_extract = elements.join(' : ');"+
@@ -149,7 +174,17 @@ public final class TurndownView extends WebView {
                 "filter: ['div'], " +
                 "replacement: function(content) { " +
                 " return '\\n' + content + '\\n'; }" +
-                "});"+
+                "});" +
+                "turndownService.addRule('shareUrl', { " +
+                "filter: function (node, options) { " +
+                "return (\n" +
+                    "node.nodeName === 'A' &&\n" +
+                    "node.getAttribute('href').search(/(facebook|twitter)\\.com\\/share/) >= 0\n" +
+                    "); " +
+                "}, " +
+                "replacement: function(content) { " +
+                " return ''; }" +
+                "});" +
                 "turndownService.addRule('script', { " +
                 "filter: ['script', 'style', 'noscript', 'form', 'nav', 'iframe', 'input', 'header', 'footer'], " +
                 "replacement: function(content) { " +
@@ -177,6 +212,11 @@ public final class TurndownView extends WebView {
 
     public TurndownView setHtmlBodyCallback(OnMarkdownBodyListener mOnHTMLBodyListener) {
         this.mOnMarkdownBodyListener = mOnHTMLBodyListener;
+        return this;
+    }
+
+    public TurndownView setProgressBar(CircularProgressView progressBar) {
+        this.progressBar = progressBar;
         return this;
     }
 

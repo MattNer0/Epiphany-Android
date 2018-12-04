@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.AdBlocker;
 import com.neromatt.epiphany.helper.CreateNoteHelper;
@@ -29,6 +30,7 @@ public class NoteFromWebsite extends AppCompatActivity implements CreateNoteHelp
     private ImageDownloaderTask image_downloader_task;
     private SingleNote current_note;
 
+    private CircularProgressView progressView;
     private TurndownView turndownView;
 
     @Override
@@ -53,6 +55,7 @@ public class NoteFromWebsite extends AppCompatActivity implements CreateNoteHelp
     }
 
     private void initializeUI() {
+        progressView = findViewById(R.id.progress_view);
         turndownView = findViewById(R.id.turndownView);
         turndownView
                 .setHtmlBodyCallback(new TurndownView.OnMarkdownBodyListener() {
@@ -67,7 +70,8 @@ public class NoteFromWebsite extends AppCompatActivity implements CreateNoteHelp
                     public void LoadFailed() {
                         createNoteFromUrl(url);
                     }
-                });
+                })
+                .setProgressBar(progressView);
 
         new AlertDialog.Builder(this)
             .setCancelable(false)

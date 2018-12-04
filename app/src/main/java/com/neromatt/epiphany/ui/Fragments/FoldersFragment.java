@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,18 +15,18 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
-import com.neromatt.epiphany.helper.CreateFolderHelper;
+import com.neromatt.epiphany.helper.FolderHelper;
 import com.neromatt.epiphany.helper.DeleteNoteHelper;
 import com.neromatt.epiphany.model.Adapters.BreadcrumbAdapter;
 import com.neromatt.epiphany.model.Adapters.FadeInItemAnimator;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
+import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
 import com.neromatt.epiphany.model.NotebooksComparator;
 import com.neromatt.epiphany.tasks.CleanNotesDBTask;
 import com.neromatt.epiphany.tasks.ReadFoldersTask;
 import com.neromatt.epiphany.tasks.ReadNotesDBTask;
-import com.neromatt.epiphany.tasks.ReadNotesTask;
 import com.neromatt.epiphany.tasks.SearchNotesTask;
 import com.neromatt.epiphany.ui.EditorActivity;
 import com.neromatt.epiphany.ui.MainActivity;
@@ -62,6 +61,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     private ReadNotesDBTask notes_db_task;
     private SearchNotesTask search_notes_task;
     private CleanNotesDBTask clean_notes_db_task;
+
     private boolean database_cleaned = false;
     private boolean should_refresh_list = false;
 
@@ -151,10 +151,10 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                         case Constants.FAB_MENU_RENAME_BUCKET:
                             break;
                         case Constants.FAB_MENU_NEW_FOLDER:
-                            CreateFolderHelper.addFolder(getMainActivity(), folder_path, new CreateFolderHelper.FolderCreatedListener() {
+                            FolderHelper.addFolder(getMainActivity(), folder_path, new FolderHelper.FolderCreatedListener() {
                                 @Override
                                 public void onCreated(boolean success) {
-                                    runFoldersTask();
+                                    runFoldersTask(true);
                                 }
                             });
                             break;
@@ -218,6 +218,11 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         } else {
             mNavigationLayout.hideFab();
         }
+    }
+
+    private void runFoldersTask(boolean refresh) {
+        if (refresh) should_refresh_list = true;
+        runFoldersTask();
     }
 
     private void runFoldersTask() {
@@ -399,43 +404,83 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     public void onItemLongClick(final int position) {
         MainModel model = adapter.getItem(position);
         if (model.isNote()) {
-                SheetMenu.with(getContext())
-                    .setTitle(model.getTitle())
-                    .setMenu(R.menu.popup_note_menu)
-                    .setAutoCancel(true)
-                    .setClick(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            SingleNote note = (SingleNote) adapter.getItem(position);
-                            switch (item.getItemId()) {
-                                case R.id.note_delete:
-                                    DeleteNoteHelper.deleteNote(getContext(), note, new DeleteNoteHelper.OnNoteDeleteListener() {
-                                        @Override
-                                        public void NoteDeleted(boolean deleted) {
-                                            if (deleted) {
-                                                Toast.makeText(getContext(), "Deleted Note!", Toast.LENGTH_SHORT).show();
-                                                runFoldersTask();
-                                            }
+            SheetMenu.with(getContext())
+                .setTitle(model.getTitle())
+                .setMenu(R.menu.popup_note_menu)
+                .setAutoCancel(true)
+                .setClick(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        SingleNote note = (SingleNote) adapter.getItem(position);
+                        switch (item.getItemId()) {
+                            case R.id.note_delete:
+                                DeleteNoteHelper.deleteNote(getContext(), note, new DeleteNoteHelper.OnNoteDeleteListener() {
+                                    @Override
+                                    public void NoteDeleted(boolean deleted) {
+                                        if (deleted) {
+                                            Toast.makeText(getContext(), "Deleted Note!", Toast.LENGTH_SHORT).show();
+                                            runFoldersTask(true);
                                         }
-                                    });
-                                    break;
-                                case R.id.note_edit:
-                                    Intent intent = new Intent(getActivity(), EditorActivity.class);
-                                    intent.putExtra("note", note.toBundle());
-                                    intent.putExtra("root", root_path);
-                                    startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
-                                    break;
-                                case R.id.note_move:
-                                    mNavigationLayout.addMovingNote(getMainActivity(), note);
-                                    //getMainActivity().setMovingNote((SingleNote) notebook, current_model);
-                                    //initializeMovingNoteUI();
-                                    //reloadAdapter(false);
-                                    break;
-                            }
-                            return true;
+                                    }
+                                });
+                                break;
+                            case R.id.note_edit:
+                                Intent intent = new Intent(getActivity(), EditorActivity.class);
+                                intent.putExtra("note", note.toBundle());
+                                intent.putExtra("root", root_path);
+                                startActivityForResult(intent, Constants.NOTE_EDITOR_REQUEST_CODE);
+                                break;
+                            case R.id.note_move:
+                                mNavigationLayout.addMovingNote(getMainActivity(), note);
+                                break;
                         }
-                    }).show();
+                        return true;
+                    }
+                }).show();
+        } else if (model.isFolder()) {
+            File dir = new File(model.getPath());
+            File[] files = dir.listFiles();
+            int folder_menu = R.menu.popup_folder_menu;
+            if (files.length == 0 || files.length == 1 && files[0].getName().equals(".folder.json")) {
+                folder_menu = R.menu.popup_folder_menu_delete;
             }
+
+            SheetMenu.with(getContext())
+                .setTitle(model.getTitle())
+                .setMenu(folder_menu)
+                .setAutoCancel(true)
+                .setClick(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        SingleNotebook folder = (SingleNotebook) adapter.getItem(position);
+                        switch (item.getItemId()) {
+                            case R.id.folder_delete:
+                                FolderHelper.deleteFolder(getMainActivity(), folder, new FolderHelper.FolderDeletedListener() {
+                                    @Override
+                                    public void onDeleted(boolean success) {
+                                        if (success) {
+                                            Toast.makeText(getContext(), "Folder deleted!", Toast.LENGTH_SHORT).show();
+                                            runFoldersTask(true);
+                                        }
+                                    }
+                                });
+                                break;
+                            case R.id.folder_rename:
+                                FolderHelper.renameFolder(getMainActivity(), folder, new FolderHelper.FolderRenamedListener() {
+                                    @Override
+                                    public void onRenamed(boolean success) {
+                                        if (success) {
+                                            Toast.makeText(getContext(), "Folder renamed!", Toast.LENGTH_SHORT).show();
+                                            runFoldersTask(true);
+                                        }
+                                    }
+                                });
+                                break;
+                        }
+                        return true;
+                    }
+                }).show();
+        }
     }
 
     @Override
@@ -476,7 +521,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         } else if (requestCode == Constants.NEW_NOTE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 should_refresh_list = true;
-                runFoldersTask();
+                runFoldersTask(true);
             }
         }
     }

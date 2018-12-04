@@ -33,6 +33,7 @@ public class Constants {
 
     public static final String BUCKETS_FRAGMENT_TAG = "Bf";
     public static final String FOLDER_FRAGMENT_TAG = "Ff";
+    public static final String RECENT_NOTES_FRAGMENT_TAG = "Rnf";
 
     public static final String KEY_DIR_PATH = "path";
     public static final String KEY_DIR_ROOT_PATH = "root_path";
@@ -58,4 +59,6 @@ public class Constants {
     public static final String RECYCLE_STATE = "recycle_state";
 
     public static final String DIALOG_CREATE_BUCKET = "dialog_new_bucket";
+
+    public static final String EXTRA_STACK_TRACE = "stack";
 }

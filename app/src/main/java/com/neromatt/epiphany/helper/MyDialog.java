@@ -19,6 +19,8 @@ public class MyDialog extends DialogFragment {
 
     private MyDialogListener mListener;
 
+    public MyDialog() {}
+
     void setDialogListener(MyDialogListener mListener) {
         this.mListener = mListener;
     }
@@ -27,7 +29,6 @@ public class MyDialog extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         if (dialog_open) return null;
         AlertDialog.Builder builder;
-
         LayoutInflater inflater = getActivity().getLayoutInflater();
 
         final View view = inflater.inflate(R.layout.create_notebook_dialog, null);

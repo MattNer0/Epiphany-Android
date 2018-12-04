@@ -397,6 +397,8 @@ public final class NavigationLayoutFactory implements LayoutFactory {
 
             breadcrumb_adapter = new BreadcrumbAdapter(context, breadcrumbs, listener);
             toolbar_breadcrumbs_list.setAdapter(breadcrumb_adapter);
+
+            toolbar_breadcrumbs_list.scrollToPosition(breadcrumbs.size() - 1);
         }
     }
 
@@ -447,6 +449,8 @@ public final class NavigationLayoutFactory implements LayoutFactory {
                 showSearch("", true);
             }
             return true;
+        } else if (id == R.id.action_recent_notes) {
+            ma.showRecentNotes();
         }
 
         return false;

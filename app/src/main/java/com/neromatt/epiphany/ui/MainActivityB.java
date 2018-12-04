@@ -17,7 +17,6 @@
 //import com.neromatt.epiphany.Constants;
 //import com.neromatt.epiphany.helper.DBInterface;
 //import com.neromatt.epiphany.helper.Database;
-//import com.neromatt.epiphany.tasks.ReadDatabaseTask;
 //import com.neromatt.epiphany.model.DataObjects.MainModel;
 //import com.neromatt.epiphany.model.DataObjects.SingleNote;
 //import com.neromatt.epiphany.model.DataObjects.SingleNotebook;

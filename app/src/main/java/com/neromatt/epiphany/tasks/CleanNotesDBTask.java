@@ -6,15 +6,25 @@ import android.util.Log;
 
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.DBInterface;
+import com.neromatt.epiphany.model.DataObjects.MainModel;
+import com.neromatt.epiphany.model.DataObjects.SingleNote;
 
 import java.io.File;
 import java.util.ArrayList;
 
 public class CleanNotesDBTask extends AsyncTask<String, Void, Integer> {
+
     private final DBInterface db;
+    private final CleanDBListener listener;
 
     public CleanNotesDBTask(DBInterface db) {
         this.db = db;
+        this.listener = null;
+    }
+
+    public CleanNotesDBTask(DBInterface db, CleanDBListener listener) {
+        this.db = db;
+        this.listener = listener;
     }
 
     @Override
@@ -23,7 +33,7 @@ public class CleanNotesDBTask extends AsyncTask<String, Void, Integer> {
 
         ArrayList<Bundle> db_data = db.getDatabase().getNotesByFolderPath(paths[0]);
         for (Bundle note: db_data) {
-            File f = new File(note.getString(Constants.KEY_NOTE_PATH));
+            File f = new File(note.getString(Constants.KEY_NOTE_PATH)+"/"+note.getString(Constants.KEY_NOTE_FILENAME));
             if (!f.exists()) {
                 if (db.getDatabase().deleteNoteByID(note.getInt("id"))) {
                     res++;
@@ -39,5 +49,10 @@ public class CleanNotesDBTask extends AsyncTask<String, Void, Integer> {
         if (count > 0) {
             Log.i(Constants.LOG, "database cleaned " + count);
         }
+        if (listener != null) listener.DatabaseCleaned();
+    }
+
+    public interface CleanDBListener {
+        void DatabaseCleaned();
     }
 }

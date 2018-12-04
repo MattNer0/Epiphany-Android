@@ -58,7 +58,7 @@
 //    private RecyclerView notebookList;
 //
 //    private MainAdapter<MainModel> adapter;
-//    private CreateFolderHelper mCreateNotebookHelper;
+//    private FolderHelper mCreateNotebookHelper;
 //    private CreateNoteHelper mCreateNoteHelper;
 //    private CreateBucketHelper mCreateBucketHelper;
 //
@@ -262,7 +262,7 @@
 //        notebookList.addItemDecoration(mItemDecoration);*/
 //
 //        mCreateBucketHelper = new CreateBucketHelper(this);
-//        mCreateNotebookHelper = new CreateFolderHelper(this);
+//        mCreateNotebookHelper = new FolderHelper(this);
 //        mCreateNoteHelper = new CreateNoteHelper(this, path);
 //
 //        pullToRefresh = getView().findViewById(R.id.pullToRefresh);
@@ -497,7 +497,6 @@
 //        if (current_model != null && modified_note != null) {
 //            if (pullToRefresh != null) pullToRefresh.setRefreshing(true);
 //
-//            for (MainModel m: current_model.getNotes()) {
 //                if (m.equalsUUID(modified_note.getString("_uuid"))) {
 //                    ((SingleNote) m).refreshContent(getMainActivity().getDatabase(), new SingleNote.OnNoteLoadedListener() {
 //                        @Override

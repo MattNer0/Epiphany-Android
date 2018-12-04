@@ -17,6 +17,7 @@ import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.ui.Fragments.BucketsFragment;
 import com.neromatt.epiphany.ui.Fragments.FoldersFragment;
 import com.neromatt.epiphany.ui.Fragments.MyFragment;
+import com.neromatt.epiphany.ui.Fragments.RecentNotesFragment;
 import com.neromatt.epiphany.ui.Navigation.SearchState;
 import com.sensorberg.permissionbitte.BitteBitte;
 import com.sensorberg.permissionbitte.PermissionBitte;
@@ -109,6 +110,10 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     public void showSettings() {
         Intent settingsIntent = new Intent(this, SettingsActivity.class);
         startActivity(settingsIntent);
+    }
+
+    public void showRecentNotes() {
+        pushFragment(RecentNotesFragment.newInstance(root_path), Constants.RECENT_NOTES_FRAGMENT_TAG, Constants.RECENT_NOTES_FRAGMENT_TAG);
     }
 
     public void openQuickNotes() {

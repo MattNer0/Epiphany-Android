@@ -224,9 +224,14 @@ public class ViewNote extends AppCompatActivity {
     }
 
     public void updateInfo() {
+        TextView note_filename = findViewById(R.id.note_filename);
+        TextView note_path = findViewById(R.id.note_path);
         TextView note_created_at = findViewById(R.id.note_created_at);
         TextView note_updated_at = findViewById(R.id.note_updated_at);
         TextView note_lines = findViewById(R.id.note_lines);
+
+        note_filename.setText(note.getFilename());
+        note_path.setText(note.getFullPath());
 
         note_created_at.setText(note.getCreatedString(MainModel.getCurrentLocale(this)));
         note_updated_at.setText(note.getLastModifiedString(MainModel.getCurrentLocale(this)));

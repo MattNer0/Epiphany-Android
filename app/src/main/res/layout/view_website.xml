@@ -21,7 +21,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:alpha="0.8"
-        android:background="@color/colorPrimary">
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
@@ -30,6 +32,17 @@
             android:layout_gravity="center"
             android:textAlignment="center"
             android:text="Loading..."/>
+
+        <com.github.rahatarmanahmed.cpv.CircularProgressView
+            android:id="@+id/progress_view"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            android:visibility="gone"
+            app:cpv_animAutostart="false"
+            app:cpv_progress="0"
+            app:cpv_maxProgress="100"/>
 
     </LinearLayout>
 

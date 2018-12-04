@@ -26,90 +26,7 @@
         android:paddingTop="15dp"
         android:clipToPadding="false">
 
-        <LinearLayout
-            android:id="@+id/bottom_info_inner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:textColor="@color/textColor"
-                android:text="@string/info_note_title"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="5dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textColor"
-                    android:text="@string/info_note_created_at"/>
-
-                <TextView
-                    android:id="@+id/note_created_at"
-                    android:textColor="@color/textColor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="10dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textColor"
-                    android:text="@string/info_note_updated_at"/>
-
-                <TextView
-                    android:id="@+id/note_updated_at"
-                    android:textColor="@color/textColor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="10dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/textColor"
-                    android:text="@string/info_note_lines"/>
-
-                <TextView
-                    android:id="@+id/note_lines"
-                    android:textColor="@color/textColor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        <include layout="@layout/view_note_info" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/close_info"
@@ -119,7 +36,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginTop="-15dp"
             android:layout_alignParentEnd="true"
-            android:layout_alignTop="@+id/bottom_info_inner"
+            android:layout_alignParentTop="true"
             android:src="@drawable/ic_close_white_24dp"
             android:background="@color/colorPrimaryDark"
             app:fabSize="mini"
