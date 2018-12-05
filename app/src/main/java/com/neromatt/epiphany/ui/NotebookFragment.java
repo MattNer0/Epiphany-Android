@@ -60,7 +60,7 @@
 //    private MainAdapter<MainModel> adapter;
 //    private FolderHelper mCreateNotebookHelper;
 //    private CreateNoteHelper mCreateNoteHelper;
-//    private CreateBucketHelper mCreateBucketHelper;
+//    private BucketHelper mCreateBucketHelper;
 //
 //    private ArrayList<MainModel> library_list;
 //    private MainModel current_model;
@@ -261,7 +261,7 @@
 //                .withBottomEdge(true);
 //        notebookList.addItemDecoration(mItemDecoration);*/
 //
-//        mCreateBucketHelper = new CreateBucketHelper(this);
+//        mCreateBucketHelper = new BucketHelper(this);
 //        mCreateNotebookHelper = new FolderHelper(this);
 //        mCreateNoteHelper = new CreateNoteHelper(this, path);
 //

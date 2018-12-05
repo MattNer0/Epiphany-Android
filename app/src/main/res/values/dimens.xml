@@ -14,4 +14,7 @@
     <dimen name="app_bar_inset">8dp</dimen>
     <dimen name="app_bar_elevation">6dp</dimen>
     <dimen name="app_bar_fontsize">20sp</dimen>
+
+    <dimen name="big_fontsize">20sp</dimen>
+    <dimen name="regular_fontsize">16sp</dimen>
 </resources>

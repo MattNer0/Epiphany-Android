@@ -1,21 +1,27 @@
 package com.neromatt.epiphany.ui.Fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
-import com.neromatt.epiphany.helper.CreateBucketHelper;
+import com.neromatt.epiphany.helper.BucketHelper;
 import com.neromatt.epiphany.helper.CreateNoteHelper;
+import com.neromatt.epiphany.helper.FolderHelper;
 import com.neromatt.epiphany.model.Adapters.FadeInItemAnimator;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
+import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
+import com.neromatt.epiphany.model.DataObjects.SingleRack;
 import com.neromatt.epiphany.tasks.ReadBucketsTask;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
@@ -26,14 +32,22 @@ import com.neromatt.epiphany.ui.R;
 
 import java.io.File;
 import java.util.ArrayList;
+
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
+import ru.whalemare.sheetmenu.SheetMenu;
 
 public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener, ReadBucketsTask.BucketsListener {
 
     private String root_path;
     private ReadBucketsTask buckets_task;
+
+    private LinearLayout empty_list_message;
+    //private SwipeRefreshLayout refresh_layout;
+
+    private boolean should_refresh_list = false;
 
     public BucketsFragment() { }
 
@@ -57,6 +71,8 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
 
         mNavigationLayout.viewCreated(getMainActivity(), view);
         recycler_view = view.findViewById(R.id.listview);
+        //refresh_layout = view.findViewById(R.id.swipe_refresh);
+        empty_list_message = view.findViewById(R.id.no_buckets);
 
         if (recycler_view_state == null && savedInstanceState != null) {
             recycler_view_state = savedInstanceState.getParcelable(Constants.RECYCLE_STATE);
@@ -70,7 +86,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
             public void onMenuItemClick(FloatingActionButton fab, TextView textView, int itemId) {
                 switch (itemId) {
                     case Constants.FAB_MENU_NEW_BUCKET:
-                        CreateBucketHelper.addBucket(getMainActivity(), root_path, new CreateBucketHelper.BucketCreatedListener() {
+                        BucketHelper.addBucket(getMainActivity(), root_path, new BucketHelper.BucketCreatedListener() {
                             @Override
                             public void onCreated(boolean success) {
                                 runBucketsTask();
@@ -84,6 +100,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         Bundle args = getArguments();
         if (args.containsKey(Constants.KEY_DIR_PATH)) {
             root_path = args.getString(Constants.KEY_DIR_PATH, "");
+            should_refresh_list = true;
             runBucketsTask();
         }
 
@@ -167,28 +184,64 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     private void initList(ArrayList<MainModel> list) {
-        adapter = new MainAdapter<>(list);
-        adapter.addListener(this);
+        Log.i(Constants.LOG, "list: "+list.size()+" "+should_refresh_list);
+        if (adapter == null || should_refresh_list) {
+            adapter = new MainAdapter<>(list);
+            adapter.addListener(this);
 
-        adapter
-            .setNotifyMoveOfFilteredItems(true)
-            .setOnlyEntryAnimation(false)
-            .setAnimationOnForwardScrolling(false)
-            .setAnimationOnReverseScrolling(false)
-            .setAnimationEntryStep(true)
-            .setAnimationInterpolator(new DecelerateInterpolator())
-            .setAnimationDelay(50)
-            .setAnimationDuration(200);
+            adapter
+                    .setNotifyMoveOfFilteredItems(true)
+                    .setOnlyEntryAnimation(false)
+                    .setAnimationOnForwardScrolling(false)
+                    .setAnimationOnReverseScrolling(false)
+                    .setAnimationEntryStep(true)
+                    .setAnimationInterpolator(new DecelerateInterpolator())
+                    .setAnimationDelay(50)
+                    .setAnimationDuration(200);
 
-        recycler_view.setItemViewCacheSize(0);
-        recycler_view.setLayoutManager(getLayoutManager());
+            recycler_view.setItemViewCacheSize(0);
+            recycler_view.setLayoutManager(getLayoutManager());
 
-        recycler_view.setHasFixedSize(true);
-        recycler_view.setAdapter(adapter);
+            recycler_view.setHasFixedSize(true);
+            recycler_view.setAdapter(adapter);
 
-        recycler_view.setItemAnimator(new FadeInItemAnimator(new OvershootInterpolator(1f)));
-        recycler_view.getItemAnimator().setAddDuration(500);
-        recycler_view.getItemAnimator().setRemoveDuration(500);
+            recycler_view.setItemAnimator(new FadeInItemAnimator(new OvershootInterpolator(1f)));
+            recycler_view.getItemAnimator().setAddDuration(500);
+            recycler_view.getItemAnimator().setRemoveDuration(500);
+
+            /*refresh_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    refresh_layout.setRefreshing(true);
+                    runBucketsTask();
+                }
+            });
+            refresh_layout.setColorSchemeResources(android.R.color.holo_blue_bright,
+                    android.R.color.holo_green_light,
+                    android.R.color.holo_orange_light,
+                    android.R.color.holo_red_light);*/
+        }
+
+        //refresh_layout.setRefreshing(false);
+
+        if (list.size() == 0) {
+            recycler_view.setVisibility(View.GONE);
+            empty_list_message.setVisibility(View.VISIBLE);
+            empty_list_message.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    BucketHelper.addBucket(getMainActivity(), root_path, new BucketHelper.BucketCreatedListener() {
+                        @Override
+                        public void onCreated(boolean success) {
+                            runBucketsTask();
+                        }
+                    });
+                }
+            });
+        } else {
+            recycler_view.setVisibility(View.VISIBLE);
+            empty_list_message.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -202,8 +255,50 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     @Override
-    public void onItemLongClick(int position) {
+    public void onItemLongClick(final int position) {
+        MainModel model = adapter.getItem(position);
+        File dir = new File(model.getPath());
+        File[] files = dir.listFiles();
+        int folder_menu = R.menu.popup_folder_menu;
+        if (files.length == 0 || files.length == 1 && files[0].getName().equals(".bucket.json")) {
+            folder_menu = R.menu.popup_folder_menu_delete;
+        }
 
+        SheetMenu.with(getContext())
+            .setTitle(model.getTitle())
+            .setMenu(folder_menu)
+            .setAutoCancel(true)
+            .setClick(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    SingleRack folder = (SingleRack) adapter.getItem(position);
+                    switch (item.getItemId()) {
+                        case R.id.folder_delete:
+                            BucketHelper.deleteBucket(getMainActivity(), folder, new BucketHelper.BucketDeletedListener() {
+                                @Override
+                                public void onDeleted(boolean success) {
+                                    if (success) {
+                                        Toast.makeText(getContext(), "Bucket deleted!", Toast.LENGTH_SHORT).show();
+                                        runBucketsTask();
+                                    }
+                                }
+                            });
+                            break;
+                        case R.id.folder_rename:
+                            BucketHelper.renameBucket(getMainActivity(), folder, new BucketHelper.BucketRenamedListener() {
+                                @Override
+                                public void onRenamed(boolean success) {
+                                    if (success) {
+                                        Toast.makeText(getContext(), "Bucket renamed!", Toast.LENGTH_SHORT).show();
+                                        runBucketsTask();
+                                    }
+                                }
+                            });
+                            break;
+                    }
+                    return true;
+                }
+            }).show();
     }
 
     @Override

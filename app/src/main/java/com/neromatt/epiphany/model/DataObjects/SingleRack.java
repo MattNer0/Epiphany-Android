@@ -65,6 +65,23 @@ public class SingleRack extends MainModel {
     }
 
     @Override
+    public boolean delete() {
+        File dir = new File(path);
+        if (dir.exists() && dir.isDirectory()) {
+            for (File f : dir.listFiles()) {
+                if (f.isDirectory()) return false;
+                String filename = f.getName();
+                String extension = filename.substring(filename.lastIndexOf('.') + 1);
+                if (extension.equals(".md") || extension.equals(".txt")) return false;
+                if (!f.delete()) return false;
+            }
+            return dir.delete();
+        }
+
+        return false;
+    }
+
+    @Override
     public Bundle toBundle() {
         Bundle args = super.toBundle();
         args.putString("path", path);
