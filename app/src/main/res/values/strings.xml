@@ -86,6 +86,7 @@
     <!--Strngs for CreateNotebookDialog-->
     <string name="create_notebook">Create</string>
     <string name="rename_notebook">Rename</string>
+    <string name="save">Save</string>
     <string name="cancel">Cancel</string>
 
     <string name="no_more_load_retry">No more items to load. Refresh to retry.</string>
@@ -103,6 +104,20 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
+    </string-array>
+
+    <string-array name="pref_bucket_grid_entries">
+        <item>1 Columns</item>
+        <item>2 Columns</item>
+        <item>3 Columns</item>
+        <item>4 Columns</item>
+    </string-array>
+
+    <string-array name="pref_bucket_grid_entries_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
     </string-array>
 
 </resources>

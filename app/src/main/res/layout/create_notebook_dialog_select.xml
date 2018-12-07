@@ -5,13 +5,14 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <EditText
+    <com.neromatt.epiphany.ui.InstantAutoComplete
         android:id="@+id/folder_name"
         android:inputType="textEmailAddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
         android:textColor="@color/textColor"
+        android:completionThreshold="0"
         android:padding="5dp"
         android:singleLine="true"
         android:layout_marginTop="16dp"

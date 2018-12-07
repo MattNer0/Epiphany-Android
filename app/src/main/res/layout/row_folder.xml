@@ -22,8 +22,8 @@
             android:paddingBottom="22dp">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="wrap_content"
+                android:layout_width="@dimen/icon_list_regular"
+                android:layout_height="@dimen/icon_list_regular"
                 android:layout_gravity="start|center"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_folder_white_24dp"/>
@@ -34,7 +34,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Item Name"
-                android:textSize="18sp"
+                android:textSize="@dimen/regular_fontsize_list"
                 android:layout_gravity="center"
                 android:textColor="@color/textColor"/>
 

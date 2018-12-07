@@ -2,15 +2,18 @@ package com.neromatt.epiphany.model.DataObjects;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+
 import com.neromatt.epiphany.Constants;
+import com.neromatt.epiphany.helper.IconHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.IFlexible;
 
@@ -20,21 +23,33 @@ public class SingleRack extends MainModel {
     private int order;
 
     private boolean isQuickNotes = false;
+    private String color = null;
+
+    private int grid_columns = 1;
 
     public SingleRack(String name, String path, JSONObject data) {
         super();
 
         this.path = path;
         this.name = name;
-        try {
-            if (data != null && data.has("ordering")) {
-                this.order = data.getInt("ordering");
-            } else {
+        if (data != null) {
+            try {
+                if (data.has("ordering")) {
+                    this.order = data.getInt("ordering");
+                } else {
+                    this.order = 0;
+                }
+
+                if (data.has("color")) {
+                    this.color = data.getString("color");
+                } else {
+                    this.color = null;
+                }
+            } catch (JSONException e) {
+                Log.e("err", "json " + data.toString());
                 this.order = 0;
+                this.color = null;
             }
-        } catch (JSONException e) {
-            Log.e("err", "json "+data.toString());
-            this.order = 0;
         }
         this._model_type = MainModel.TYPE_RACK;
 
@@ -62,6 +77,36 @@ public class SingleRack extends MainModel {
         }
 
         return false;
+    }
+
+    public void setViewOptions(int grid_columns) {
+        this.grid_columns = grid_columns;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public void saveMeta() {
+        JSONObject js = new JSONObject();
+        try {
+            js.put("ordering", order);
+            js.put("color", color);
+
+            File file = new File(getPath()+"/.bucket.json");
+            FileOutputStream stream = new FileOutputStream(file);
+            try {
+                stream.write(js.toString().getBytes());
+            } finally {
+                stream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -93,12 +138,18 @@ public class SingleRack extends MainModel {
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         if (holder.mNotebookTitle != null) {
-            holder.mNotebookTitle.setText(getTitle());
+            if (grid_columns == 1) {
+                holder.mNotebookTitle.setText(getTitle());
+                holder.mNotebookTitle.setVisibility(View.VISIBLE);
+            } else {
+                holder.mNotebookTitle.setVisibility(View.GONE);
+            }
         }
 
-        if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-            StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) holder.itemView.getLayoutParams();
-            layoutParams.setFullSpan(true);
+        String new_color = IconHelper.setIcon(holder.iconContainer, getTitle(), grid_columns, color);
+        if (!new_color.equals(color)) {
+            color = new_color;
+            saveMeta();
         }
     }
 

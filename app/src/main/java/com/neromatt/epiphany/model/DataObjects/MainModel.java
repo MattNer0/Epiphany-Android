@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.neromatt.epiphany.Constants;
@@ -256,6 +257,8 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
         ProgressBar progressBar;
         TextView progressMessage;
 
+        RelativeLayout iconContainer;
+
         MyViewHolder(View view, FlexibleAdapter adapter) {
             super(view, adapter);
             this.mNotebookTitle = view.findViewById(R.id.notebook_title);
@@ -273,6 +276,8 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
 
             this.progressBar = view.findViewById(R.id.progress_bar);
             this.progressMessage = view.findViewById(R.id.progress_message);
+
+            this.iconContainer = view.findViewById(R.id.icon_container);
         }
 
         @Override

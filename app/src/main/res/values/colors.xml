@@ -3,6 +3,7 @@
 <resources>
     <color name="textColor">#FFFFFF</color>
     <color name="textColorGrey">#999999</color>
+    <color name="textShadowColor">#666666</color>
     <color name="textColorBlack">#555555</color>
     <color name="colorPrimary">#252526</color>
     <color name="colorPrimaryDark">#1e1e1e</color>

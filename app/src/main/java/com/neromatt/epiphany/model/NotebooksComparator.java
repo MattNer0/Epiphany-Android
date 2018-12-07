@@ -47,6 +47,9 @@ public class NotebooksComparator implements Comparator<MainModel> {
                 result = v1.getName().compareTo(v2.getName());
             } else {
                 result = ((SingleRack) v1).compareOrderTo((SingleRack) v2);
+                if (result == 0) {
+                    result = v1.getName().compareTo(v2.getName());
+                }
             }
 
         } else if (v1 instanceof SingleNotebook && v2 instanceof SingleNotebook) {
@@ -55,6 +58,9 @@ public class NotebooksComparator implements Comparator<MainModel> {
                 result = v1.getName().compareTo(v2.getName());
             } else {
                 result = ((SingleNotebook) v1).compareOrderTo((SingleNotebook) v2);
+                if (result == 0) {
+                    result = v1.getName().compareTo(v2.getName());
+                }
             }
 
         } else if (v1 instanceof SingleNote && v2 instanceof SingleNote) {

@@ -22,6 +22,7 @@ import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
 import com.neromatt.epiphany.model.DataObjects.SingleRack;
+import com.neromatt.epiphany.model.NotebooksComparator;
 import com.neromatt.epiphany.tasks.ReadBucketsTask;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
@@ -32,9 +33,13 @@ import com.neromatt.epiphany.ui.R;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
+import eu.davidea.flexibleadapter.common.SmoothScrollGridLayoutManager;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 import ru.whalemare.sheetmenu.SheetMenu;
@@ -48,6 +53,8 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     //private SwipeRefreshLayout refresh_layout;
 
     private boolean should_refresh_list = false;
+
+    private int grid_size = 1;
 
     public BucketsFragment() { }
 
@@ -111,6 +118,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
             }
         });
 
+        mNavigationLayout.hideLayoutButtons();
         mNavigationLayout.setOnQueryTextListener(new OnSearchViewListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -122,6 +130,11 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
                 mNavigationLayout.hideSearch(getContext());
             }
         });
+    }
+
+    private void runBucketsTask(boolean refresh) {
+        if (refresh) should_refresh_list = true;
+        runBucketsTask();
     }
 
     private void runBucketsTask() {
@@ -137,6 +150,11 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     public void onActivityCreated (Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mNavigationLayout.setTitle(R.string.title_library);
+    }
+
+    RecyclerView.LayoutManager getLayoutManager() {
+        String grid_size = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("pref_bucket_grid", "2");
+        return new SmoothScrollGridLayoutManager(getContext(), Integer.parseInt(grid_size));
     }
 
     @Override
@@ -184,9 +202,27 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     private void initList(ArrayList<MainModel> list) {
-        Log.i(Constants.LOG, "list: "+list.size()+" "+should_refresh_list);
+        ArrayList<MainModel> buckets = new ArrayList<>();
+
+        int new_grid_size = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("pref_bucket_grid", "1"));
+        if (grid_size != new_grid_size) {
+            grid_size = new_grid_size;
+            should_refresh_list = true;
+        }
+
+        for (MainModel m: list) {
+            if (!m.isQuickNotes()) {
+                SingleRack rack = (SingleRack) m;
+                rack.setViewOptions(grid_size);
+                buckets.add(rack);
+            }
+        }
+
         if (adapter == null || should_refresh_list) {
-            adapter = new MainAdapter<>(list);
+
+            if (adapter != null) adapter.clear();
+
+            adapter = new MainAdapter<>(buckets);
             adapter.addListener(this);
 
             adapter
@@ -224,7 +260,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
 
         //refresh_layout.setRefreshing(false);
 
-        if (list.size() == 0) {
+        if (buckets.size() == 0) {
             recycler_view.setVisibility(View.GONE);
             empty_list_message.setVisibility(View.VISIBLE);
             empty_list_message.setOnClickListener(new View.OnClickListener() {
@@ -259,9 +295,9 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         MainModel model = adapter.getItem(position);
         File dir = new File(model.getPath());
         File[] files = dir.listFiles();
-        int folder_menu = R.menu.popup_folder_menu;
+        int folder_menu = R.menu.popup_bucket_menu;
         if (files.length == 0 || files.length == 1 && files[0].getName().equals(".bucket.json")) {
-            folder_menu = R.menu.popup_folder_menu_delete;
+            folder_menu = R.menu.popup_bucket_menu_delete;
         }
 
         SheetMenu.with(getContext())
@@ -279,7 +315,18 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
                                 public void onDeleted(boolean success) {
                                     if (success) {
                                         Toast.makeText(getContext(), "Bucket deleted!", Toast.LENGTH_SHORT).show();
-                                        runBucketsTask();
+                                        runBucketsTask(true);
+                                    }
+                                }
+                            });
+                            break;
+                        case R.id.folder_color:
+                            BucketHelper.changeColorBucket(getMainActivity(), folder, new BucketHelper.BucketRenamedListener() {
+                                @Override
+                                public void onRenamed(boolean success) {
+                                    if (success) {
+                                        Toast.makeText(getContext(), "Bucket color changed!", Toast.LENGTH_SHORT).show();
+                                        runBucketsTask(true);
                                     }
                                 }
                             });
@@ -290,7 +337,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
                                 public void onRenamed(boolean success) {
                                     if (success) {
                                         Toast.makeText(getContext(), "Bucket renamed!", Toast.LENGTH_SHORT).show();
-                                        runBucketsTask();
+                                        runBucketsTask(true);
                                     }
                                 }
                             });

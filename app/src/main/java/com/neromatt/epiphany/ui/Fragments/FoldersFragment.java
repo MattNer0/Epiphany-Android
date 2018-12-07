@@ -324,6 +324,9 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         contents = list;
 
         if (adapter == null || should_refresh_list) {
+
+            if (adapter != null) adapter.clear();
+
             adapter = new MainAdapter<>(contents);
             adapter.addListener(this);
 

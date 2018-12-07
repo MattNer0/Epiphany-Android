@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
 
     private boolean isFirstRun() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
+        String path = prefs.getString("pref_root_directory", "");
         if (prefs.getBoolean("firstrun", true) || path.isEmpty()) {
             return true;
         }
@@ -231,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         prefs_edit.putString("pref_root_directory", full);
         prefs_edit.putBoolean("firstrun", false);
         prefs_edit.putString("pref_note_order", "0");
+        prefs_edit.putString("pref_bucket_grid", "2");
         if (prefs_edit.commit()) {
             createBucketsFragment(root_path);
         }

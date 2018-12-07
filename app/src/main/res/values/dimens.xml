@@ -17,4 +17,14 @@
 
     <dimen name="big_fontsize">20sp</dimen>
     <dimen name="regular_fontsize">16sp</dimen>
+    <dimen name="regular_fontsize_list">18sp</dimen>
+    <dimen name="small_fontsize_list">12sp</dimen>
+
+    <dimen name="icon_list_big">32dp</dimen>
+    <dimen name="icon_list_regular">24dp</dimen>
+
+    <dimen name="icon_width_height">56dp</dimen>
+    <dimen name="icon_text">28sp</dimen>
+
+    <dimen name="fontsize_bucket_list">20sp</dimen>
 </resources>

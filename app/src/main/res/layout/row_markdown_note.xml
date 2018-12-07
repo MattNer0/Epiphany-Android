@@ -19,8 +19,8 @@
 
         <ImageView
             android:id="@+id/notebook_icon"
-            android:layout_width="24dp"
-            android:layout_height="wrap_content"
+            android:layout_width="@dimen/icon_list_regular"
+            android:layout_height="@dimen/icon_list_regular"
             android:layout_gravity="start|top"
             android:layout_marginTop="2dp"
             android:layout_marginEnd="10dp"
@@ -37,7 +37,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textSize="18sp"
+                android:textSize="@dimen/regular_fontsize_list"
                 android:layout_gravity="center"
                 android:textColor="@color/textColor"/>
 
@@ -46,7 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textSize="12sp"
+                android:textSize="@dimen/small_fontsize_list"
                 android:maxLines="5"
                 android:ellipsize="end"
                 android:layout_gravity="center"
@@ -65,7 +65,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text=""
-                android:textSize="12sp"
+                android:textSize="@dimen/small_fontsize_list"
                 android:maxLines="5"
                 android:ellipsize="end"
                 android:layout_marginTop="3dp"

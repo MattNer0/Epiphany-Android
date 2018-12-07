@@ -51,6 +51,7 @@
         <activity
             android:name="com.neromatt.epiphany.ui.SettingsActivity"
             android:noHistory="true"
+            android:theme="@style/AppThemeSettings"
             android:label="@string/title_activity_settings" />
 
         <activity

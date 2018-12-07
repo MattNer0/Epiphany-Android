@@ -5,9 +5,9 @@
     </declare-styleable>
 
     <style name="AppTheme" parent="AppTheme.Base"/>
+    <style name="AppThemeSettings" parent="AppTheme.Settings"/>
 
     <style name="AppTheme.Base" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="preferenceTheme">@style/PreferenceStyle</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimary</item>
         <item name="android:colorBackground">@color/background</item>
@@ -24,6 +24,13 @@
 
         <item name="android:alertDialogTheme">@style/MyAlertDialogTheme</item>
         <item name="alertDialogTheme">@style/MyAlertDialogTheme</item>
+    </style>
+
+    <style name="AppTheme.Settings" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="preferenceTheme">@style/PreferenceStyle</item>
+
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
     </style>
 
     <style name="AppFullScreenTheme" parent="Theme.AppCompat.Light.NoActionBar">
@@ -52,8 +59,8 @@
     </style>
 
     <style name="PreferenceStyle" parent="PreferenceThemeOverlay.v14.Material">
-        <item name="android:textColor">@color/textColor</item>
-        <item name="android:textColorSecondary">@color/textColorGrey</item>
+        <!--item name="android:textColor">@color/textColor</item>
+        <item name="android:textColorSecondary">@color/textColorGrey</item-->
     </style>
 
     <style name="CardViewStyle" parent="CardView.Dark">

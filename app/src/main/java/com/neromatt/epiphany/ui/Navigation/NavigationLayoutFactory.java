@@ -90,6 +90,8 @@ public final class NavigationLayoutFactory implements LayoutFactory {
     private MenuItem action_staggered_layout;
     private MenuItem action_search_view;
 
+    private boolean layout_items_hidden = false;
+
     public NavigationLayoutFactory(boolean includeToolbar, boolean includeBreadCrumbs, boolean includeFab, boolean includeDrawer, boolean inputQuickNote, LayoutFactory origin) {
         this.includeToolbar = includeToolbar || includeDrawer;
         this.includeBreadCrumbs = includeBreadCrumbs;
@@ -407,7 +409,9 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         action_staggered_layout = menu.findItem(R.id.action_staggered_layout);
         action_search_view = menu.findItem(R.id.action_search);
 
-        toggleLayoutItem(context);
+        if (!layout_items_hidden) {
+            toggleLayoutItem(context);
+        }
     }
 
     private void toggleLayoutItem(Context context) {
@@ -429,14 +433,14 @@ public final class NavigationLayoutFactory implements LayoutFactory {
             ma.openQuickNotes();
             return true;
         } else if (id == R.id.action_list_layout) {
-            if (action_list_layout != null && action_staggered_layout != null) {
+            if (action_list_layout != null && action_staggered_layout != null && !layout_items_hidden) {
                 action_staggered_layout.setVisible(true);
                 action_list_layout.setVisible(false);
             }
             listener.updateLayoutList(false);
             return true;
         } else if (id == R.id.action_staggered_layout) {
-            if (action_list_layout != null && action_staggered_layout != null) {
+            if (action_list_layout != null && action_staggered_layout != null && !layout_items_hidden) {
                 action_list_layout.setVisible(true);
                 action_staggered_layout.setVisible(false);
             }
@@ -454,6 +458,14 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         }
 
         return false;
+    }
+
+    public void hideLayoutButtons() {
+        layout_items_hidden = true;
+        if (action_list_layout != null && action_staggered_layout != null) {
+            action_list_layout.setVisible(false);
+            action_staggered_layout.setVisible(false);
+        }
     }
 
     public void setOnQueryTextListener(OnSearchViewListener listener) {

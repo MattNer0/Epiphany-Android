@@ -20,6 +20,23 @@
             android:defaultValue="false"
             />
 
+        <ListPreference
+            android:key="pref_bucket_grid"
+            android:title="Select buckets grid size"
+            android:summary="%s"
+            android:entries="@array/pref_bucket_grid_entries"
+            android:entryValues="@array/pref_bucket_grid_entries_values"
+            app:iconSpaceReserved="false"
+            android:defaultValue="1" />
+
+        <!--CheckBoxPreference
+            android:id="@+id/pref_bucket_label"
+            android:key="pref_bucket_label"
+            app:iconSpaceReserved="false"
+            android:title="Show bucket label"
+            android:defaultValue="true"
+            /-->
+
         <!--Preference
             android:id="@+id/pref_default_notebook"
             android:summary=""

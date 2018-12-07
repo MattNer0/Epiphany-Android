@@ -160,7 +160,7 @@ public final class TurndownView extends WebView {
                 "\"document.querySelector('.content-body') ? document.querySelector('.content-body').innerHTML\",\n" +
                 "\"document.querySelector('div[itemtype=\\\"http://schema.org/Question\\\"]') ? document.querySelector('div[itemtype=\\\"http://schema.org/Question\\\"]').innerHTML\",\n" +
                 "\"document.querySelector('p + p + p + p') ? document.querySelector('p + p + p + p').parentNode.innerHTML\",\n" +
-                "\"document.querySelector('.repository-content .file > .data').innerHTML\"\n" +
+                "\"document.querySelector('.repository-content .file > .data') ? document.querySelector('.repository-content .file > .data').innerHTML\",\n" +
                 "\"document.querySelector('body').innerHTML\"\n" +
                 "];" +
                 "var body_extract = elements.join(' : ');"+
@@ -171,24 +171,24 @@ public final class TurndownView extends WebView {
                 "codeBlockStyle: \"fenced\" " +
                 "});\n" +
                 "turndownService.addRule('div', { " +
-                "filter: ['div'], " +
-                "replacement: function(content) { " +
-                " return '\\n' + content + '\\n'; }" +
+                    "filter: ['div'], " +
+                    "replacement: function(content) { " +
+                    " return '\\n' + content + '\\n'; }" +
                 "});" +
                 "turndownService.addRule('shareUrl', { " +
-                "filter: function (node, options) { " +
-                "return (\n" +
-                    "node.nodeName === 'A' &&\n" +
-                    "node.getAttribute('href').search(/(facebook|twitter)\\.com\\/share/) >= 0\n" +
-                    "); " +
-                "}, " +
-                "replacement: function(content) { " +
-                " return ''; }" +
+                    "filter: function (node, options) { " +
+                        "return (node.nodeName === 'A' && " +
+                            "node.getAttribute('href') && " +
+                                "(node.getAttribute('href').search(/(facebook|twitter)\\.com\\/share/) >= 0 || node.getAttribute('href').search(/whatsapp:\\/\\//) >= 0)" +
+                        ");" +
+                    "}, " +
+                    "replacement: function(content) { " +
+                    "return ''; }" +
                 "});" +
                 "turndownService.addRule('script', { " +
-                "filter: ['script', 'style', 'noscript', 'form', 'nav', 'iframe', 'input', 'header', 'footer'], " +
-                "replacement: function(content) { " +
-                "return ''; }" +
+                    "filter: ['script', 'style', 'noscript', 'form', 'nav', 'iframe', 'input', 'header', 'footer'], " +
+                    "replacement: function(content) { " +
+                    "return ''; }" +
                 "});"+
                 "var body_content = eval(body_extract);"+
                 "var markdown = turndownService.turndown(body_content.replace('(\\n)+', ' '));" +
