@@ -152,14 +152,19 @@ public final class MarkedView extends WebView {
         return this;
     }
 
+    public MarkedView setFontSize(int font_size) {
+        evaluateJavascript("resizefont("+font_size+")", null);
+        return this;
+    }
+
     public MarkedView setNoteImagePath(String path) {
         this.noteImagePath = path;
         return this;
     }
 
-    public void loadMDFilePath(String filePath){
+    /*public void loadMDFilePath(String filePath){
         loadMDFile(new File(filePath));
-    }
+    }*/
 
     public void loadMDFile(File file) {
         String mdText = "";

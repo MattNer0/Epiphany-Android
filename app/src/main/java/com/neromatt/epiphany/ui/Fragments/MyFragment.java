@@ -65,8 +65,10 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
-        mNavigationLayout.onCreateMenu(getContext(), menu);
-        mNavigationLayout.showSearchIfOpened();
+        if (mNavigationLayout != null) {
+            mNavigationLayout.onCreateMenu(getContext(), menu);
+            mNavigationLayout.showSearchIfOpened();
+        }
     }
 
     @Override

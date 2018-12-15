@@ -91,4 +91,9 @@ function preview(md_text, codeScrollDisable) {
     forEach(document.querySelectorAll('li.checkbox'), (index, el) => {
         clickCheckbox(index, el);
     });
-};
+}
+
+function resizefont(font_size) {
+    var html = document.getElementsByTagName("HTML")[0];
+    html.className = "font"+font_size;
+}

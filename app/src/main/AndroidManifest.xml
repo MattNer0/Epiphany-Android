@@ -61,8 +61,52 @@
 
         <activity
             android:name="com.neromatt.epiphany.ui.ViewNote"
-            android:theme="@style/AppFullScreenTheme"
             android:label="@string/title_view_note" />
+
+        <activity
+            android:name="com.neromatt.epiphany.ui.ViewPdf"
+            android:label="@string/title_view_pdf">
+
+            <intent-filter tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:mimeType="application/pdf"/>
+                <data android:mimeType="application/x-pdf"/>
+                <data android:mimeType="image/djvu"/>
+                <data android:mimeType="image/vnd.djvu"/>
+                <data android:mimeType="image/x-djvu" />
+                <data android:mimeType="application/vnd.ms-xpsdocument"/>
+                <data android:mimeType="application/oxps"/>
+                <data android:mimeType="application/x-cbz"/>
+                <data android:mimeType="application/x-cbr"/>
+                <data android:mimeType="application/x-fb2"/>
+            </intent-filter>
+
+            <intent-filter tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:host="*"/>
+                <data android:scheme="file" />
+                <data android:scheme="smb" />
+                <data android:scheme="content" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.pdf" />
+                <data android:pathPattern=".*\\.djvu" />
+                <data android:pathPattern=".*\\.djv" />
+                <data android:pathPattern=".*\\.xps" />
+                <data android:pathPattern=".*\\.oxps" />
+                <data android:pathPattern=".*\\.cbz" />
+                <data android:pathPattern=".*\\.cbr" />
+                <data android:pathPattern=".*\\.fb2" />
+                <data android:pathPattern=".*\\.fb2\\.zip" />
+            </intent-filter>
+
+        </activity>
+
 
         <activity
             android:name="com.neromatt.epiphany.ui.NoteFromWebsite"

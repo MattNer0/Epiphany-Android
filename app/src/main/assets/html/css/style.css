@@ -274,3 +274,75 @@ section.footnotes {
     font-size: 90%;
     opacity: 0.8;
 }
+
+html.font10 body,
+html.font10 p,
+html.font10 span,
+html.font10 input,
+html.font10 textarea {
+    font-size: 10px;
+}
+
+html.font12 body,
+html.font12 p,
+html.font12 span,
+html.font12 input,
+html.font12 textarea {
+    font-size: 12px;
+}
+
+html.font14 body,
+html.font14 p,
+html.font14 span,
+html.font14 input,
+html.font14 textarea {
+    font-size: 14px;
+}
+
+html.font15 body,
+html.font15 p,
+html.font15 span,
+html.font15 input,
+html.font15 textarea {
+    font-size: 15px;
+}
+
+html.font16 body,
+html.font16 p,
+html.font16 span,
+html.font16 input,
+html.font16 textarea {
+    font-size: 16px;
+}
+
+html.font18 body,
+html.font18 p,
+html.font18 span,
+html.font18 input,
+html.font18 textarea {
+    font-size: 18px;
+}
+
+html.font20 body,
+html.font20 p,
+html.font20 span,
+html.font20 input,
+html.font20 textarea {
+    font-size: 20px;
+}
+
+html.font22 body,
+html.font22 p,
+html.font22 span,
+html.font22 input,
+html.font22 textarea {
+    font-size: 22px;
+}
+
+html.font24 body,
+html.font24 p,
+html.font24 span,
+html.font24 input,
+html.font24 textarea {
+    font-size: 24px;
+}

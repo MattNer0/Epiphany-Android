@@ -6,6 +6,7 @@
     android:id="@+id/toolbar"
     android:layout_height="wrap_content"
     android:background="@color/colorPrimaryDark"
+    app:layout_scrollFlags="scroll|enterAlways"
     app:theme="@style/Theme.AppCompat.NoActionBar"
     app:popupTheme="@style/ThemeOverlay.Epiphany"
     app:elevation="3dp"

@@ -515,11 +515,9 @@ public class SingleNote extends MainModel {
                 out.write(buffer, 0, read);
             }
             in.close();
-            in = null;
 
             out.flush();
             out.close();
-            out = null;
 
             new File(getFullPath()).delete();
 

@@ -11,6 +11,17 @@
     <string name="action_search">Search</string>
     <string name="action_clean_database">Clean Database</string>
 
+    <string name="action_save_pdf">Save as new note</string>
+    <string name="action_font_size">Change Font Size</string>
+    <string name="action_font_10">10</string>
+    <string name="action_font_12">12</string>
+    <string name="action_font_14">14</string>
+    <string name="action_font_15">15</string>
+    <string name="action_font_16">16</string>
+    <string name="action_font_18">18</string>
+    <string name="action_font_20">20</string>
+    <string name="action_font_24">24</string>
+
     <string name="move_note_here">Move here</string>
     <string name="cant_move_here">Can\'t move here</string>
 
@@ -62,6 +73,7 @@
     <string name="title_add_note">Add Note</string>
     <string name="title_edit_note">Edit Note</string>
     <string name="title_view_note">View Note</string>
+    <string name="title_view_pdf">View PDF</string>
     <string name="title_view_photo">View Photo</string>
     <string name="title_import_note">Import Note</string>
 

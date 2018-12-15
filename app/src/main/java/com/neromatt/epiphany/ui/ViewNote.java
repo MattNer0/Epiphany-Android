@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Patterns;
 import android.view.ContextMenu;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
@@ -26,6 +27,7 @@ import com.neromatt.epiphany.model.DataObjects.SingleNote;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 import ru.whalemare.sheetmenu.SheetMenu;
@@ -33,6 +35,9 @@ import ru.whalemare.sheetmenu.SheetMenu;
 public class ViewNote extends AppCompatActivity {
 
     private Database db;
+
+    private Toolbar toolbar;
+    private MarkedView markdownView;
 
     private SingleNote note;
     private boolean from_editor;
@@ -72,8 +77,15 @@ public class ViewNote extends AppCompatActivity {
     }
 
     private void initializeUI() {
-        MarkedView markdownView = findViewById(R.id.markdownView);
+        toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
+        setTitle(note.getTitle());
+
+        markdownView = findViewById(R.id.markdownView);
         markdownView
                 .setCheckboxCallback(new MarkedView.OnCheckboxChangedListener() {
                     @Override
@@ -101,7 +113,7 @@ public class ViewNote extends AppCompatActivity {
 
         registerForContextMenu(markdownView);
 
-        FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
+        /*FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
 
         noteFab.removeAllOnMenuItemClickListeners();
         noteFab.addOnMenuItemClickListener(new FabSpeedDial.OnMenuItemClickListener() {
@@ -137,7 +149,7 @@ public class ViewNote extends AppCompatActivity {
             menu.add(1, Constants.FAB_MENU_OPEN_LINK_NOTE, 4, R.string.fab_open_link_note).setIcon(R.drawable.ic_open_in_browser_white_24dp);
         }
 
-        noteFab.setMenu(menu);
+        noteFab.setMenu(menu);*/
 
         FloatingActionButton close_info = findViewById(R.id.close_info);
         close_info.setOnClickListener(new View.OnClickListener() {
@@ -146,6 +158,63 @@ public class ViewNote extends AppCompatActivity {
                 hideInfo();
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_note_view, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.info_note:
+                showInfo();
+                break;
+            case R.id.edit_note:
+                editNote();
+                break;
+            case R.id.share_note:
+                shareNote();
+                break;
+            case R.id.action_font_10:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(10);
+                break;
+            case R.id.action_font_12:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(12);
+                break;
+            case R.id.action_font_14:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(14);
+                break;
+            case R.id.action_font_15:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(15);
+                break;
+            case R.id.action_font_16:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(16);
+                break;
+            case R.id.action_font_18:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(18);
+                break;
+            case R.id.action_font_20:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(20);
+                break;
+            case R.id.action_font_24:
+                item.setChecked(true);
+                if (markdownView != null) markdownView.setFontSize(24);
+                break;
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -243,19 +312,19 @@ public class ViewNote extends AppCompatActivity {
 
     public void showInfo() {
         RelativeLayout bInfo = findViewById(R.id.bottom_info);
-        FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
+        //FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
 
         updateInfo();
 
-        noteFab.hide();
+        //noteFab.hide();
         slideUp(bInfo);
     }
 
     public void hideInfo() {
         RelativeLayout bInfo = findViewById(R.id.bottom_info);
-        FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
+        //FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
 
-        noteFab.show();
+        //noteFab.show();
         slideDown(bInfo);
     }
 

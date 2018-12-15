@@ -6,16 +6,64 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <FrameLayout
-        android:id="@+id/content_frame"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content" >
+
+        <include android:id="@+id/toolbar" layout="@layout/tool_bar" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="fill_vertical"
+        android:background="@color/textColor"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <com.neromatt.epiphany.ui.MarkedView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/markdownView" />
-    </FrameLayout>
+
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!--FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </FrameLayout-->
+
+    <LinearLayout
+        android:id="@+id/loading_note"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.8"
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textColor"
+            android:layout_gravity="center"
+            android:textAlignment="center"
+            android:text="Loading..."/>
+
+        <com.github.rahatarmanahmed.cpv.CircularProgressView
+            android:id="@+id/progress_view"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="5dp"
+            app:cpv_animAutostart="true"
+            app:cpv_indeterminate="true" />
+
+    </LinearLayout>
 
     <RelativeLayout
         android:id="@+id/bottom_info"
@@ -45,7 +93,7 @@
 
     </RelativeLayout>
 
-    <io.github.kobakei.materialfabspeeddial.FabSpeedDial
+    <!--io.github.kobakei.materialfabspeeddial.FabSpeedDial
         android:id="@+id/noteviewFab"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -56,6 +104,6 @@
         app:fab_fabDrawableTint="@color/textColor"
         app:fab_miniFabDrawableTint="@color/colorPrimaryDark"
         app:fab_miniFabTextColor="@color/colorPrimaryDark"
-        app:fab_miniFabTextBackground="@color/textColor" />
+        app:fab_miniFabTextBackground="@color/textColor" /-->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
