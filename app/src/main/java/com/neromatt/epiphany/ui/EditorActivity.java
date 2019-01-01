@@ -21,6 +21,7 @@ import com.yydcdut.markdown.callback.OnTodoClickCallback;
 import com.yydcdut.markdown.loader.DefaultLoader;
 import com.yydcdut.markdown.syntax.edit.EditFactory;
 import com.yydcdut.markdown.theme.ThemeDefault;
+import com.yydcdut.markdown.theme.ThemeSonsOfObsidian;
 import com.yydcdut.rxmarkdown.RxMDConfiguration;
 import com.yydcdut.rxmarkdown.RxMDEditText;
 import com.yydcdut.rxmarkdown.RxMarkdown;
@@ -229,7 +230,7 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
             .setHorizontalRulesHeight(Color.LTGRAY)
             .setCodeFontColor(Color.LTGRAY)
             .setCodeBgColor(Color.LTGRAY)
-            .setTheme(new ThemeDefault())
+            .setTheme(new ThemeSonsOfObsidian())
             .setTodoColor(Color.DKGRAY)
             .setTodoDoneColor(Color.DKGRAY)
             .setOnTodoClickCallback(new OnTodoClickCallback() {

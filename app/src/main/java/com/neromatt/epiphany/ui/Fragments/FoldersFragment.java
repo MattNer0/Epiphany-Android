@@ -42,6 +42,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
@@ -49,7 +52,7 @@ import ru.whalemare.sheetmenu.SheetMenu;
 
 import static android.app.Activity.RESULT_OK;
 
-public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener, ReadFoldersTask.FoldersListener, ReadNotesDBTask.NotesListener {
+public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener, FlexibleAdapter.OnItemMoveListener, ReadFoldersTask.FoldersListener, ReadNotesDBTask.NotesListener {
 
     private ArrayList<String> parent_paths;
     private String folder_path;
@@ -66,6 +69,8 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     private boolean should_refresh_list = false;
 
     private ArrayList<MainModel> contents;
+
+    private int last_state = 0;
 
     public FoldersFragment() { }
 
@@ -350,6 +355,12 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
             recycler_view.getItemAnimator().setAddDuration(500);
             recycler_view.getItemAnimator().setRemoveDuration(500);
 
+            adapter.setHandleDragEnabled(true);
+
+            if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_drag_handle", false)) {
+                adapter.toggleDragHandle();
+            }
+
             should_refresh_list = false;
         }
 
@@ -561,5 +572,38 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
 
             database_cleaned = true;
         }
+    }
+
+    @Override
+    public void onActionStateChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+        if (actionState == ItemTouchHelper.ACTION_STATE_IDLE && last_state == ItemTouchHelper.ACTION_STATE_DRAG && adapter != null) {
+            for (int i = 0; i<adapter.getItemCount(); i++) {
+                MainModel m = adapter.getItem(i);
+                if (m.isFolder()) {
+                    SingleNotebook sn = (SingleNotebook) m;
+                    sn.setOrder(i+1);
+                    sn.saveMeta();
+                } else {
+                    break;
+                }
+            }
+            adapter.notifyDataSetChanged();
+        }
+        last_state = actionState;
+    }
+
+    @Override
+    public boolean shouldMoveItem(int fromPosition, int toPosition) {
+        if (adapter != null) {
+            MainModel a = adapter.getItem(fromPosition);
+            MainModel b = adapter.getItem(toPosition);
+            return a.isFolder() && b.isFolder();
+        }
+        return false;
+    }
+
+    @Override
+    public void onItemMove(int fromPosition, int toPosition) {
+
     }
 }

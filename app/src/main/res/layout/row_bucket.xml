@@ -24,7 +24,8 @@
 
             <TextView
                 android:id="@+id/notebook_title"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Item Name"
                 android:textSize="@dimen/fontsize_bucket_list"
@@ -33,6 +34,8 @@
                 android:paddingEnd="0dp"
                 android:layout_gravity="center|start"
                 android:textColor="@color/textColor"/>
+
+            <include layout="@layout/row_drag" />
 
         </LinearLayout>
 

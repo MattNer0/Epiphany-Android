@@ -8,18 +8,27 @@ import eu.davidea.flexibleadapter.items.IFlexible;
 
 public class MainAdapter<T extends IFlexible> extends FlexibleAdapter<T> {
 
-    private int spanCount = 1;
+    private int span_count = 1;
+    private boolean show_drag_handle = false;
 
     public MainAdapter(@Nullable List<T> items) {
         super(items);
     }
 
     public void setSpanCount(int value) {
-        this.spanCount = value;
+        this.span_count = value;
     }
 
     public int getSpanCount() {
-        return spanCount;
+        return span_count;
+    }
+
+    public void toggleDragHandle() {
+        this.show_drag_handle = !this.show_drag_handle;
+    }
+
+    public boolean isShowingDragHandle() {
+        return this.show_drag_handle;
     }
 
     @Override

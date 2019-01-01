@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.neromatt.epiphany.Constants;
@@ -51,6 +50,11 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        SharedPreferences.Editor prefs_edit = prefs.edit();
+        prefs_edit.putBoolean("pref_drag_handle", false);
+        prefs_edit.apply();
 
         db = new Database(getApplicationContext());
         if (isFirstRun()) {

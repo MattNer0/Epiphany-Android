@@ -6,6 +6,7 @@ import android.view.View;
 
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.IconHelper;
+import com.neromatt.epiphany.model.Adapters.MainAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -137,6 +138,16 @@ public class SingleRack extends MainModel {
 
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
+        if (adapter instanceof MainAdapter) {
+            MainAdapter m_adapter = (MainAdapter) adapter;
+            if (m_adapter.isShowingDragHandle()) {
+                holder.dragHandle.setVisibility(View.VISIBLE);
+                holder.mNotebookOrder.setText(""+getOrder());
+            } else {
+                holder.dragHandle.setVisibility(View.GONE);
+            }
+        }
+
         if (holder.mNotebookTitle != null) {
             if (grid_columns == 1) {
                 holder.mNotebookTitle.setText(getTitle());
@@ -164,6 +175,10 @@ public class SingleRack extends MainModel {
 
     @Override
     public int getOrder() { return order; }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
     @Override
     public String getName() {

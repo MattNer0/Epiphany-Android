@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Patterns;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,17 +18,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.helper.IttyBitty;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
-import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 import ru.whalemare.sheetmenu.SheetMenu;
 
 public class ViewNote extends AppCompatActivity {

@@ -1,14 +1,12 @@
 package com.neromatt.epiphany.model.DataObjects;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.load.DataSource;
@@ -838,6 +836,12 @@ public class SingleNote extends MainModel {
     public String toString() {
         return "Note[" + getPath()+"/"+getFilename() + "][ "+getLastModifiedString(Locale.US)+" ]";
     }
+
+    @Override
+    public boolean isDraggable() {
+        return false;
+    }
+
 
     public interface OnNoteLoadedListener {
         void NoteLoaded(SingleNote note);

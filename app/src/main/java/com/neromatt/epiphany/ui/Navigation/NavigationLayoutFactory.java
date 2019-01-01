@@ -432,6 +432,9 @@ public final class NavigationLayoutFactory implements LayoutFactory {
         } else if (id == R.id.action_quick_notes) {
             ma.openQuickNotes();
             return true;
+        } else if (id == R.id.action_drag) {
+            listener.toggleDragHandle();
+            return true;
         } else if (id == R.id.action_list_layout) {
             if (action_list_layout != null && action_staggered_layout != null && !layout_items_hidden) {
                 action_staggered_layout.setVisible(true);

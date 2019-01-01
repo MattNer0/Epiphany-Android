@@ -4,10 +4,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.neromatt.epiphany.model.Adapters.MainAdapter;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -75,6 +78,16 @@ public class SingleNotebook extends MainModel {
 
     @Override
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
+        if (adapter instanceof MainAdapter) {
+            MainAdapter m_adapter = (MainAdapter) adapter;
+            if (m_adapter.isShowingDragHandle()) {
+                holder.dragHandle.setVisibility(View.VISIBLE);
+                holder.mNotebookOrder.setText(""+getOrder());
+            } else {
+                holder.dragHandle.setVisibility(View.GONE);
+            }
+        }
+
         holder.mNotebookTitle.setText(getName());
 
         if (holder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
@@ -86,6 +99,23 @@ public class SingleNotebook extends MainModel {
     @Override
     public boolean isQuickNotes() {
         return isQuickNotes;
+    }
+
+    public void saveMeta() {
+        JSONObject js = new JSONObject();
+        try {
+            js.put("ordering", order);
+
+            File file = new File(getPath()+"/.folder.json");
+            FileOutputStream stream = new FileOutputStream(file);
+            try {
+                stream.write(js.toString().getBytes());
+            } finally {
+                stream.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -117,6 +147,10 @@ public class SingleNotebook extends MainModel {
 
     @Override
     public int getOrder() { return order; }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
     @Override
     public String getName() {

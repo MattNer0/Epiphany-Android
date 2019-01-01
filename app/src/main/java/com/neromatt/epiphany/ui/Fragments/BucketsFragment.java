@@ -1,7 +1,6 @@
 package com.neromatt.epiphany.ui.Fragments;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,13 +15,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.BucketHelper;
 import com.neromatt.epiphany.helper.CreateNoteHelper;
-import com.neromatt.epiphany.helper.FolderHelper;
 import com.neromatt.epiphany.model.Adapters.FadeInItemAnimator;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
-import com.neromatt.epiphany.model.DataObjects.SingleNotebook;
 import com.neromatt.epiphany.model.DataObjects.SingleRack;
-import com.neromatt.epiphany.model.NotebooksComparator;
 import com.neromatt.epiphany.tasks.ReadBucketsTask;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
@@ -33,18 +29,17 @@ import com.neromatt.epiphany.ui.R;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.common.SmoothScrollGridLayoutManager;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDial;
 import io.github.kobakei.materialfabspeeddial.FabSpeedDialMenu;
 import ru.whalemare.sheetmenu.SheetMenu;
 
-public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener, ReadBucketsTask.BucketsListener {
+public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnItemClickListener, FlexibleAdapter.OnItemLongClickListener, FlexibleAdapter.OnItemMoveListener, ReadBucketsTask.BucketsListener {
 
     private String root_path;
     private ReadBucketsTask buckets_task;
@@ -55,6 +50,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     private boolean should_refresh_list = false;
 
     private int grid_size = 1;
+    private int last_state = 0;
 
     public BucketsFragment() { }
 
@@ -152,9 +148,13 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         mNavigationLayout.setTitle(R.string.title_library);
     }
 
+    private int getGridSize() {
+        String grid_size = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("pref_bucket_grid", "1");
+        return Integer.parseInt(grid_size);
+    }
+
     RecyclerView.LayoutManager getLayoutManager() {
-        String grid_size = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("pref_bucket_grid", "2");
-        return new SmoothScrollGridLayoutManager(getContext(), Integer.parseInt(grid_size));
+        return new SmoothScrollGridLayoutManager(getContext(), getGridSize());
     }
 
     @Override
@@ -204,7 +204,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     private void initList(ArrayList<MainModel> list) {
         ArrayList<MainModel> buckets = new ArrayList<>();
 
-        int new_grid_size = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("pref_bucket_grid", "1"));
+        int new_grid_size = getGridSize();
         if (grid_size != new_grid_size) {
             grid_size = new_grid_size;
             should_refresh_list = true;
@@ -244,6 +244,14 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
             recycler_view.setItemAnimator(new FadeInItemAnimator(new OvershootInterpolator(1f)));
             recycler_view.getItemAnimator().setAddDuration(500);
             recycler_view.getItemAnimator().setRemoveDuration(500);
+
+            if (grid_size == 1) {
+                adapter.setHandleDragEnabled(true);
+            }
+
+            if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_drag_handle", false)) {
+                adapter.toggleDragHandle();
+            }
 
             /*refresh_layout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                 @Override
@@ -353,5 +361,28 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         initList(list);
         MainActivity ma = getMainActivity();
         if (ma != null) ma.refreshRackDrawer(list);
+    }
+
+    @Override
+    public void onActionStateChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+        if (actionState == ItemTouchHelper.ACTION_STATE_IDLE && last_state == ItemTouchHelper.ACTION_STATE_DRAG && adapter != null) {
+            for (int i = 0; i<adapter.getItemCount(); i++) {
+                SingleRack m = (SingleRack) adapter.getItem(i);
+                m.setOrder(i+1);
+                m.saveMeta();
+            }
+            adapter.notifyDataSetChanged();
+        }
+        last_state = actionState;
+    }
+
+    @Override
+    public boolean shouldMoveItem(int fromPosition, int toPosition) {
+        return true;
+    }
+
+    @Override
+    public void onItemMove(int fromPosition, int toPosition) {
+
     }
 }

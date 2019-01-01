@@ -17,7 +17,6 @@ import android.widget.TextView;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.ui.R;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -147,7 +146,7 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
 
     @Override
     public MyViewHolder createViewHolder(View view, FlexibleAdapter<IFlexible> adapter) {
-        return new MyViewHolder(view, adapter);
+        return new MyViewHolder(view, adapter, _model_type);
     }
 
     @Override
@@ -259,25 +258,33 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
 
         RelativeLayout iconContainer;
 
-        MyViewHolder(View view, FlexibleAdapter adapter) {
+        TextView mNotebookOrder;
+        LinearLayout dragHandle;
+
+        MyViewHolder(View view, FlexibleAdapter adapter, int type) {
             super(view, adapter);
             this.mNotebookTitle = view.findViewById(R.id.notebook_title);
-
-            /*this.mNoteCount = view.findViewById(R.id.note_count);
-            this.mNoteCountContainer = view.findViewById(R.id.note_count_container);
-
-            this.mFolderCount = view.findViewById(R.id.folder_count);
-            this.mFolderCountContainer = view.findViewById(R.id.folder_count_container);*/
-
-            this.mNoteSummary = view.findViewById(R.id.notebook_summary);
-            this.mNoteTime = view.findViewById(R.id.notebook_time);
             this.mNoteIcon = view.findViewById(R.id.notebook_icon);
-            this.mNotePhoto = view.findViewById(R.id.note_photo);
+
+            if (type == TYPE_MARKDOWN_NOTE) {
+                this.mNoteSummary = view.findViewById(R.id.notebook_summary);
+                this.mNoteTime = view.findViewById(R.id.notebook_time);
+                this.mNotePhoto = view.findViewById(R.id.note_photo);
+            }
 
             this.progressBar = view.findViewById(R.id.progress_bar);
             this.progressMessage = view.findViewById(R.id.progress_message);
 
             this.iconContainer = view.findViewById(R.id.icon_container);
+
+            this.dragHandle = view.findViewById(R.id.notebook_handle);
+            this.mNotebookOrder = view.findViewById(R.id.notebook_order);
+
+            if (type == TYPE_RACK) {
+                setDragHandleView(dragHandle);
+            } else if (type == TYPE_FOLDER) {
+                setDragHandleView(dragHandle);
+            }
         }
 
         @Override

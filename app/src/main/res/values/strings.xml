@@ -10,12 +10,13 @@
     <string name="action_recent_notes">Recent Notes</string>
     <string name="action_search">Search</string>
     <string name="action_clean_database">Clean Database</string>
+    <string name="action_drag">Toggle Drag Handle</string>
 
     <string name="action_save_pdf">Save as new note</string>
     <string name="action_font_size">Change Font Size</string>
     <string name="action_font_10">10</string>
     <string name="action_font_12">12</string>
-    <string name="action_font_14">14</string>
+    <string name="action_font_14">14 (default)</string>
     <string name="action_font_15">15</string>
     <string name="action_font_16">16</string>
     <string name="action_font_18">18</string>

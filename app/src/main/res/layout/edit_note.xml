@@ -1,29 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/container_toolbar"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
         <include
             android:id="@+id/toolbar"
             layout="@layout/tool_bar" />
-    </LinearLayout>
 
-    <LinearLayout
-        app:layout_constraintTop_toBottomOf="@id/container_toolbar"
-        app:layout_constraintBottom_toBottomOf="parent"
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:layout_gravity="fill_vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <FrameLayout
             android:id="@+id/content_frame"
@@ -36,19 +34,15 @@
                 android:paddingEnd="10dp"
                 android:textColor="@color/textColor"
                 android:textColorHint="@color/textColorGrey"
-                android:gravity="top"
+
+                android:gravity="start|top"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:background="@color/colorPrimary"
-
-                android:enabled="true"
-                android:focusable="true"
-                android:isScrollContainer="true"
-
-                android:inputType="text|textMultiLine"
                 android:hint="@string/add_note_hint" />
 
         </FrameLayout>
-    </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

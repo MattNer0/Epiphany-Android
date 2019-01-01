@@ -98,6 +98,19 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
     }
 
     @Override
+    public void toggleDragHandle() {
+        if (adapter != null) {
+            adapter.toggleDragHandle();
+            adapter.notifyDataSetChanged();
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            SharedPreferences.Editor prefs_edit = prefs.edit();
+            prefs_edit.putBoolean("pref_drag_handle", adapter.isShowingDragHandle());
+            prefs_edit.apply();
+        }
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         if (recycler_view != null) {
