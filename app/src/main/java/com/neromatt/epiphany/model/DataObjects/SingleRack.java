@@ -140,7 +140,7 @@ public class SingleRack extends MainModel {
     public void bindViewHolder(FlexibleAdapter<IFlexible> adapter, MyViewHolder holder, int position, List<Object> payloads) {
         if (adapter instanceof MainAdapter) {
             MainAdapter m_adapter = (MainAdapter) adapter;
-            if (m_adapter.isShowingDragHandle()) {
+            if (m_adapter.isShowingDragHandle() && !isQuickNotes) {
                 holder.dragHandle.setVisibility(View.VISIBLE);
                 holder.mNotebookOrder.setText(""+getOrder());
             } else {
@@ -165,6 +165,11 @@ public class SingleRack extends MainModel {
     }
 
     @Override
+    public boolean isDraggable() {
+        return !isQuickNotes;
+    }
+
+    @Override
     public boolean isQuickNotes() {
         return isQuickNotes;
     }
@@ -178,6 +183,7 @@ public class SingleRack extends MainModel {
 
     public void setOrder(int order) {
         this.order = order;
+        if (isQuickNotes) this.order = 0;
     }
 
     @Override

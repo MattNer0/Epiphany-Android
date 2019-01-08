@@ -131,11 +131,7 @@ public class MainModel extends AbstractFlexibleItem<MainModel.MyViewHolder> impl
             case MainModel.TYPE_MARKDOWN_NOTE:
                 return R.layout.row_markdown_note;
             case MainModel.TYPE_RACK:
-                if (this.isQuickNotes()) {
-                    return R.layout.row_quick_notes;
-                } else {
-                    return R.layout.row_bucket;
-                }
+                return R.layout.row_bucket;
             case MainModel.TYPE_FOLDER:
                 return R.layout.row_folder;
             default:

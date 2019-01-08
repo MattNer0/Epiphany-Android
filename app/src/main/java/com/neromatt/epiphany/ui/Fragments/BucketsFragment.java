@@ -211,11 +211,12 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         }
 
         for (MainModel m: list) {
-            if (!m.isQuickNotes()) {
-                SingleRack rack = (SingleRack) m;
-                rack.setViewOptions(grid_size);
-                buckets.add(rack);
-            }
+            SingleRack rack = (SingleRack) m;
+            rack.setViewOptions(grid_size);
+            buckets.add(rack);
+            /*if (!m.isQuickNotes()) {
+
+            }*/
         }
 
         if (adapter == null || should_refresh_list) {
@@ -294,6 +295,16 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
 
         MainActivity ma = getMainActivity();
         if (ma == null) return false;
+
+        if (model.isQuickNotes()) {
+            String quick_path = model.getPath()+"/New Notes";
+            File f = new File(quick_path);
+            if (f.exists() || f.mkdirs()) {
+                ma.pushFragment(FoldersFragment.newInstance(root_path, quick_path, model.getTitle()), Constants.FOLDER_FRAGMENT_TAG, Constants.FOLDER_FRAGMENT_TAG + model.getPath());
+                return true;
+            }
+        }
+
         ma.pushFragment(FoldersFragment.newInstance(root_path, model.getPath()), Constants.FOLDER_FRAGMENT_TAG, Constants.FOLDER_FRAGMENT_TAG + model.getPath());
         return true;
     }
@@ -368,7 +379,7 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
         if (actionState == ItemTouchHelper.ACTION_STATE_IDLE && last_state == ItemTouchHelper.ACTION_STATE_DRAG && adapter != null) {
             for (int i = 0; i<adapter.getItemCount(); i++) {
                 SingleRack m = (SingleRack) adapter.getItem(i);
-                m.setOrder(i+1);
+                m.setOrder(i);
                 m.saveMeta();
             }
             adapter.notifyDataSetChanged();
@@ -378,7 +389,12 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
 
     @Override
     public boolean shouldMoveItem(int fromPosition, int toPosition) {
-        return true;
+        if (adapter != null) {
+            MainModel a = adapter.getItem(fromPosition);
+            MainModel b = adapter.getItem(toPosition);
+            return !a.isQuickNotes() && !b.isQuickNotes();
+        }
+        return false;
     }
 
     @Override
