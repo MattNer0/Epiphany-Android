@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,10 +19,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.helper.Database;
 import com.neromatt.epiphany.helper.IttyBitty;
 import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
+
+import java.io.File;
+import java.util.ArrayList;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -107,6 +112,13 @@ public class ViewNote extends AppCompatActivity {
                 .setMDText(note.getMarkdown());
 
         registerForContextMenu(markdownView);
+
+        if (note.wasLoaded()) {
+            ArrayList images = note.getLocalImages();
+            if (images.size() == 0) {
+                note.deleteImageFolder();
+            }
+        }
 
         /*FabSpeedDial noteFab = findViewById(R.id.noteviewFab);
 

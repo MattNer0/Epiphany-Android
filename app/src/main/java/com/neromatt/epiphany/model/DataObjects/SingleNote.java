@@ -17,6 +17,7 @@ import com.bumptech.glide.request.target.Target;
 import com.neromatt.epiphany.Constants;
 import com.neromatt.epiphany.GlideApp;
 import com.neromatt.epiphany.helper.Database;
+import com.neromatt.epiphany.helper.FileSystem;
 import com.neromatt.epiphany.model.Adapters.MainAdapter;
 import com.neromatt.epiphany.model.Path;
 
@@ -281,6 +282,25 @@ public class SingleNote extends MainModel {
         return list;
     }
 
+    public ArrayList<String> getLocalImages() {
+        ArrayList<String> list = new ArrayList<>();
+        String regex = "!\\[([^]]*?)]\\(epiphany?://(.*?)\\)";
+        Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(body);
+
+        ArrayList<String> formats = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "gif", "bmp"));
+
+        while (matcher.find()) {
+            String url = matcher.group(2).trim();
+            String extension = FilenameUtils.getExtension(url).toLowerCase();
+            if (formats.contains(extension)) {
+                list.add(url);
+            }
+        }
+
+        return list;
+    }
+
     private static Bundle readNoteFile(String full_path) {
         File file = new File(full_path);
         StringBuilder text = new StringBuilder();
@@ -487,9 +507,19 @@ public class SingleNote extends MainModel {
         }
 
         File file = new File(getFullPath());
-        if (file.exists()) return file.delete();
+        if (file.exists()) return file.delete() && deleteImageFolder();
 
         return false;
+    }
+
+    public boolean deleteImageFolder() {
+        File img_folder = new File(getImageFolderPath());
+        if (img_folder.exists() && img_folder.isDirectory()) {
+            Log.i(Constants.LOG, "delete image folder");
+            return FileSystem.deleteRecursive(img_folder);
+        }
+
+        return true;
     }
 
     public boolean moveFile(String outputPath) {
@@ -518,6 +548,13 @@ public class SingleNote extends MainModel {
             out.close();
 
             new File(getFullPath()).delete();
+
+            File img_folder = new File(getImageFolderPath());
+            if (img_folder.exists() && img_folder.isDirectory()) {
+                if (FileSystem.moveRecursive(img_folder, outputPath)) {
+                    FileSystem.deleteRecursive(img_folder);
+                }
+            }
 
             this.path = outputPath;
             return true;
