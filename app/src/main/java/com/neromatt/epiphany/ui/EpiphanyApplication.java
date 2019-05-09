@@ -13,12 +13,19 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import androidx.annotation.NonNull;
 
 public class EpiphanyApplication extends Application {
 
     private static final int MAX_STACK_TRACE_SIZE = 131071; //128 KB - 1
+    private static final long MAX_ACTIVITY_TRANSITION_TIME_MS = 10000; //10seconds
+
+    private Timer mActivityTransitionTimer;
+    private TimerTask mActivityTransitionTimerTask;
+    public boolean wasInBackground;
 
     //Shared preferences
     private static final String SHARED_PREFERENCES_FILE = "custom_activity_on_crash";
@@ -160,5 +167,28 @@ public class EpiphanyApplication extends Application {
         long currentTimestamp = new Date().getTime();
 
         return (lastTimestamp <= currentTimestamp && currentTimestamp - lastTimestamp < 2000);
+    }
+
+    public void startActivityTransitionTimer() {
+        this.mActivityTransitionTimer = new Timer();
+        this.mActivityTransitionTimerTask = new TimerTask() {
+            public void run() {
+                EpiphanyApplication.this.wasInBackground = true;
+            }
+        };
+
+        this.mActivityTransitionTimer.schedule(mActivityTransitionTimerTask, MAX_ACTIVITY_TRANSITION_TIME_MS);
+    }
+
+    public void stopActivityTransitionTimer() {
+        if (this.mActivityTransitionTimerTask != null) {
+            this.mActivityTransitionTimerTask.cancel();
+        }
+
+        if (this.mActivityTransitionTimer != null) {
+            this.mActivityTransitionTimer.cancel();
+        }
+
+        this.wasInBackground = false;
     }
 }

@@ -115,7 +115,11 @@ public class TextUndoRedo implements TextWatcher {
         if (isUndoOrRedo) {
             return;
         }
-        new Record(start, start + after, s.subSequence(start, start + count));
+        if (s.length() < (start + count)) {
+            new Record(start, start + after, s.subSequence(start, s.length()));
+        } else {
+            new Record(start, start + after, s.subSequence(start, start + count));
+        }
         cleanNext();
         noticeTextChang();
     }

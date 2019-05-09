@@ -44,13 +44,13 @@ public class ViewPdf extends AppCompatActivity implements CreateNoteHelper.OnQui
         setContentView(R.layout.view_note);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        root_path = PreferenceManager.getDefaultSharedPreferences(this).getString("pref_root_directory", "");
+        root_path = prefs.getString("pref_root_directory", "");
 
         if (prefs.getBoolean("firstrun", true)) {
             finish();
         }
 
-        db = new Database(getApplicationContext());
+        db = new Database(getApplicationContext(), root_path);
 
         Intent intent = getIntent();
 

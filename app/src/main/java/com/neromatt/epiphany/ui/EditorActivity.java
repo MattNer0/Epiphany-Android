@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,7 +21,6 @@ import com.yydcdut.markdown.callback.OnLinkClickCallback;
 import com.yydcdut.markdown.callback.OnTodoClickCallback;
 import com.yydcdut.markdown.loader.DefaultLoader;
 import com.yydcdut.markdown.syntax.edit.EditFactory;
-import com.yydcdut.markdown.theme.ThemeDefault;
 import com.yydcdut.markdown.theme.ThemeSonsOfObsidian;
 import com.yydcdut.rxmarkdown.RxMDConfiguration;
 import com.yydcdut.rxmarkdown.RxMDEditText;
@@ -30,6 +30,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -55,7 +56,9 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
         setContentView(R.layout.edit_note);
         setupToolBar();
 
-        db = new Database(getApplicationContext());
+        Intent intent = getIntent();
+        root_path = intent.getStringExtra("root");
+        db = new Database(getApplicationContext(), root_path);
 
         editTextField = findViewById(R.id.edit_text);
         editTextField.setText("");
@@ -66,11 +69,8 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
                 .intoObservable()
                 .subscribe();
 
-        Intent intent = getIntent();
         Bundle notebundle = intent.getBundleExtra("note");
         String folder = intent.getStringExtra("folder");
-
-        root_path = intent.getStringExtra("root");
 
         if (notebundle != null) {
             note = new SingleNote(notebundle);
@@ -124,6 +124,21 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
     @Override
     protected void onResume() {
         super.onResume();
+        EpiphanyApplication myApp = (EpiphanyApplication) this.getApplication();
+        if (myApp.wasInBackground) {
+            if (note != null && !note.wasModified()) {
+                Log.i(Constants.LOG, "Coming from background. Refreshing note.");
+                note.refreshContent(db, new SingleNote.OnNoteLoadedListener() {
+                    @Override
+                    public void NoteLoaded(SingleNote note) {
+                        String noteText = note.getMarkdown();
+                        editTextField.setText(noteText);
+                        addTextChangeListener();
+                    }
+                });
+            }
+        }
+        myApp.stopActivityTransitionTimer();
         checkUndoRedo();
     }
 
@@ -184,7 +199,8 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
         Toolbar toolbar = findViewById(R.id.toolbar);
         if (toolbar != null) {
             setSupportActionBar(toolbar);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            ActionBar ab = getSupportActionBar();
+            if (ab != null) ab.setDisplayHomeAsUpEnabled(false);
         }
     }
 
@@ -295,7 +311,7 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
                 }
 
                 String note_text = editTextField.getText().toString();
-                if (note_text != null && note.wasModified()) {
+                if (note.wasModified()) {
                     note.updateBody(note_text);
                 }
 
@@ -329,8 +345,17 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
     @Override
     protected void onPause() {
         super.onPause();
+        ((EpiphanyApplication) this.getApplication()).startActivityTransitionTimer();
+        if (!onBackPressed && note != null && note.wasModified() && editTextField != null) {
+            saveNote(false);
+            onBackPressed = true;
+        }
+    }
 
-        if (!onBackPressed && note.wasModified() && note.isNewFile() && editTextField != null) {
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (!onBackPressed && note != null && note.wasModified() && editTextField != null) {
             saveNote(false);
             onBackPressed = true;
         }
@@ -339,7 +364,7 @@ public class EditorActivity extends AppCompatActivity implements ImageDownloader
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (!onBackPressed) saveNote(true);
+        if (!onBackPressed && note != null && note.wasModified()) saveNote(true);
     }
 
     @Override

@@ -3,10 +3,12 @@ package com.neromatt.epiphany.ui;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -34,6 +36,7 @@ import ru.whalemare.sheetmenu.SheetMenu;
 
 public class ViewNote extends AppCompatActivity {
 
+    private String root_path;
     private Database db;
 
     private Toolbar toolbar;
@@ -49,7 +52,10 @@ public class ViewNote extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.view_note);
 
-        db = new Database(getApplicationContext());
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        root_path = prefs.getString("pref_root_directory", "");
+
+        db = new Database(getApplicationContext(), root_path);
 
         Intent intent = getIntent();
         Bundle note_bundle = intent.getBundleExtra("note");

@@ -33,7 +33,7 @@ public class MyFragment extends Fragment implements LayoutFactory, OnOptionMenuL
     MainAdapter<MainModel> adapter;
     Parcelable recycler_view_state;
 
-    public MainActivity getMainActivity() {
+    MainActivity getMainActivity() {
         return (MainActivity) getActivity();
     }
 

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,6 +30,7 @@ import com.neromatt.epiphany.tasks.ReadFoldersTask;
 import com.neromatt.epiphany.tasks.ReadNotesDBTask;
 import com.neromatt.epiphany.tasks.SearchNotesTask;
 import com.neromatt.epiphany.ui.EditorActivity;
+import com.neromatt.epiphany.ui.EpiphanyApplication;
 import com.neromatt.epiphany.ui.MainActivity;
 import com.neromatt.epiphany.ui.Navigation.Breadcrumb;
 import com.neromatt.epiphany.ui.Navigation.NavigationLayoutFactory;
@@ -42,6 +44,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -104,13 +107,13 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mNavigationLayout = new NavigationLayoutFactory(true, true, true, true, false, this);
         return mNavigationLayout.produceLayout(inflater, container);
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         mNavigationLayout.viewCreated(getMainActivity(), view);
@@ -144,7 +147,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                 menu.add(1, Constants.FAB_MENU_NEW_NOTE, 4, R.string.fab_new_note).setIcon(R.drawable.ic_action_add);
                 menu.add(1, Constants.FAB_MENU_NEW_FOLDER, 3, R.string.fab_new_folder).setIcon(R.drawable.ic_action_add);
                 //menu.add(1, Constants.FAB_MENU_RENAME_FOLDER, 2, R.string.fab_rename_folder).setIcon(R.drawable.ic_mode_edit_white_24dp);
-                /*if (current_model.getContentCount() == 0) {
+                /*if (folder_path != null && empty) {
                     menu.add(1, Constants.FAB_MENU_DELETE_FOLDER, 1, R.string.fab_remove_folder).setIcon(R.drawable.ic_delete_white_24dp);
                 }*/
             }
@@ -159,7 +162,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                             FolderHelper.addFolder(getMainActivity(), folder_path, new FolderHelper.FolderCreatedListener() {
                                 @Override
                                 public void onCreated(boolean success) {
-                                    runFoldersTask(true);
+                                    runRefreshFoldersTask();
                                 }
                             });
                             break;
@@ -225,8 +228,8 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         }
     }
 
-    private void runFoldersTask(boolean refresh) {
-        if (refresh) should_refresh_list = true;
+    private void runRefreshFoldersTask() {
+        should_refresh_list = true;
         runFoldersTask();
     }
 
@@ -264,33 +267,42 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         if (adapter != null && recycler_view != null) {
             recycler_view.setLayoutManager(getLayoutManager());
 
-            if (recycler_view_state != null) {
+            if (recycler_view_state != null && recycler_view.getLayoutManager() != null) {
                 recycler_view.getLayoutManager().onRestoreInstanceState(recycler_view_state);
             }
         }
 
         MainActivity ma = getMainActivity();
-        mNavigationLayout.setMovingNoteListener(new OnMovingNoteListener() {
-            @Override
-            public boolean onMovingNote(ArrayList<MainModel> list) {
-                for (MainModel model: list) {
-                    if (model.isNote()) {
-                        SingleNote n = (SingleNote) model;
-                        n.moveFile(folder_path);
-                    }
-                }
-                if (list.size() == 1) {
-                    Toast.makeText(getContext(), "One note moved!", Toast.LENGTH_SHORT).show();
-                } else if (list.size() > 1) {
-                    Toast.makeText(getContext(), "All notes moved!", Toast.LENGTH_SHORT).show();
-                }
-                runFoldersTask();
-                return true;
-            }
-        });
         if (ma != null) {
-            mNavigationLayout.setMovingNotes(ma, ma.getMovingNotes());
-            mNavigationLayout.setSearchState(ma.getSearchState());
+            EpiphanyApplication myApp = (EpiphanyApplication) ma.getApplication();
+            if (myApp.wasInBackground) {
+                Log.i(Constants.LOG, "Coming from background. Refreshing content.");
+                runRefreshFoldersTask();
+            }
+            if (mNavigationLayout != null) {
+                mNavigationLayout.setMovingNoteListener(new OnMovingNoteListener() {
+                    @Override
+                    public boolean onMovingNote(ArrayList<MainModel> list) {
+                        for (MainModel model: list) {
+                            if (model.isNote()) {
+                                SingleNote n = (SingleNote) model;
+                                n.moveFile(folder_path);
+                            }
+                        }
+                        if (list.size() == 1) {
+                            Toast.makeText(getContext(), "One note moved!", Toast.LENGTH_SHORT).show();
+                        } else if (list.size() > 1) {
+                            Toast.makeText(getContext(), "All notes moved!", Toast.LENGTH_SHORT).show();
+                        }
+                        runFoldersTask();
+                        return true;
+                    }
+                });
+                mNavigationLayout.setMovingNotes(ma, ma.getMovingNotes());
+                mNavigationLayout.setSearchState(ma.getSearchState());
+            }
+
+            myApp.stopActivityTransitionTimer();
         }
     }
 
@@ -299,9 +311,13 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         super.onPause();
         cancelTasks();
         MainActivity ma = getMainActivity();
-        if (ma != null && mNavigationLayout != null) {
-            ma.setMovingNotes(mNavigationLayout.getMovingNotes());
-            ma.setSearchState(mNavigationLayout.getSearchState());
+
+        if (ma != null) {
+            ((EpiphanyApplication) ma.getApplication()).startActivityTransitionTimer();
+            if (mNavigationLayout != null) {
+                ma.setMovingNotes(mNavigationLayout.getMovingNotes());
+                ma.setSearchState(mNavigationLayout.getSearchState());
+            }
         }
     }
 
@@ -384,7 +400,6 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     private void refreshNotes() {
-        //adapter.getCurrentItems();
         Collections.sort(contents, new NotebooksComparator(getContext()));
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -433,7 +448,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                                     public void NoteDeleted(boolean deleted) {
                                         if (deleted) {
                                             Toast.makeText(getContext(), "Deleted Note!", Toast.LENGTH_SHORT).show();
-                                            runFoldersTask(true);
+                                            runRefreshFoldersTask();
                                         }
                                     }
                                 });
@@ -474,7 +489,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                                     public void onDeleted(boolean success) {
                                         if (success) {
                                             Toast.makeText(getContext(), "Folder deleted!", Toast.LENGTH_SHORT).show();
-                                            runFoldersTask(true);
+                                            runRefreshFoldersTask();
                                         }
                                     }
                                 });
@@ -485,7 +500,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
                                     public void onRenamed(boolean success) {
                                         if (success) {
                                             Toast.makeText(getContext(), "Folder renamed!", Toast.LENGTH_SHORT).show();
-                                            runFoldersTask(true);
+                                            runRefreshFoldersTask();
                                         }
                                     }
                                 });
@@ -535,7 +550,7 @@ public class FoldersFragment extends MyFragment implements FlexibleAdapter.OnIte
         } else if (requestCode == Constants.NEW_NOTE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 should_refresh_list = true;
-                runFoldersTask(true);
+                runRefreshFoldersTask();
             }
         }
     }

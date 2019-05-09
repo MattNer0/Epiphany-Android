@@ -10,18 +10,15 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.neromatt.epiphany.Constants;
-import com.neromatt.epiphany.model.DataObjects.MainModel;
 import com.neromatt.epiphany.model.DataObjects.SingleNote;
-import com.neromatt.epiphany.model.DataObjects.SingleRack;
 
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class Database extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "epiphany";
 
     // Table Names
@@ -36,6 +33,7 @@ public class Database extends SQLiteOpenHelper {
     private static final String KEY_PATH = "path";
     private static final String KEY_NAME = "name";
     private static final String KEY_PHOTO = "photo";
+    private static final String KEY_FAVORITE = "favorite";
 
     private static final String CONSTRAINT_PATH = "path_unique";
 
@@ -49,14 +47,23 @@ public class Database extends SQLiteOpenHelper {
             + KEY_PATH + " TEXT,"
             + KEY_NAME + " TEXT,"
             + KEY_PHOTO + " TEXT,"
+            + KEY_FAVORITE + " INTEGER,"
             + KEY_NOTE_SUMMARY + " TEXT,"
             + KEY_NOTE_UPDATED_AT + " INTEGER,"
             + KEY_NOTE_CREATED_AT + " INTEGER,"
             + "CONSTRAINT " + CONSTRAINT_PATH + " UNIQUE (" + KEY_PATH + ")"
             + ")";
 
-    public Database(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    private String libraryPath;
+
+    public Database(Context context, String libraryPath) {
+        super(new DatabaseContext(context, cleanRootPath(libraryPath)), DATABASE_NAME, null, DATABASE_VERSION);
+        this.libraryPath = cleanRootPath(libraryPath) + File.separator;
+    }
+
+    private static String cleanRootPath(String libraryPath) {
+        if (libraryPath.endsWith(File.separator)) libraryPath = libraryPath.substring(0, libraryPath.length() - 1);
+        return libraryPath;
     }
 
     @Override
@@ -81,7 +88,11 @@ public class Database extends SQLiteOpenHelper {
         values.put(KEY_NOTE_SUMMARY, data.getString(Constants.KEY_NOTE_SUMMARY, ""));
 
         if (data.containsKey(Constants.KEY_NOTE_PHOTO)) {
-            values.put(KEY_PHOTO, data.getString(Constants.KEY_NOTE_PHOTO, ""));
+            String photoPath = data.getString(Constants.KEY_NOTE_PHOTO, "");
+
+            if (photoPath.startsWith(libraryPath)) photoPath = photoPath.substring(libraryPath.length());
+            if (photoPath.startsWith("file:///" + libraryPath)) photoPath = photoPath.substring(libraryPath.length()+8);
+            values.put(KEY_PHOTO, photoPath);
         }
 
         if (data.containsKey(Constants.METATAG_UPDATED) && data.containsKey(Constants.METATAG_CREATED)) {
@@ -98,6 +109,8 @@ public class Database extends SQLiteOpenHelper {
                 e.printStackTrace();
             }
         }
+
+        if (path.startsWith(libraryPath)) path = path.substring(libraryPath.length());
 
         if (isNoteInDB(path)) {
             updateNote(path, values);
@@ -120,9 +133,12 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public boolean isNoteInDB(String path) {
+        String dbPath = path;
+        if (dbPath.startsWith(libraryPath)) dbPath = dbPath.substring(libraryPath.length());
+
         String countQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
                 + " WHERE tn."
-                + KEY_PATH + " = '" + path + "'";
+                + KEY_PATH + " = '" + dbPath + "'";
 
         int count;
         SQLiteDatabase db = this.getReadableDatabase();
@@ -137,10 +153,13 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public Bundle getNoteByPath(String path) {
+        String dbPath = path;
+        if (dbPath.startsWith(libraryPath)) dbPath = dbPath.substring(libraryPath.length());
+
         Bundle res = new Bundle();
         String selectQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
                 + " WHERE tn."
-                + KEY_PATH + " = '" + path + "'"
+                + KEY_PATH + " = '" + dbPath + "'"
                 + " LIMIT 1";
 
         SQLiteDatabase db = this.getReadableDatabase();
@@ -196,9 +215,12 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public ArrayList<Bundle> getNotesByFolderPath(String path) {
+        String dbPath = path;
+        if (dbPath.startsWith(libraryPath)) dbPath = dbPath.substring(libraryPath.length());
+
         ArrayList<Bundle> res = new ArrayList<>();
         String selectQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
-                + " WHERE " + KEY_PATH + " LIKE '" + path + "%'"
+                + " WHERE " + KEY_PATH + " LIKE '" + dbPath + "%'"
                 + " ORDER BY id ASC";
 
         SQLiteDatabase db = this.getReadableDatabase();
@@ -208,11 +230,16 @@ public class Database extends SQLiteOpenHelper {
                 do {
                     Bundle res_note = new Bundle();
                     res_note.putInt(Constants.KEY_ID, getInt(c, KEY_ID));
-                    File f = new File(getString(c, KEY_PATH));
+                    File f = new File(libraryPath + getString(c, KEY_PATH));
                     res_note.putString(Constants.KEY_NOTE_PATH, f.getParentFile().getPath());
                     res_note.putString(Constants.KEY_NOTE_FILENAME, f.getName());
                     res_note.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
-                    res_note.putString(Constants.KEY_NOTE_PHOTO, getString(c, KEY_PHOTO));
+
+                    String photoPath = getString(c, KEY_PHOTO);
+                    if (photoPath != null && !photoPath.startsWith("http")) {
+                        photoPath = "file:///" + libraryPath + photoPath;
+                    }
+                    res_note.putString(Constants.KEY_NOTE_PHOTO, photoPath);
                     res_note.putString(Constants.KEY_NOTE_BODY, "");
                     res_note.putString(Constants.KEY_NOTE_SUMMARY, getString(c, KEY_NOTE_SUMMARY));
                     res_note.putLong(Constants.METATAG_UPDATED, getLong(c, KEY_NOTE_UPDATED_AT));
@@ -240,11 +267,16 @@ public class Database extends SQLiteOpenHelper {
                 do {
                     Bundle res_note = new Bundle();
                     res_note.putInt(Constants.KEY_ID, getInt(c, KEY_ID));
-                    File f = new File(getString(c, KEY_PATH));
+                    File f = new File(libraryPath + getString(c, KEY_PATH));
                     res_note.putString(Constants.KEY_NOTE_PATH, f.getParentFile().getPath());
                     res_note.putString(Constants.KEY_NOTE_FILENAME, f.getName());
                     res_note.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
-                    res_note.putString(Constants.KEY_NOTE_PHOTO, getString(c, KEY_PHOTO));
+
+                    String photoPath = getString(c, KEY_PHOTO);
+                    if (!photoPath.startsWith("http")) {
+                        photoPath = "file:/" + libraryPath + photoPath;
+                    }
+                    res_note.putString(Constants.KEY_NOTE_PHOTO, photoPath);
                     res_note.putString(Constants.KEY_NOTE_BODY, "");
                     res_note.putString(Constants.KEY_NOTE_SUMMARY, getString(c, KEY_NOTE_SUMMARY));
                     res_note.putLong(Constants.METATAG_UPDATED, getLong(c, KEY_NOTE_UPDATED_AT));

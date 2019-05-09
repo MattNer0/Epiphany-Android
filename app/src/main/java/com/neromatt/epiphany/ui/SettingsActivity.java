@@ -1,11 +1,16 @@
 package com.neromatt.epiphany.ui;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.neromatt.epiphany.Constants;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,6 +43,12 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        setResult(Activity.RESULT_OK);
+        finish();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_clean_db:
@@ -45,10 +56,11 @@ public class SettingsActivity extends AppCompatActivity {
                 return true;
 
             case android.R.id.home:
-                // go to previous screen when app icon in action bar is clicked
-                Intent intent = new Intent(this, MainActivity.class);
+                setResult(Activity.RESULT_OK);
+                finish();
+                /*Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);//TODO: what is this?
-                startActivity(intent);
+                startActivity(intent);*/
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -62,7 +74,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        Log.i(Constants.LOG, "todo");
                     }
                 })
                 .setNegativeButton(R.string.dialog_no, null)

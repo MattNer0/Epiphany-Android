@@ -30,6 +30,7 @@ import com.neromatt.epiphany.ui.R;
 import java.io.File;
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -45,7 +46,6 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     private ReadBucketsTask buckets_task;
 
     private LinearLayout empty_list_message;
-    //private SwipeRefreshLayout refresh_layout;
 
     private boolean should_refresh_list = false;
 
@@ -63,13 +63,13 @@ public class BucketsFragment extends MyFragment implements FlexibleAdapter.OnIte
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mNavigationLayout = new NavigationLayoutFactory(true, false, true, true, true, this);
         return mNavigationLayout.produceLayout(inflater, container);
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         mNavigationLayout.viewCreated(getMainActivity(), view);

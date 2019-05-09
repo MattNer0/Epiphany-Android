@@ -8,6 +8,7 @@ public class Constants {
     public static final int NOTE_IMPORT_REQUEST_CODE = 1655;
     public static final int NEW_NOTE_REQUEST_CODE = 1653;
     public static final int NEW_QUICK_NOTE_REQUEST_CODE = 1654;
+    public static final int SETTINGS_REQUEST_CODE = 1554;
 
     //public static final int LOADING_REQUEST_CODE_SHARE = 1655;
 

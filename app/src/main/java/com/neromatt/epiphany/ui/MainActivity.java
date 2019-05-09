@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.neromatt.epiphany.Constants;
@@ -56,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         prefs_edit.putBoolean("pref_drag_handle", false);
         prefs_edit.apply();
 
-        db = new Database(getApplicationContext());
         if (isFirstRun()) {
             if (PermissionBitte.shouldAsk(this, this)) {
                 PermissionBitte.ask(MainActivity.this, MainActivity.this);
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
 
     public void showSettings() {
         Intent settingsIntent = new Intent(this, SettingsActivity.class);
-        startActivity(settingsIntent);
+        startActivityForResult(settingsIntent, Constants.SETTINGS_REQUEST_CODE);
     }
 
     public void showRecentNotes() {
@@ -204,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
             return true;
         }
 
+        db = new Database(getApplicationContext(), path);
         this.root_path = path;
         return false;
     }
@@ -230,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         }
 
         root_path = full;
+        db = new Database(getApplicationContext(), root_path);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor prefs_edit = prefs.edit();
         prefs_edit.putString("pref_root_directory", full);
@@ -265,5 +267,22 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
             })
             .setCancelable(false)
             .show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultIntent) {
+        super.onActivityResult(requestCode, resultCode, resultIntent);
+
+        if (requestCode == Constants.SETTINGS_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                String newRootPath = prefs.getString("pref_root_directory", "");
+                if (!root_path.equals(newRootPath)) {
+                    root_path = newRootPath;
+                    if (db != null) db.closeDB();
+                    db = new Database(getApplicationContext(), root_path);
+                }
+            }
+        }
     }
 }
