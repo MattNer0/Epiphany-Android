@@ -2,6 +2,8 @@ package com.neromatt.epiphany.tasks;
 
 import android.os.AsyncTask;
 
+import androidx.annotation.NonNull;
+
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
@@ -21,7 +23,7 @@ public class ImageDownloaderTask extends AsyncTask<String, Void, ArrayList<Image
         this.listener = listener;
     }
 
-    static boolean containsUrl(ArrayList<ImageReplace> list, String url) {
+    private static boolean containsUrl(ArrayList<ImageReplace> list, String url) {
         for(ImageReplace img: list) {
             if (img.old_path.equals(url)) {
                 return true;
@@ -29,6 +31,11 @@ public class ImageDownloaderTask extends AsyncTask<String, Void, ArrayList<Image
         }
 
         return false;
+    }
+
+    private static String getImageName(String url) {
+        String res = FilenameUtils.getName(url);
+        return res.replaceAll("[^\\w _-]", "").replaceAll("\\*", "").replaceAll("\\s+", " ").trim();
     }
 
     @Override
@@ -44,7 +51,7 @@ public class ImageDownloaderTask extends AsyncTask<String, Void, ArrayList<Image
                     URL urlObj = new URL(url);
                     InputStream input = urlObj.openStream();
 
-                    OutputStream output = new FileOutputStream(image_folder + "/" + FilenameUtils.getName(url));
+                    OutputStream output = new FileOutputStream(image_folder + "/" + getImageName(url));
                     try {
                         byte[] buffer = new byte[2048];
                         int bytesRead = 0;
@@ -55,8 +62,7 @@ public class ImageDownloaderTask extends AsyncTask<String, Void, ArrayList<Image
                         output.close();
                     }
 
-                    res.add(new ImageReplace(url, "epiphany://"+FilenameUtils.getName(url)));
-
+                    res.add(new ImageReplace(url, "epiphany://" + getImageName(url)));
                     input.close();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -75,14 +81,14 @@ public class ImageDownloaderTask extends AsyncTask<String, Void, ArrayList<Image
         public String old_path;
         public String new_path;
 
-        public ImageReplace(String old_path, String new_path) {
+        ImageReplace(String old_path, String new_path) {
             this.old_path = old_path;
             this.new_path = new_path;
         }
 
-        @Override
+        @Override @NonNull
         public String toString() {
-            return old_path+" -> "+new_path;
+            return old_path + " -> " + new_path;
         }
     }
 

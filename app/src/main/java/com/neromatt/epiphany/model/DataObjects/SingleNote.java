@@ -41,6 +41,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import eu.davidea.flexibleadapter.FlexibleAdapter;
 import eu.davidea.flexibleadapter.items.IFlexible;
@@ -235,13 +236,17 @@ public class SingleNote extends MainModel {
         metadata.putString(key, value);
     }
 
-    public String getMetaString(String key) {
+    /*public String getMetaString(String key) {
         if (metadata == null) return null;
         return metadata.getString(key, null);
-    }
+    }*/
 
     public String getImageFolderPath() {
-        return getPath()+"/."+getFileNameNoExtension();
+        return getImageFolderPath(filename);
+    }
+
+    private String getImageFolderPath(@NonNull String myFilename) {
+        return getPath()+"/."+ myFilename.substring(0, myFilename.lastIndexOf('.'));
     }
 
     private static String getImageFolderPath(File file) {
@@ -491,9 +496,9 @@ public class SingleNote extends MainModel {
         }
     }
 
-    public boolean isNewFile() {
+    /*public boolean isNewFile() {
         return this.newFilename;
-    }
+    }*/
 
     @Override
     public boolean delete() {
@@ -577,7 +582,15 @@ public class SingleNote extends MainModel {
         this.noteModified = false;
         if (oldFilename != null && !oldFilename.isEmpty()) {
             File old_file = new File(getPath()+"/"+oldFilename);
-            if (old_file.exists()) old_file.delete();
+            if (old_file.exists() && old_file.delete()) Log.i(Constants.LOG, "old file deleted");
+
+            File old_img_folder = new File(getImageFolderPath(oldFilename));
+            if (old_img_folder.exists() && old_img_folder.isDirectory()) {
+                if (FileSystem.moveDirectoryRecursive(old_img_folder, getImageFolderPath())) {
+                    FileSystem.deleteRecursive(old_img_folder);
+                }
+            }
+
             oldFilename = null;
         }
 
@@ -635,9 +648,9 @@ public class SingleNote extends MainModel {
         return path;
     }
 
-    public String getSummary() {
+    /*public String getSummary() {
         return summary;
-    }
+    }*/
 
     public String getLastModifiedString(Locale loc) {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm", loc).format(updatedAt);

@@ -32,6 +32,8 @@ import java.util.ArrayList;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.widget.NestedScrollView;
+
 import ru.whalemare.sheetmenu.SheetMenu;
 
 public class ViewNote extends AppCompatActivity {
@@ -89,6 +91,9 @@ public class ViewNote extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        String previewTheme = prefs.getString("pref_note_preview_theme", "");
+
         setTitle(note.getTitle());
 
         markdownView = findViewById(R.id.markdownView);
@@ -114,6 +119,7 @@ public class ViewNote extends AppCompatActivity {
                         startActivity(intent);
                     }
                 })
+                .setPreviewTheme(previewTheme)
                 .setNoteImagePath(note.getImageFolderPath())
                 .setMDText(note.getMarkdown());
 
@@ -124,6 +130,11 @@ public class ViewNote extends AppCompatActivity {
             if (images.size() == 0) {
                 note.deleteImageFolder();
             }
+        }
+
+        NestedScrollView scrollViewMarkdown = findViewById(R.id.scrollViewMarkdown);
+        if (previewTheme != null && previewTheme.equals("dark")) {
+            scrollViewMarkdown.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
         }
 
         /*FabSpeedDial noteFab = findViewById(R.id.noteviewFab);

@@ -51,6 +51,24 @@
             android:entryValues="@array/pref_note_entries_values"
             app:iconSpaceReserved="false"
             android:defaultValue="0" />
+
+        <ListPreference
+            android:key="pref_note_editor_theme"
+            android:title="Select editor theme"
+            android:summary="%s"
+            android:entries="@array/pref_note_editor_theme"
+            android:entryValues="@array/pref_note_editor_theme"
+            app:iconSpaceReserved="false"
+            android:defaultValue="dark" />
+
+        <ListPreference
+            android:key="pref_note_preview_theme"
+            android:title="Select note preview theme"
+            android:summary="%s"
+            android:entries="@array/pref_note_preview_theme"
+            android:entryValues="@array/pref_note_preview_theme"
+            app:iconSpaceReserved="false"
+            android:defaultValue="light" />
     </PreferenceCategory>
 
 </PreferenceScreen>

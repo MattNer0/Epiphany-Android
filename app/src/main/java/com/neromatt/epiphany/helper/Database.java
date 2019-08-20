@@ -258,7 +258,7 @@ public class Database extends SQLiteOpenHelper {
     public ArrayList<Bundle> getRecentNotes() {
         ArrayList<Bundle> res = new ArrayList<>();
         String selectQuery = "SELECT  * FROM " + TABLE_NOTES + " tn"
-                + " ORDER BY "+KEY_NOTE_UPDATED_AT+" DESC";
+                + " ORDER BY "+KEY_NOTE_UPDATED_AT+" DESC LIMIT 24";
 
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(selectQuery, null);
@@ -273,7 +273,7 @@ public class Database extends SQLiteOpenHelper {
                     res_note.putString(Constants.KEY_NOTE_TITLE, getString(c, KEY_NAME));
 
                     String photoPath = getString(c, KEY_PHOTO);
-                    if (!photoPath.startsWith("http")) {
+                    if (photoPath != null && !photoPath.startsWith("http")) {
                         photoPath = "file:/" + libraryPath + photoPath;
                     }
                     res_note.putString(Constants.KEY_NOTE_PHOTO, photoPath);

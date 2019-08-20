@@ -133,4 +133,14 @@
         <item>4</item>
     </string-array>
 
+    <string-array name="pref_note_editor_theme">
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+
+    <string-array name="pref_note_preview_theme">
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+
 </resources>

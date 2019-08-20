@@ -14,8 +14,8 @@ import java.io.OutputStream;
 public class FileSystem {
     private static boolean moveFile(String inputPath, String inputFile, String outputPath) {
 
-        InputStream in = null;
-        OutputStream out = null;
+        InputStream in;
+        OutputStream out;
         try {
 
             //create output directory if it doesn't exist
@@ -34,12 +34,12 @@ public class FileSystem {
                 out.write(buffer, 0, read);
             }
             in.close();
-            in = null;
+            //in = null;
 
             // write the output file
             out.flush();
             out.close();
-            out = null;
+            //out = null;
 
             // delete the original file
             return new File(inputPath + inputFile).delete();
@@ -68,17 +68,20 @@ public class FileSystem {
     public static boolean moveRecursive(File fileOrDirectory, String destination) {
         if (fileOrDirectory.exists()) {
             if (fileOrDirectory.isDirectory()) {
-                String new_destination = destination + "/" + fileOrDirectory.getName();
-                for (File child : fileOrDirectory.listFiles()) {
-                    if (!moveRecursive(child, new_destination)) {
-                        return false;
-                    }
-                }
-                return true;
+                moveDirectoryRecursive(fileOrDirectory, destination + "/" + fileOrDirectory.getName());
             } else {
                 return moveFile(fileOrDirectory.getParent() + "/", fileOrDirectory.getName(), destination);
             }
         }
         return false;
+    }
+
+    public static boolean moveDirectoryRecursive(File fileOrDirectory, String new_destination) {
+        for (File child : fileOrDirectory.listFiles()) {
+            if (!moveRecursive(child, new_destination)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

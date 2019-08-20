@@ -11,6 +11,16 @@ html, body {
     margin: 0;
 }
 
+body.theme-light {
+    color: #333;
+    background: #FFF;
+}
+
+body.theme-dark {
+    color: #FFF;
+    background: #252526;
+}
+
 html, body, h1, h2, h3, h4, h5, p, span, input, textarea {
 	font-size: 14px;
 	font-family: "Roboto";
@@ -214,6 +224,10 @@ h1, input.h1 {
     color: #3f51b5;
 }
 
+body.theme-dark h1, body.theme-dark input.h1 {
+    color: #a1aade;
+}
+
 h2 {
     padding-left: 10px;
     border-left: solid 4px #333;
@@ -221,6 +235,10 @@ h2 {
     font-size: 160%;
     font-weight: 600;
     line-height: 1.4em;
+}
+
+body.theme-dark h2 {
+    border-left: solid 4px #FFF;
 }
 
 h2,
@@ -247,6 +265,14 @@ img {
     max-width: 36em;
     max-height: 36em;
     height: auto;
+}
+
+a {
+    color: #3f51b5;
+}
+
+body.theme-dark a {
+    color: #a1aade;
 }
 
 a.image-link {

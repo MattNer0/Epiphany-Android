@@ -95,5 +95,10 @@ function preview(md_text, codeScrollDisable) {
 
 function resizefont(font_size) {
     var html = document.getElementsByTagName("HTML")[0];
-    html.className = "font"+font_size;
+    html.className = "font" + font_size;
+}
+
+function settheme(theme) {
+    var body = document.getElementsByTagName("BODY")[0];
+    body.classList.add("theme-"+theme);
 }

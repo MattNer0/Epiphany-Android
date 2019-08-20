@@ -100,6 +100,9 @@ public class ViewPdf extends AppCompatActivity implements CreateNoteHelper.OnQui
             loading_note.setVisibility(View.GONE);
         }
 
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        String previewTheme = prefs.getString("pref_note_preview_theme", "");
+
         setTitle(pdf_title);
 
         markdownView = findViewById(R.id.markdownView);
@@ -113,6 +116,7 @@ public class ViewPdf extends AppCompatActivity implements CreateNoteHelper.OnQui
                     startActivity(intent);
                 }
             })
+            .setPreviewTheme(previewTheme)
             .setMDText(pdf_content);
 
         registerForContextMenu(markdownView);

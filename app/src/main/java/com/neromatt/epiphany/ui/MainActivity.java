@@ -236,6 +236,8 @@ public class MainActivity extends AppCompatActivity implements DBInterface, Bitt
         SharedPreferences.Editor prefs_edit = prefs.edit();
         prefs_edit.putString("pref_root_directory", full);
         prefs_edit.putBoolean("firstrun", false);
+        prefs_edit.putString("pref_note_editor_theme", "dark");
+        prefs_edit.putString("pref_note_preview_theme", "light");
         prefs_edit.putString("pref_note_order", "0");
         prefs_edit.putString("pref_bucket_grid", "2");
         if (prefs_edit.commit()) {

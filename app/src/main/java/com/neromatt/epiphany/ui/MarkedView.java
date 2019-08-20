@@ -43,6 +43,7 @@ public final class MarkedView extends WebView {
     //private static final String IMAGE_PATTERN = "!\\[(.*)\\]\\((.*)\\)";
 
     private String previewText;
+    private String previewTheme;
     private String noteImagePath;
     private boolean codeScrollDisable;
 
@@ -135,6 +136,9 @@ public final class MarkedView extends WebView {
 
     private void sendScriptAction() {
         evaluateJavascript(previewText, null);
+        if (previewTheme != null && !previewTheme.isEmpty()) {
+            evaluateJavascript("settheme('"+previewTheme+"')", null);
+        }
     }
 
     public MarkedView setCheckboxCallback(OnCheckboxChangedListener mOnCheckboxChangedListener) {
@@ -154,6 +158,15 @@ public final class MarkedView extends WebView {
 
     public MarkedView setFontSize(int font_size) {
         evaluateJavascript("resizefont("+font_size+")", null);
+        return this;
+    }
+
+    public MarkedView setPreviewTheme(@Nullable String theme) {
+        if (theme != null && theme.equals("dark")) {
+            previewTheme = "dark";
+        } else {
+            previewTheme = "light";
+        }
         return this;
     }
 
