@@ -116,6 +116,10 @@ ul li.checkbox div.check:after {
     z-index: 1;
 }
 
+body.theme-dark ul li.checkbox div.check:after {
+    color: #FFF;
+}
+
 ul li.checkbox.checkbox-checked div.check:after {
     content: "\e901";
 }
@@ -200,6 +204,12 @@ blockquote {
     background-color: #F5F3F3;
     border-left: solid 4px #ccc;
     color: #777;
+}
+
+body.theme-dark blockquote {
+    background-color: #3A3A3A;
+    border-left: solid 4px #aaa;
+    color: #ccc;
 }
 
 blockquote p {
